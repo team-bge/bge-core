@@ -1,13 +1,16 @@
+import { _currentGame } from "./game";
+
 export class Delay {
-    static async short(): Promise<void> {
-        await Delay.seconds(1);
+    static short(): Promise<void> {
+        return this.seconds(1);
     }
 
-    static async long(): Promise<void>{
-        await Delay.seconds(2);
+    static long(): Promise<void>{
+        return this.seconds(2);
     }
 
     static seconds(value: number): Promise<void> {
-        throw new Error("Not implemented");
+        _currentGame._dispatchUpdateView();
+        return new Promise(resolve => setTimeout(resolve, value * 1000));
     }
 }

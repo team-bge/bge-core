@@ -25,8 +25,8 @@ export interface CardView extends IThicknessView, ITransformView, IContainerView
     identity: number;
     type: ViewType.Card;
     cornerRadius?: number;
-    front: ImageView;
-    back: ImageView;
+    front?: ImageView;
+    back?: ImageView;
 }
 
 export interface DeckView extends IOutlinedView, ITransformView, ISizedView {
