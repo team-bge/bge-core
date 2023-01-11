@@ -3,6 +3,8 @@ import { Display } from "./display";
 import { Player } from "./player";
 import { GameView, IView, OutlineStyle, ViewType } from "./views";
 
+export const apiVersion = 1;
+
 export interface IPlayerConfig {
     id: string;
     name: string;
@@ -13,6 +15,7 @@ export interface IGameResult {
 }
 
 export interface IGameConfig {
+    apiVersion: number;
     Game: new() => IGame;
     minPlayers: number;
     maxPlayers: number;
@@ -37,9 +40,12 @@ export interface IRenderContext {
 export let _currentGame: IGame;
 
 export abstract class Game<TPlayer extends Player> implements IGame {
+    private readonly _PlayerType: { new(): TPlayer };
     private _players: TPlayer[];
 
-    protected abstract onCreatePlayer(): TPlayer;
+    constructor(PlayerType: { new(): TPlayer }) {
+        this._PlayerType = PlayerType;
+    }
 
     get players(): ReadonlyArray<TPlayer> {
         return this._players;
@@ -52,7 +58,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
         this._onUpdateView = onUpdateView;
 
         for (let i = 0; i < players.length; ++i) {
-            const player = this.onCreatePlayer();
+            const player = new this._PlayerType();
             player._init(i, players[i]);
             this._players.push(player);
         }
@@ -87,8 +93,6 @@ export abstract class Game<TPlayer extends Player> implements IGame {
         return {
             table: {
                 type: ViewType.Table,
-                identity: 0,
-
                 children: Display.renderProperties(this, ctx)
             }
         };

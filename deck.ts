@@ -1,4 +1,4 @@
-import { Card } from "./card";
+import { Card, CardOrientation } from "./card";
 import { GameObject, IRenderContext } from "./game";
 import { DeckView, OutlineStyle, ViewType } from "./views";
 
@@ -6,10 +6,17 @@ export class Deck<TCard extends Card> extends GameObject {
     private readonly _CardType: { new(): TCard };
     private readonly _cards: TCard[] = [];
 
-    constructor(CardType: { new(...args: any[]): TCard }) {
+    private readonly _addOrientation: CardOrientation;
+    private readonly _drawOrientation: CardOrientation;
+
+    constructor(CardType: { new(...args: any[]): TCard },
+        addOrientation?: CardOrientation,
+        drawOrientation?: CardOrientation) {
         super();
 
         this._CardType = CardType;
+        this._addOrientation = addOrientation;
+        this._drawOrientation = drawOrientation;
     }
 
     get count(): number {
@@ -23,12 +30,11 @@ export class Deck<TCard extends Card> extends GameObject {
     add(card: TCard): Promise<void> {
         this._cards.push(card);
 
-        return Promise.resolve();
-    }
+        if (this._addOrientation != null) {
+            card.orientation = this._addOrientation;
+        }
 
-    draw(): Promise<TCard> {
-        const topCard = this._cards.splice(this._cards.length - 1, 1)[0];
-        return Promise.resolve(topCard);
+        return Promise.resolve();
     }
 
     addRange(cards: TCard[] | Iterable<TCard>): Promise<void> {
@@ -37,8 +43,42 @@ export class Deck<TCard extends Card> extends GameObject {
         }
 
         this._cards.push(...cards);
+        
+        if (this._addOrientation != null) {
+            for (let card of cards) {
+                card.orientation = this._addOrientation;
+            }
+        }
 
         return Promise.resolve();
+    }
+
+    draw(): Promise<TCard> {
+        const topCard = this._cards.splice(this._cards.length - 1, 1)[0];
+
+        if (this._drawOrientation != null) {
+            topCard.orientation = this._drawOrientation;
+        }
+
+        return Promise.resolve(topCard);
+    }
+
+    drawRange(count: number): Promise<TCard[]> {
+        count = Math.min(this.count, count);
+
+        if (count == 0) {
+            return Promise.resolve([]);
+        }
+
+        const cards = this._cards.splice(this._cards.length - count, count);
+
+        if (this._drawOrientation != null) {
+            for (let card of cards) {
+                card.orientation = this._drawOrientation;
+            }
+        }
+
+        return Promise.resolve(cards);
     }
 
     shuffle(): Promise<void> {
@@ -60,7 +100,6 @@ export class Deck<TCard extends Card> extends GameObject {
 
         return {
             type: ViewType.Deck,
-            identity: 0,
 
             width: dims.width,
             height: dims.height,

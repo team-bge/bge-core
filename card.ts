@@ -8,10 +8,25 @@ export interface ICardFace {
 const cardWidthKey = Symbol("width");
 const cardHeightKey = Symbol("height");
 
+export enum CardOrientation {
+    FaceUp,
+    FaceDown
+}
+
 export class Card extends GameObject {
     front: ICardFace = {};
     hidden: ICardFace = {};
     back: ICardFace = {};
+
+    orientation: CardOrientation = CardOrientation.FaceUp;
+
+    get isFaceUp(): boolean {
+        return this.orientation === CardOrientation.FaceUp;
+    }
+
+    get isFaceDown(): boolean {
+        return this.orientation === CardOrientation.FaceDown;
+    }
     
     static width(cm: number): ClassDecorator {
         return Reflect.metadata(cardWidthKey, cm);
@@ -33,15 +48,16 @@ export class Card extends GameObject {
 
         return {
             type: ViewType.Card,
-            identity: 0,
 
-            front: this.front.image,
+            front: this.isFaceUp ? this.front.image : this.hidden.image,
             back: this.back.image,
 
             cornerRadius: 0.25,
 
             width: dims.width,
-            height: dims.height
+            height: dims.height,
+
+            localRotation: this.isFaceUp ? undefined : { z: 180 }
         };
     }
 }

@@ -12,25 +12,25 @@ export interface GameView {
 }
 
 export interface TableView extends IContainerView {
-    identity: number;
+    childId?: number;
     type: ViewType.Table;
 }
 
 export interface ZoneView extends IOutlinedView, ITransformView, IContainerView {
-    identity: number;
+    childId?: number;
     type: ViewType.Zone;
 }
 
-export interface CardView extends IThicknessView, ITransformView, IContainerView, ISizedView {
-    identity: number;
+export interface CardView extends ISizedView, IThicknessView, ITransformView, IContainerView {
+    childId?: number;
     type: ViewType.Card;
     cornerRadius?: number;
     front?: ImageView;
     back?: ImageView;
 }
 
-export interface DeckView extends IOutlinedView, ITransformView, ISizedView {
-    identity: number;
+export interface DeckView extends ISizedView, IOutlinedView, ITransformView {
+    childId?: number;
     type: ViewType.Deck;
     topCard?: CardView;
     count: number;
@@ -57,13 +57,13 @@ export interface ITransformView {
     localRotation?: Vector3;
 }
 
-export interface IThicknessView {
-    thickness?: number;
-}
-
 export interface ISizedView {
     width: number;
     height: number;
+}
+
+export interface IThicknessView {
+    thickness?: number;
 }
 
 export interface ImageView {
@@ -82,8 +82,8 @@ export enum OutlineStyle {
 }
 
 export interface Vector3 {
-    x: number;
-    y: number;
-    z: number;
+    x?: number;
+    y?: number;
+    z?: number;
 }
 
