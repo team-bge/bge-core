@@ -1,8 +1,11 @@
+import { ParentMap } from "./display";
 import { IPlayerConfig } from "./game";
 
 export class Player {
     private _index: number;
     private _config: IPlayerConfig;
+
+    _oldParentMap?: ParentMap;
 
     get index(): number {
         return this._index;

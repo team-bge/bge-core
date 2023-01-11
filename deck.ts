@@ -1,6 +1,7 @@
 import { Card, CardOrientation } from "./card";
-import { GameObject, IRenderContext } from "./game";
-import { DeckView, OutlineStyle, ViewType } from "./views";
+import { RenderContext } from "./display";
+import { GameObject } from "./game";
+import { CardView, DeckView, OutlineStyle, ViewType } from "./views";
 
 export class Deck<TCard extends Card> extends GameObject {
     private readonly _CardType: { new(): TCard };
@@ -95,10 +96,10 @@ export class Deck<TCard extends Card> extends GameObject {
         return Promise.resolve();
     }
 
-    render(ctx: IRenderContext): DeckView {
+    render(ctx: RenderContext): DeckView {
         const dims = Card.getDimensions(this._CardType);
 
-        return {
+        const view: DeckView = {
             type: ViewType.Deck,
 
             width: dims.width,
@@ -106,9 +107,23 @@ export class Deck<TCard extends Card> extends GameObject {
 
             count: this._cards.length,
 
-            outlineStyle: OutlineStyle.Dashed,
-
-            topCard: this._cards.length == 0 ? null : this._cards[this._cards.length - 1].render(ctx)
+            outlineStyle: OutlineStyle.Dashed
         };
+
+        ctx.setParentView(this, view);
+
+        if (!this.isEmpty) {
+            view.topCard = ctx.renderChild(this._cards[this._cards.length - 1], this, 0) as CardView;
+            
+            view.topCard.localPosition = view.topCard.localPosition ?? { };
+            view.topCard.localPosition.y = view.topCard.localPosition.y ?? 0.0;
+            view.topCard.localPosition.y += view.topCard.thickness * (this.count - 0.5);
+
+            for (let i = 0; i < this._cards.length - 1; ++i) {
+                ctx.renderChild(this._cards[i], this);
+            }
+        }
+
+        return view;
     }
 }

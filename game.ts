@@ -1,7 +1,6 @@
-import { Delay } from "./delay";
-import { Display } from "./display";
+import { RenderContext } from "./display";
 import { Player } from "./player";
-import { GameView, IView, OutlineStyle, ViewType } from "./views";
+import { GameView, IView,  TableView, ViewType } from "./views";
 
 export const apiVersion = 1;
 
@@ -22,7 +21,7 @@ export interface IGameConfig {
 }
 
 export abstract class GameObject {
-    abstract render(ctx: IRenderContext): IView;
+    abstract render(ctx: RenderContext): IView;
 }
 
 export interface IGame {
@@ -31,10 +30,6 @@ export interface IGame {
     render(playerIndex?: number): GameView;
 
     _dispatchUpdateView(): void;
-}
-
-export interface IRenderContext {
-    readonly player: Player;
 }
 
 export let _currentGame: IGame;
@@ -88,13 +83,22 @@ export abstract class Game<TPlayer extends Player> implements IGame {
 
     render(playerIndex?: number): GameView {
         const player = playerIndex !== undefined ? this.players[playerIndex] : null;
-        const ctx: IRenderContext = { player: player };
+        const ctx = new RenderContext(player, player._oldParentMap ?? new Map());
+
+        player._oldParentMap = ctx.newParentMap;
+
+        const table: TableView = {
+            type: ViewType.Table
+        };
+
+        ctx.setParentView(this, table);
+
+        table.children = ctx.renderProperties(this, table);
+
+        ctx.close();
 
         return {
-            table: {
-                type: ViewType.Table,
-                children: Display.renderProperties(this, ctx)
-            }
+            table: table
         };
     }
 }

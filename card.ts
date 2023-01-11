@@ -1,4 +1,5 @@
-import { GameObject, IRenderContext } from "./game";
+import { RenderContext } from "./display";
+import { GameObject } from "./game";
 import { CardView, ImageView, ViewType } from "./views";
 
 export interface ICardFace {
@@ -7,6 +8,7 @@ export interface ICardFace {
 
 const cardWidthKey = Symbol("width");
 const cardHeightKey = Symbol("height");
+const cardThicknessKey = Symbol("thickness");
 
 export enum CardOrientation {
     FaceUp,
@@ -36,14 +38,19 @@ export class Card extends GameObject {
         return Reflect.metadata(cardHeightKey, cm);
     }
 
-    static getDimensions(CardType: { new(): Card }): { width: number, height: number } {
+    static thickness(cm: number): ClassDecorator {
+        return Reflect.metadata(cardThicknessKey, cm);
+    }
+
+    static getDimensions(CardType: { new(): Card }): { width: number, height: number, thickness: number } {
         return {
             width: Reflect.getMetadata(cardWidthKey, CardType) ?? 10,
             height: Reflect.getMetadata(cardHeightKey, CardType) ?? 10,
-        }
+            thickness: Reflect.getMetadata(cardThicknessKey, CardType) ?? 0.02
+        };
     }
     
-    render(ctx: IRenderContext): CardView {
+    render(ctx: RenderContext): CardView {
         const dims = Card.getDimensions(Object.getPrototypeOf(this).constructor);
 
         return {
@@ -56,6 +63,7 @@ export class Card extends GameObject {
 
             width: dims.width,
             height: dims.height,
+            thickness: dims.thickness,
 
             localRotation: this.isFaceUp ? undefined : { z: 180 }
         };
