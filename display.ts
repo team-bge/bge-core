@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import { GameObject } from "./game";
 import { Player } from "./player";
-import { IOutlinedView, ITransformView, IView, Origin, Vector3 } from "./views";
+import { IOutlinedView, ITransformView, IView, Origin, Vector3, ViewType } from "./views";
 
 export interface IParentInfo {
     parent: Object;
@@ -93,12 +93,12 @@ export class RenderContext {
             (view as IOutlinedView).label = options.label;
         }
 
-        if (oldParentInfo != null && oldParentInfo.parent !== parent) {
+        if (oldParentInfo?.parent !== parent && view.type == ViewType.Card) {
             view.origin = {
-                containerId: this.getParentId(oldParentInfo.parent),
-                childId: oldParentInfo.childId,
-                localPosition: oldParentInfo.localPosition,
-                localRotation: oldParentInfo.localRotation
+                containerId: oldParentInfo == null ? undefined : this.getParentId(oldParentInfo.parent),
+                childId: oldParentInfo?.childId,
+                localPosition: oldParentInfo == null ? { y: 100 } : oldParentInfo?.localPosition,
+                localRotation: oldParentInfo == null ? { x: Math.random() * 360, y: Math.random() * 360, z: Math.random() * 360 } : oldParentInfo?.localRotation
             };
 
             this._origins.push([object._lastActionIndex, view.origin]);
@@ -169,10 +169,15 @@ export class RenderContext {
             view.containerId = parentId;
         }
 
+        if (this._origins.length == 0) {
+            return;
+        }
+
         let index = 0;
+        let delay = Math.min(0.1, 0.75 / this._origins.length);
 
         for (let [_, origin] of this._origins.sort(([indexA, originA], [indexB, originB]) => indexA - indexB)) {
-            origin.delay = index++ * 0.1;
+            origin.delay = index++ * delay;
         }
     }
 }
