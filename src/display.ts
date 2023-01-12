@@ -139,7 +139,7 @@ export class RenderContext {
 
             ++nextId;
             
-            const value = parent[key];
+            const value = (parent as any)[key];
             if (value == null) {
                 continue;
             }

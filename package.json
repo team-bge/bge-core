@@ -1,8 +1,12 @@
 {
-  "name": "bge-core",
+  "name": "@team-bge/bge-core",
   "version": "0.1.0",
-  "description": "Core TypeScript library for writing games with BGE.",
-  "main": "index.js",
+  "description": "Core TypeScript library for writing games.",
+  "dependencies": {
+    "reflect-metadata": "^0.1.13",
+    "typescript": "^4.9.4"
+  },
+  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,7 +14,7 @@
     "type": "git",
     "url": "git+https://github.com/team-bge/bge-core.git"
   },
-  "author": "",
+  "author": "James King <james@ziks.net>",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/team-bge/bge-core/issues"
