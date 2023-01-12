@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import { GameObject } from "./game";
 import { Player } from "./player";
-import { IOutlinedView, ITransformView, IView, Vector3 } from "./views";
+import { IOutlinedView, ITransformView, IView, Origin, Vector3 } from "./views";
 
 export interface IParentInfo {
     parent: Object;
@@ -16,12 +16,13 @@ export class RenderContext {
     readonly player: Player;
 
     readonly newParentMap: ParentMap;
-    readonly oldParentMap: ParentMap;
+    private readonly _oldParentMap: ParentMap;
 
-    readonly parentViews: Map<Object, IView>;
-    readonly parentIds: Map<Object, number>;
+    private readonly _parentViews: Map<Object, IView>;
+    private readonly _parentIds: Map<Object, number>;
 
-    private _animationCount: number;
+    private readonly _origins: [actionIndex: number, origin: Origin][];
+
     private _isHidden: boolean;
 
     get isHidden(): boolean {
@@ -31,29 +32,30 @@ export class RenderContext {
     constructor(player: Player, oldParentMap: ParentMap) {
         this.player = player;
 
-        this.oldParentMap = oldParentMap;
+        this._oldParentMap = oldParentMap;
         this.newParentMap = new Map();
 
-        this.parentViews = new Map();
-        this.parentIds = new Map();
+        this._parentViews = new Map();
+        this._parentIds = new Map();
 
-        this._animationCount = 0;
+        this._origins = [];
+
         this._isHidden = false;
     }
 
     getParentId(parent: Object): number {
-        let parentId = this.parentIds.get(parent);
+        let parentId = this._parentIds.get(parent);
 
         if (parentId == null) {
-            parentId = this.parentIds.size + 1;
-            this.parentIds.set(parent, parentId);
+            parentId = this._parentIds.size + 1;
+            this._parentIds.set(parent, parentId);
         }
 
         return parentId;
     }
 
     setParentView(parent: Object, view: IView): void {
-        this.parentViews.set(parent, view);
+        this._parentViews.set(parent, view);
     }
 
     private _renderChild(object: GameObject, parent: Object, childId: number, options?: IDisplayOptions): IView;
@@ -64,7 +66,7 @@ export class RenderContext {
         const childId: number | null = isInternal ? null : childIdOrParentView;
         const parentView: IView | null = isInternal ? childIdOrParentView : null;
 
-        const oldParentInfo = this.oldParentMap.get(object);
+        const oldParentInfo = this._oldParentMap.get(object);
         this.newParentMap.set(object, { parent: parent, childId: childId, localPosition: options?.localPosition, localRotation: options?.localRotation });
         
         if (isInternal && oldParentInfo?.parent === parent) {
@@ -96,9 +98,10 @@ export class RenderContext {
                 containerId: this.getParentId(oldParentInfo.parent),
                 childId: oldParentInfo.childId,
                 localPosition: oldParentInfo.localPosition,
-                localRotation: oldParentInfo.localRotation,
-                delay: (this._animationCount++) * 0.1
+                localRotation: oldParentInfo.localRotation
             };
+
+            this._origins.push([object._lastActionIndex, view.origin]);
         }
 
         if (isInternal) {
@@ -156,14 +159,20 @@ export class RenderContext {
     }
 
     processAnimations(): void {
-        for (let [parent, parentId] of this.parentIds) {
-            const view = this.parentViews.get(parent);
+        for (let [parent, parentId] of this._parentIds) {
+            const view = this._parentViews.get(parent);
             
             if (view == null) {
                 continue;
             }
 
             view.containerId = parentId;
+        }
+
+        let index = 0;
+
+        for (let [_, origin] of this._origins.sort(([indexA, originA], [indexB, originB]) => indexA - indexB)) {
+            origin.delay = index++ * 0.1;
         }
     }
 }

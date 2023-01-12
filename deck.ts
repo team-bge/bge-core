@@ -1,7 +1,12 @@
 import { Card, CardOrientation } from "./card";
 import { RenderContext } from "./display";
-import { GameObject } from "./game";
+import { GameObject, _currentGame } from "./game";
 import { CardView, DeckView, OutlineStyle, ViewType } from "./views";
+
+export interface ICardReceiver<TCard> {
+    add(card: TCard): void;
+    addRange(cards: TCard[] | Iterable<TCard>): void;
+}
 
 export class Deck<TCard extends Card> extends GameObject {
     private readonly _CardType: { new(): TCard };
@@ -26,12 +31,17 @@ export class Deck<TCard extends Card> extends GameObject {
     }
 
     add(card: TCard): void {
+        card._lastActionIndex = _currentGame.nextActionIndex();
         this._cards.push(card);
     }
 
     addRange(cards: TCard[] | Iterable<TCard>): void {
         if (!Array.isArray(cards)) {
             cards = Array.from(cards);
+        }
+
+        for (let card of cards) { 
+            card._lastActionIndex = _currentGame.nextActionIndex();
         }
 
         this._cards.push(...cards);
@@ -44,6 +54,24 @@ export class Deck<TCard extends Card> extends GameObject {
     drawRange(count: number): TCard[] {
         count = Math.min(this.count, count);
         return this._cards.splice(this._cards.length - count, count).reverse();
+    }
+
+    tryDeal(targets: ICardReceiver<TCard>[], count: number = 1): boolean {
+        if (this.count < targets.length * count) {
+            return false;
+        }
+
+        this.deal(targets, count);
+        return true;
+    }
+
+    deal(targets: ICardReceiver<TCard>[], count: number = 1): void {
+        for (let i = 0; i < count; ++i) {
+            for (let target of targets) {
+                if (this.isEmpty) return;
+                target.add(this.draw());
+            }
+        }
     }
 
     shuffle(): Promise<void> {

@@ -21,6 +21,7 @@ export interface IGameConfig {
 }
 
 export abstract class GameObject {
+    _lastActionIndex: number;
     abstract render(ctx: RenderContext): IView;
 }
 
@@ -28,6 +29,8 @@ export interface IGame {
     init(players: IPlayerConfig[], onUpdateView?: { (playerIndex: number, gameView: GameView): void }): void;
     run(): Promise<IGameResult>;
     render(playerIndex?: number): GameView;
+
+    nextActionIndex(): number;
 
     _dispatchUpdateView(): void;
 }
@@ -37,13 +40,19 @@ export let _currentGame: IGame;
 export abstract class Game<TPlayer extends Player> implements IGame {
     private readonly _PlayerType: { new(): TPlayer };
     private _players: TPlayer[];
+    private _actionIndex: number;
 
     constructor(PlayerType: { new(): TPlayer }) {
         this._PlayerType = PlayerType;
+        this._actionIndex = 0;
     }
 
     get players(): ReadonlyArray<TPlayer> {
         return this._players;
+    }
+
+    nextActionIndex(): number {
+        return this._actionIndex++;
     }
 
     private _onUpdateView?: { (playerIndex: number, gameView: GameView): void };
