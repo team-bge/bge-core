@@ -16,6 +16,7 @@ export interface TableView extends IContainerView {
     childId?: number;
     containerId?: number;
     origin?: Origin;
+    tempChildren?: IView[];
 }
 
 export interface ZoneView extends IContainerView, IOutlinedView, ITransformView {
@@ -23,6 +24,7 @@ export interface ZoneView extends IContainerView, IOutlinedView, ITransformView 
     childId?: number;
     containerId?: number;
     origin?: Origin;
+    tempChildren?: IView[];
 }
 
 export interface CardView extends IContainerView, ISizedView, IThicknessView, ITransformView {
@@ -30,6 +32,7 @@ export interface CardView extends IContainerView, ISizedView, IThicknessView, IT
     childId?: number;
     containerId?: number;
     origin?: Origin;
+    tempChildren?: IView[];
     cornerRadius?: number;
     front?: ImageView;
     back?: ImageView;
@@ -40,6 +43,7 @@ export interface DeckView extends ISizedView, IOutlinedView, ITransformView {
     childId?: number;
     containerId?: number;
     origin?: Origin;
+    tempChildren?: IView[];
     topCard?: CardView;
     count: number;
 }
@@ -58,6 +62,10 @@ export enum ViewType {
 export interface Origin {
     containerId: number;
     childId?: number;
+    localPosition?: Vector3;
+    localRotation?: Vector3;
+    delay?: number;
+    duration?: number;
 }
 
 export interface IOutlinedView {
@@ -87,16 +95,16 @@ export interface ImageView {
     col?: number;
 }
 
+export interface Vector3 {
+    x?: number;
+    y?: number;
+    z?: number;
+}
+
 export enum OutlineStyle {
     None = 0,
     Solid = 1,
     SolidFilled = 2,
     Dashed = 3,
-}
-
-export interface Vector3 {
-    x?: number;
-    y?: number;
-    z?: number;
 }
 

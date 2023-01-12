@@ -19,16 +19,6 @@ export class Card extends GameObject {
     front: ICardFace = {};
     hidden: ICardFace = {};
     back: ICardFace = {};
-
-    orientation: CardOrientation = CardOrientation.FaceUp;
-
-    get isFaceUp(): boolean {
-        return this.orientation === CardOrientation.FaceUp;
-    }
-
-    get isFaceDown(): boolean {
-        return this.orientation === CardOrientation.FaceDown;
-    }
     
     static width(cm: number): ClassDecorator {
         return Reflect.metadata(cardWidthKey, cm);
@@ -56,16 +46,14 @@ export class Card extends GameObject {
         return {
             type: ViewType.Card,
 
-            front: this.isFaceUp ? this.front.image : this.hidden.image,
+            front: ctx.isHidden ? this.hidden.image : this.front.image,
             back: this.back.image,
 
             cornerRadius: 0.25,
 
             width: dims.width,
             height: dims.height,
-            thickness: dims.thickness,
-
-            localRotation: this.isFaceUp ? undefined : { z: 180 }
+            thickness: dims.thickness
         };
     }
 }

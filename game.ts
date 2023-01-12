@@ -94,8 +94,8 @@ export abstract class Game<TPlayer extends Player> implements IGame {
         ctx.setParentView(this, table);
 
         table.children = ctx.renderProperties(this, table);
-
-        ctx.close();
+        
+        ctx.processAnimations();
 
         return {
             table: table

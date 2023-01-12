@@ -6,6 +6,8 @@ import { IOutlinedView, ITransformView, IView, Vector3 } from "./views";
 export interface IParentInfo {
     parent: Object;
     childId?: number;
+    localPosition?: Vector3;
+    localRotation?: Vector3;
 };
 
 export type ParentMap = Map<GameObject, IParentInfo>;
@@ -19,6 +21,13 @@ export class RenderContext {
     readonly parentViews: Map<Object, IView>;
     readonly parentIds: Map<Object, number>;
 
+    private _animationCount: number;
+    private _isHidden: boolean;
+
+    get isHidden(): boolean {
+        return this._isHidden;
+    }
+
     constructor(player: Player, oldParentMap: ParentMap) {
         this.player = player;
 
@@ -27,6 +36,9 @@ export class RenderContext {
 
         this.parentViews = new Map();
         this.parentIds = new Map();
+
+        this._animationCount = 0;
+        this._isHidden = false;
     }
 
     getParentId(parent: Object): number {
@@ -43,33 +55,67 @@ export class RenderContext {
     setParentView(parent: Object, view: IView): void {
         this.parentViews.set(parent, view);
     }
-    
-    renderChild(object: GameObject, parent: Object): void;
-    renderChild(object: GameObject, parent: Object, childId: number): IView; 
-    renderChild(object: GameObject, parent: Object, childId?: number): IView | void {
-        const oldParentInfo = this.oldParentMap.get(object);
 
-        if (childId == null && oldParentInfo?.parent === parent) {
+    private _renderChild(object: GameObject, parent: Object, childId: number, options?: IDisplayOptions): IView;
+    private _renderChild(object: GameObject, parent: Object, parentView: IView, options?: IDisplayOptions): void;
+    private _renderChild(object: GameObject, parent: Object, childIdOrParentView: number | IView, options?: IDisplayOptions): IView | void {
+        const isInternal = typeof childIdOrParentView !== "number";
+
+        const childId: number | null = isInternal ? null : childIdOrParentView;
+        const parentView: IView | null = isInternal ? childIdOrParentView : null;
+
+        const oldParentInfo = this.oldParentMap.get(object);
+        this.newParentMap.set(object, { parent: parent, childId: childId, localPosition: options?.localPosition, localRotation: options?.localRotation });
+        
+        if (isInternal && oldParentInfo?.parent === parent) {
             return;
         }
 
+        const wasHidden = this._isHidden;
+        this._isHidden = (options?.isHidden ?? false) || wasHidden;
+
         const view = object.render(this);
+
+        this._isHidden = wasHidden;
+
+        // TODO: we're assuming the view won't render with a transform
+        if (options?.localPosition != null) {
+            (view as ITransformView).localPosition = options.localPosition;
+        }
+
+        if (options?.localRotation != null) {
+            (view as ITransformView).localRotation = options.localRotation;
+        }
+
+        if (options?.label != null) {
+            (view as IOutlinedView).label = options.label;
+        }
 
         if (oldParentInfo != null && oldParentInfo.parent !== parent) {
             view.origin = {
                 containerId: this.getParentId(oldParentInfo.parent),
-                childId: oldParentInfo.childId
+                childId: oldParentInfo.childId,
+                localPosition: oldParentInfo.localPosition,
+                localRotation: oldParentInfo.localRotation,
+                delay: (this._animationCount++) * 0.1
             };
         }
 
-        this.newParentMap.set(object, { parent: parent, childId: childId });
-
-        if (childId != null) {
+        if (isInternal) {
+            parentView.tempChildren ??= [];
+            parentView.tempChildren.push(view);
+        } else {
             view.childId = childId;
             return view;
         }
+    }
+    
+    renderChild(object: GameObject, parent: Object, childId: number, options?: IDisplayOptions): IView {
+        return this._renderChild(object, parent, childId, options);
+    }
 
-        console.log("TODO: floating objects between parents");
+    renderInternalChild(object: GameObject, parent: Object, parentView: IView, options?: IDisplayOptions): void {
+        this._renderChild(object, parent, parentView, options);
     }
     
     static addVectorComponent(a?: number, b?: number): number | undefined {
@@ -98,25 +144,9 @@ export class RenderContext {
             let view: IView;
 
             if (value instanceof GameObject) {
-                view = this.renderChild(value, parent, nextId);
+                view = this.renderChild(value, parent, nextId, options);
             } else {
                 throw new Error("Unexpected display value type.");
-            }
-
-            if (options.label != null) {
-                (view as IOutlinedView).label = options.label;
-            }
-
-            if (options.offset != null) {
-                const transformView = view as ITransformView;
-
-                if (transformView.localPosition == null) {
-                    transformView.localPosition = options.offset;
-                } else {
-                    transformView.localPosition.x = RenderContext.addVectorComponent(transformView.localPosition.x, options.offset.x);
-                    transformView.localPosition.y = RenderContext.addVectorComponent(transformView.localPosition.y, options.offset.y);
-                    transformView.localPosition.z = RenderContext.addVectorComponent(transformView.localPosition.z, options.offset.z);
-                }
             }
 
             views.push(view);
@@ -125,7 +155,7 @@ export class RenderContext {
         return views;
     }
 
-    close(): void {
+    processAnimations(): void {
         for (let [parent, parentId] of this.parentIds) {
             const view = this.parentViews.get(parent);
             
@@ -140,7 +170,9 @@ export class RenderContext {
 
 export interface IDisplayOptions {
     label?: string;
-    offset?: Vector3
+    isHidden?: boolean;
+    localPosition?: Vector3;
+    localRotation?: Vector3;
 }
 
 const displayKey = Symbol("display");
