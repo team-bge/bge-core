@@ -1,7 +1,7 @@
-import { Card, CardOrientation } from "./card";
-import { RenderContext } from "./display";
-import { GameObject, _currentGame } from "./game";
-import { CardView, DeckView, OutlineStyle, ViewType } from "./views";
+import { Card, CardOrientation } from "./card.js";
+import { RenderContext } from "./display.js";
+import { GameObject, _currentGame } from "./game.js";
+import { CardView, DeckView, OutlineStyle, ViewType } from "./views.js";
 
 export interface ICardReceiver<TCard> {
     add(card: TCard): void;

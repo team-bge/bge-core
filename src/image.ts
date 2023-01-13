@@ -1,4 +1,4 @@
-import { ImageView } from "./views";
+import { ImageView } from "./views.js";
 
 export class Image {
     static simple(url: string): ImageView {

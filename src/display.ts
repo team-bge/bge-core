@@ -1,7 +1,7 @@
 import "reflect-metadata";
-import { GameObject } from "./game";
-import { Player } from "./player";
-import { IOutlinedView, ITransformView, IView, Origin, Vector3, ViewType } from "./views";
+import { GameObject } from "./game.js";
+import { Player } from "./player.js";
+import { IOutlinedView, ITransformView, IView, Origin, Vector3, ViewType } from "./views.js";
 
 export interface IParentInfo {
     parent: Object;

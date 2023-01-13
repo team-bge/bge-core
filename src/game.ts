@@ -1,6 +1,6 @@
-import { RenderContext } from "./display";
-import { Player } from "./player";
-import { GameView, IView,  TableView, ViewType } from "./views";
+import { RenderContext } from "./display.js";
+import { Player } from "./player.js";
+import { GameView, IView,  TableView, ViewType } from "./views.js";
 
 export const apiVersion = 1;
 

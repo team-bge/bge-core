@@ -1,6 +1,6 @@
-import { RenderContext } from "./display";
-import { GameObject } from "./game";
-import { CardView, ImageView, ViewType } from "./views";
+import { RenderContext } from "./display.js";
+import { GameObject } from "./game.js";
+import { CardView, ImageView, ViewType } from "./views.js";
 
 export interface ICardFace {
     image?: ImageView;

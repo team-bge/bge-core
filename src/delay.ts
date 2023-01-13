@@ -1,4 +1,4 @@
-import { _currentGame } from "./game";
+import { _currentGame } from "./game.js";
 
 export class Delay {
     static short(): Promise<void> {
