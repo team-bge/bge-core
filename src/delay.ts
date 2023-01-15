@@ -1,16 +1,22 @@
-import { _currentGame } from "./game.js";
+import { IGame } from "./game.js";
 
 export class Delay {
-    static short(): Promise<void> {
+    private readonly _game: IGame;
+
+    constructor(game: IGame) {
+        this._game = game;
+    }
+
+    short(): Promise<void> {
         return this.seconds(1);
     }
 
-    static long(): Promise<void>{
+    long(): Promise<void>{
         return this.seconds(2);
     }
 
-    static seconds(value: number): Promise<void> {
-        _currentGame._dispatchUpdateView();
+    seconds(value: number): Promise<void> {
+        this._game._dispatchUpdateView();
         return new Promise(resolve => setTimeout(resolve, value * 1000));
     }
 }

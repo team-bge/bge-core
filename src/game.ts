@@ -1,3 +1,4 @@
+import { Delay } from "./delay.js";
 import { RenderContext } from "./display.js";
 import { Player } from "./player.js";
 import { GameView, IView,  TableView, ViewType } from "./views.js";
@@ -35,16 +36,18 @@ export interface IGame {
     _dispatchUpdateView(): void;
 }
 
-export let _currentGame: IGame;
-
 export abstract class Game<TPlayer extends Player> implements IGame {
     private readonly _PlayerType: { new(): TPlayer };
     private _players: TPlayer[];
     private _actionIndex: number;
 
+    readonly delay: Delay;
+    readonly bleepa: boolean = false;
+
     constructor(PlayerType: { new(): TPlayer }) {
         this._PlayerType = PlayerType;
         this._actionIndex = 0;
+        this.delay = new Delay(this);
     }
 
     get players(): ReadonlyArray<TPlayer> {
@@ -68,16 +71,8 @@ export abstract class Game<TPlayer extends Player> implements IGame {
         }
     }
 
-    async run(): Promise<IGameResult> {
-        if (_currentGame != null) {
-            throw new Error("Another game is already running.");
-        }
-
-        _currentGame = this;
-        const result = await this.onRun();
-        _currentGame = null;
-
-        return result;
+    run(): Promise<IGameResult> {
+        return this.onRun();
     }
 
     protected abstract onRun(): Promise<IGameResult>;

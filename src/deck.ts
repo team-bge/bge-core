@@ -1,6 +1,7 @@
 import { Card, CardOrientation } from "./card.js";
 import { RenderContext } from "./display.js";
-import { GameObject, _currentGame } from "./game.js";
+import { GameObject } from "./game.js";
+import { _Internal } from "./internal.js";
 import { CardView, DeckView, OutlineStyle, ViewType } from "./views.js";
 
 export interface ICardReceiver<TCard> {
@@ -31,7 +32,7 @@ export class Deck<TCard extends Card> extends GameObject {
     }
 
     add(card: TCard): void {
-        card._lastActionIndex = _currentGame.nextActionIndex();
+        card._lastActionIndex = _Internal.getNextActionIndex();
         this._cards.push(card);
     }
 
@@ -41,7 +42,7 @@ export class Deck<TCard extends Card> extends GameObject {
         }
 
         for (let card of cards) { 
-            card._lastActionIndex = _currentGame.nextActionIndex();
+            card._lastActionIndex = _Internal.getNextActionIndex();
         }
 
         this._cards.push(...cards);

@@ -13,9 +13,9 @@
   },
   "main": "index.js",
   "scripts": {
-    "clean": "rimraf dist/",
+    "clean": "rimraf dist/*",
     "copy-files": "copyfiles package.json README.md dist/",
-    "build": "yarn clean && tsc && yarn copy-files"
+    "build": "tsc && yarn copy-files"
   },
   "repository": {
     "type": "git",
