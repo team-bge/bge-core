@@ -19,7 +19,7 @@ export interface TableView extends IContainerView {
     tempChildren?: IView[];
 }
 
-export interface ZoneView extends IContainerView, IOutlinedView, ITransformView {
+export interface ZoneView extends IContainerView, ISizedView, IOutlinedView, ITransformView {
     type: ViewType.Zone;
     childId?: number;
     containerId?: number;
@@ -68,6 +68,11 @@ export interface Origin {
     duration?: number;
 }
 
+export interface ISizedView {
+    width: number;
+    height: number;
+}
+
 export interface IOutlinedView {
     outlineStyle: OutlineStyle;
     label?: string;
@@ -76,11 +81,6 @@ export interface IOutlinedView {
 export interface ITransformView {
     localPosition?: Vector3;
     localRotation?: Vector3;
-}
-
-export interface ISizedView {
-    width: number;
-    height: number;
 }
 
 export interface IThicknessView {

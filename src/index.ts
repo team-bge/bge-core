@@ -6,3 +6,4 @@ export * from "./game.js";
 export * from "./image.js";
 export * from "./player.js";
 export * from "./views.js";
+export * from "./zone.js";

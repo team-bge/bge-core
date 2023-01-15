@@ -10,6 +10,12 @@ export interface IParentInfo {
     localRotation?: Vector3;
 };
 
+export interface IDisplayChild {
+    object: GameObject;
+    options: IDisplayOptions;
+    childId: number;
+}
+
 export type ParentMap = Map<GameObject, IParentInfo>;
 
 export class RenderContext {
@@ -127,8 +133,23 @@ export class RenderContext {
         return (a ?? 0) + (b ?? 0);
     }
 
-    renderProperties(parent: Object, parentView: IView): IView[] {
-        const views: IView[] = [];
+    renderChildren(children: Iterable<IDisplayChild>, parent: Object, views?: IView[]): IView[] {
+        views ??= [];
+
+        for (let child of children) {
+            if (child.object == null) {
+                continue;
+            }
+
+            views.push(this.renderChild(child.object, parent, child.childId, child.options));
+        }
+
+        return views;
+    }
+
+    renderProperties(parent: Object, views?: IView[]): IView[] {
+        views ??= [];
+        
         let nextId = 0;
 
         for (let key in parent) {

@@ -2,6 +2,7 @@ import { Delay } from "./delay.js";
 import { RenderContext } from "./display.js";
 import { Player } from "./player.js";
 import { GameView, IView,  TableView, ViewType } from "./views.js";
+import { DisplayContainer } from "./zone.js";
 
 export const apiVersion = 1;
 
@@ -42,7 +43,8 @@ export abstract class Game<TPlayer extends Player> implements IGame {
     private _actionIndex: number;
 
     readonly delay: Delay;
-    readonly bleepa: boolean = false;
+    
+    readonly children = new DisplayContainer();
 
     constructor(PlayerType: { new(): TPlayer }) {
         this._PlayerType = PlayerType;
@@ -92,12 +94,13 @@ export abstract class Game<TPlayer extends Player> implements IGame {
         player._oldParentMap = ctx.newParentMap;
 
         const table: TableView = {
-            type: ViewType.Table
+            type: ViewType.Table,
+            children: []
         };
 
         ctx.setParentView(this, table);
-
-        table.children = ctx.renderProperties(this, table);
+        ctx.renderProperties(this, table.children);
+        this.children.render(ctx, this);
         
         ctx.processAnimations();
 
