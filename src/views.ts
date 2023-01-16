@@ -5,7 +5,8 @@ export type IView =
     | TableView
     | ZoneView
     | CardView
-    | DeckView;
+    | DeckView
+    | HandView;
 
 export interface GameView {
     table: TableView;
@@ -48,6 +49,15 @@ export interface DeckView extends ISizedView, IOutlinedView, ITransformView {
     count: number;
 }
 
+export interface HandView extends ISizedView, IOutlinedView, ITransformView {
+    type: ViewType.Hand;
+    childId?: number;
+    containerId?: number;
+    origin?: Origin;
+    tempChildren?: IView[];
+    cards: CardView[];
+}
+
 export interface IContainerView {
     children?: IView[];
 }
@@ -57,6 +67,7 @@ export enum ViewType {
     Zone = 1,
     Card = 2,
     Deck = 3,
+    Hand = 4,
 }
 
 export interface Origin {
