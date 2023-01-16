@@ -43,7 +43,7 @@ export class Card extends GameObject {
         return Reflect.metadata(cardThicknessKey, cm);
     }
 
-    static getDimensions(CardType: { new(): Card }): ICardDimensions {
+    static getDimensions(CardType: { new(...args: any[]): Card }): ICardDimensions {
         return {
             width: Reflect.getMetadata(cardWidthKey, CardType) ?? 10,
             height: Reflect.getMetadata(cardHeightKey, CardType) ?? 10,
@@ -75,7 +75,7 @@ export interface ICardReceiver<TCard> {
 }
 
 export abstract class CardContainer<TCard extends Card> extends GameObject implements ICardReceiver<TCard> {
-    private readonly _CardType: { new(): TCard };
+    private readonly _CardType: { new(...args: any[]): TCard };
 
     get cardDimensions(): ICardDimensions {
         return Card.getDimensions(this._CardType);
