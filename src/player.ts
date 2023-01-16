@@ -1,5 +1,5 @@
 import { ParentMap } from "./display.js";
-import { IPlayerConfig } from "./game.js";
+import { IPlayerConfig } from "./interfaces.js";
 
 export class Player {
     private _index: number;

@@ -1,4 +1,4 @@
-import { IGame } from "./game.js";
+import { IGame } from "./interfaces.js";
 
 export class Delay {
     private readonly _game: IGame;

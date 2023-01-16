@@ -1,6 +1,6 @@
 import { Card, CardOrientation } from "./card.js";
 import { RenderContext } from "./display.js";
-import { GameObject } from "./game.js";
+import { Footprint, GameObject } from "./object.js";
 import { _Internal } from "./internal.js";
 import { CardView, DeckView, OutlineStyle, ViewType } from "./views.js";
 
@@ -21,6 +21,14 @@ export class Deck<TCard extends Card> extends GameObject {
         this._CardType = CardType;
 
         this.orientation = orientation;
+    }
+
+    override get footprint(): Footprint {
+        const cardDims = Card.getDimensions(this._CardType);
+        return {
+            width: cardDims.width + 2,
+            height: cardDims.height + 2
+        };
     }
 
     get count(): number {

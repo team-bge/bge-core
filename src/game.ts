@@ -1,41 +1,9 @@
 import { Delay } from "./delay.js";
 import { RenderContext } from "./display.js";
+import { IGame, IGameResult, IPlayerConfig } from "./interfaces.js";
 import { Player } from "./player.js";
-import { GameView, IView,  TableView, ViewType } from "./views.js";
+import { GameView, TableView, ViewType } from "./views.js";
 import { DisplayContainer } from "./zone.js";
-
-export const apiVersion = 1;
-
-export interface IPlayerConfig {
-    id: string;
-    name: string;
-}
-
-export interface IGameResult {
-    winners?: Player[];
-}
-
-export interface IGameConfig {
-    apiVersion: number;
-    Game: new() => IGame;
-    minPlayers: number;
-    maxPlayers: number;
-}
-
-export abstract class GameObject {
-    _lastActionIndex: number;
-    abstract render(ctx: RenderContext): IView;
-}
-
-export interface IGame {
-    init(players: IPlayerConfig[], onUpdateView?: { (playerIndex: number, gameView: GameView): void }): void;
-    run(): Promise<IGameResult>;
-    render(playerIndex?: number): GameView;
-
-    nextActionIndex(): number;
-
-    _dispatchUpdateView(): void;
-}
 
 export abstract class Game<TPlayer extends Player> implements IGame {
     private readonly _PlayerType: { new(): TPlayer };
@@ -100,7 +68,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
 
         ctx.setParentView(this, table);
         ctx.renderProperties(this, table.children);
-        this.children.render(ctx, this);
+        this.children.render(ctx, this, table.children);
         
         ctx.processAnimations();
 

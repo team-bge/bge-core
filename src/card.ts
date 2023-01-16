@@ -1,5 +1,5 @@
 import { RenderContext } from "./display.js";
-import { GameObject } from "./game.js";
+import { Footprint, GameObject } from "./object.js";
 import { CardView, ImageView, ViewType } from "./views.js";
 
 export interface ICardFace {
@@ -19,6 +19,10 @@ export class Card extends GameObject {
     front: ICardFace = {};
     hidden: ICardFace = {};
     back: ICardFace = {};
+
+    override get footprint(): Footprint {
+        return Card.getDimensions(Object.getPrototypeOf(this).constructor);
+    }
     
     static width(cm: number): ClassDecorator {
         return Reflect.metadata(cardWidthKey, cm);

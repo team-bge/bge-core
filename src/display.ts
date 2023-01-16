@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { GameObject } from "./game.js";
+import { GameObject } from "./object.js";
 import { Player } from "./player.js";
 import { IOutlinedView, ITransformView, IView, Origin, Vector3, ViewType } from "./views.js";
 

@@ -1,5 +1,5 @@
 import { IDisplayChild, IDisplayOptions, RenderContext } from "./display.js";
-import { GameObject } from "./game.js";
+import { Footprint, GameObject } from "./object.js";
 import { IView, OutlineStyle, ViewType, ZoneView } from "./views.js";
 
 export enum Arrangement {
@@ -24,19 +24,34 @@ export class DisplayContainer {
     }
 
     addRange(name: string, objects: GameObject[], options?: IDisplayOptions, arrangement: Arrangement = Arrangement.Linear): void {
-        let index = 0;
+        const footprints = objects.map(x => x.footprint ?? { width: 0, height: 0 });
 
+        const maxFootprint: Footprint = {
+            width: Math.max(...footprints.map(x => x.width)),
+            height: Math.max(...footprints.map(x => x.height))
+        };
+
+        const deltaTheta = 2 * Math.PI / objects.length;
+        const dist = maxFootprint.width / (2 * Math.tan(deltaTheta * 0.5));
+
+        let index = 0;
+        let theta = Math.PI;
         for (let object of objects) {
+            const footprint = object.footprint;
+            const r = dist + footprint.height * 0.5;
+
             this.add(`${name}[${index}]`, object, {
-                localPosition: { x: index * 50 }
+                localPosition: { x: Math.sin(theta) * r, z: Math.cos(theta) * r },
+                localRotation: { y: theta * 180 / Math.PI + 180 }
             });
 
             ++index;
+            theta += deltaTheta;
         }
     }
 
-    render(ctx: RenderContext, parent: Object): IView[] {
-        return ctx.renderChildren(this._children.values(), parent);
+    render(ctx: RenderContext, parent: Object, views?: IView[]): IView[] {
+        return ctx.renderChildren(this._children.values(), parent, views);
     }
 }
 
@@ -48,6 +63,13 @@ export class Zone extends GameObject {
     label?: string;
 
     readonly children = new DisplayContainer();
+
+    override get footprint(): Footprint {
+        return {
+            width: this.width + 2,
+            height: this.height + 2
+        };
+    }
 
     render(ctx: RenderContext): IView {
         const view: ZoneView = {
@@ -65,7 +87,7 @@ export class Zone extends GameObject {
         ctx.setParentView(this, view);
 
         ctx.renderProperties(this, view.children);
-        this.children.render(ctx, this);
+        this.children.render(ctx, this, view.children);
 
         return view;
     }
