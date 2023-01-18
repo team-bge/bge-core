@@ -17,6 +17,7 @@ export interface TableView extends IContainerView {
     childId?: number;
     containerId?: number;
     origin?: Origin;
+    prompt?: Prompt;
     tempChildren?: IView[];
 }
 
@@ -25,6 +26,7 @@ export interface ZoneView extends IContainerView, ISizedView, IOutlinedView, ITr
     childId?: number;
     containerId?: number;
     origin?: Origin;
+    prompt?: Prompt;
     tempChildren?: IView[];
 }
 
@@ -33,6 +35,7 @@ export interface CardView extends IContainerView, ISizedView, IThicknessView, IT
     childId?: number;
     containerId?: number;
     origin?: Origin;
+    prompt?: Prompt;
     tempChildren?: IView[];
     cornerRadius?: number;
     front?: ImageView;
@@ -44,6 +47,7 @@ export interface DeckView extends ISizedView, IOutlinedView, ITransformView {
     childId?: number;
     containerId?: number;
     origin?: Origin;
+    prompt?: Prompt;
     tempChildren?: IView[];
     topCard?: CardView;
     count: number;
@@ -54,6 +58,7 @@ export interface HandView extends ISizedView, IOutlinedView, ITransformView {
     childId?: number;
     containerId?: number;
     origin?: Origin;
+    prompt?: Prompt;
     tempChildren?: IView[];
     cards: CardView[];
 }
@@ -77,6 +82,11 @@ export interface Origin {
     localRotation?: Vector3;
     delay?: number;
     duration?: number;
+}
+
+export interface Prompt {
+    kind: PromptKind;
+    index: number;
 }
 
 export interface ISizedView {
@@ -110,6 +120,10 @@ export interface Vector3 {
     x?: number;
     y?: number;
     z?: number;
+}
+
+export enum PromptKind {
+    Click = 0,
 }
 
 export enum OutlineStyle {

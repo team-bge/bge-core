@@ -16,6 +16,8 @@ export interface IGame {
     run(): Promise<IGameResult>;
     render(playerIndex?: number): GameView;
 
+    respondToPrompt(playerIndex: number, promptIndex: number): void;
+
     nextActionIndex(): number;
 
     _dispatchUpdateView(): void;

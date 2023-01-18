@@ -57,6 +57,8 @@ export class Card extends GameObject {
         return {
             type: ViewType.Card,
 
+            prompt: ctx.player?.prompt.get(this),
+
             front: ctx.isHidden ? this.hidden.image : this.front.image,
             back: this.back.image,
 
@@ -80,6 +82,8 @@ export abstract class CardContainer<TCard extends Card> extends GameObject imple
     get cardDimensions(): ICardDimensions {
         return Card.getDimensions(this._CardType);
     }
+
+    abstract get count(): number;
 
     constructor(CardType: { new(...args: any[]): TCard }) {
         super();
@@ -107,6 +111,13 @@ export abstract class CardContainer<TCard extends Card> extends GameObject imple
     }
 
     protected abstract onAddRange(cards: TCard[]): void;
+
+    remove(card: TCard): TCard {
+        this.onRemove(card);
+        return card;
+    }
+
+    protected abstract onRemove(card: TCard): void;
 }
 
 export enum LinearContainerKind {
@@ -114,7 +125,7 @@ export enum LinearContainerKind {
     FirstInLastOut
 }
 
-export abstract class LinearCardContainer<TCard extends Card> extends CardContainer<TCard> {
+export abstract class LinearCardContainer<TCard extends Card> extends CardContainer<TCard> implements Iterable<TCard> {
     private readonly _cards: TCard[] = [];
     private readonly _kind: LinearContainerKind;
 
@@ -126,6 +137,10 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
         this._kind = kind;
 
         this.orientation = orientation;
+    }
+
+    [Symbol.iterator](): Iterator<TCard> {
+        return this._cards[Symbol.iterator]();
     }
 
     override get footprint(): Footprint {
@@ -154,6 +169,10 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
 
     protected override onAddRange(cards: TCard[]): void {
         this._cards.push(...cards);
+    }
+
+    protected override onRemove(card: TCard): void {
+        this._cards.splice(this._cards.indexOf(card), 1);
     }
 
     draw(): TCard {

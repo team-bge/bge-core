@@ -10,6 +10,8 @@ export abstract class Game<TPlayer extends Player> implements IGame {
     private _players: TPlayer[];
     private _actionIndex: number;
 
+    private _scheduledUpdateView: boolean;
+
     readonly delay: Delay;
     
     readonly children = new DisplayContainer();
@@ -36,7 +38,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
 
         for (let i = 0; i < players.length; ++i) {
             const player = new this._PlayerType();
-            player._init(i, players[i]);
+            player._init(this, i, players[i]);
             this._players.push(player);
         }
     }
@@ -44,15 +46,28 @@ export abstract class Game<TPlayer extends Player> implements IGame {
     run(): Promise<IGameResult> {
         return this.onRun();
     }
+    
+    respondToPrompt(playerIndex: number, promptIndex: number): void {
+        const player = this._players[playerIndex];
+        player.prompt.respond(promptIndex);
+    }
 
     protected abstract onRun(): Promise<IGameResult>;
 
     _dispatchUpdateView(): void {
         if (this._onUpdateView == null) return;
 
-        for (let i = 0; i < this.players.length; ++i) {
-            this._onUpdateView(i, this.render(i));
-        }
+        if (this._scheduledUpdateView) return;
+
+        this._scheduledUpdateView = true;
+
+        setTimeout(() => {
+            this._scheduledUpdateView = false;
+
+            for (let i = 0; i < this.players.length; ++i) {
+                this._onUpdateView(i, this.render(i));
+            }
+        }, 10);
     }
 
     render(playerIndex?: number): GameView {
@@ -75,5 +90,10 @@ export abstract class Game<TPlayer extends Player> implements IGame {
         return {
             table: table
         };
+    }
+
+    getNextPlayer(player: TPlayer): TPlayer {
+        const index = this._players.indexOf(player);
+        return this._players[(index + 1) % this._players.length];
     }
 }
