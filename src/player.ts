@@ -20,6 +20,10 @@ export class PromptHelper {
     private _nextPromptIndex = 0;
     private readonly _prompts = new Map<GameObject, IPromptInfo>();
 
+    get count(): number {
+        return this._prompts.size;
+    }
+
     constructor(player: Player) {
         this._player = player;
     }

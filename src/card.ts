@@ -99,18 +99,10 @@ export abstract class CardContainer<TCard extends Card> extends GameObject imple
     protected abstract onAdd(card: TCard): void;
     
     addRange(cards: TCard[] | Iterable<TCard>): void {
-        if (!Array.isArray(cards)) {
-            cards = Array.from(cards);
-        }
-
         for (let card of cards) { 
-            card._lastActionIndex = _Internal.getNextActionIndex();
+            this.add(card);
         }
-        
-        this.onAddRange(Array.isArray(cards) ? cards : Array.from(cards));
     }
-
-    protected abstract onAddRange(cards: TCard[]): void;
 
     remove(card: TCard): TCard {
         this.onRemove(card);
@@ -125,13 +117,21 @@ export enum LinearContainerKind {
     FirstInLastOut
 }
 
+interface ILinearContainerCard<TCard extends Card> {
+    card: TCard;
+    orientation: CardOrientation;
+    childId: number;
+}
+
 export abstract class LinearCardContainer<TCard extends Card> extends CardContainer<TCard> implements Iterable<TCard> {
-    private readonly _cards: TCard[] = [];
+    private readonly _cards: ILinearContainerCard<TCard>[] = [];
     private readonly _kind: LinearContainerKind;
+
+    private _nextChildId: number = 0;
 
     readonly orientation: CardOrientation;
 
-    constructor(CardType: { new(...args: any[]): TCard }, kind: LinearContainerKind, orientation?: CardOrientation) {
+    constructor(CardType: { new(...args: any[]): TCard }, kind: LinearContainerKind, orientation: CardOrientation = CardOrientation.FaceUp) {
         super(CardType);
 
         this._kind = kind;
@@ -140,7 +140,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
     }
 
     [Symbol.iterator](): Iterator<TCard> {
-        return this._cards[Symbol.iterator]();
+        return this._cards.map(x => x.card)[Symbol.iterator]();
     }
 
     override get footprint(): Footprint {
@@ -160,19 +160,28 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
     }
 
     getCard(index: number): TCard {
-        return this._cards[index];
+        return this._cards[index].card;
+    }
+
+    protected getChildId(index: number): number {
+        return this._cards[index].childId;
+    }
+
+    getOrientation(index: number): CardOrientation {
+        return this._cards[index].orientation;
     }
 
     protected override onAdd(card: TCard): void {
-        this._cards.push(card);
-    }
-
-    protected override onAddRange(cards: TCard[]): void {
-        this._cards.push(...cards);
+        this._cards.push({card: card, orientation: this.orientation, childId: this._nextChildId++ });
     }
 
     protected override onRemove(card: TCard): void {
-        this._cards.splice(this._cards.indexOf(card), 1);
+        for (let i = this._cards.length - 1; i >= 0; i--) {
+            if (this._cards[i].card == card) {
+                this._cards.splice(i, 1);
+                return;
+            }
+        }
     }
 
     draw(): TCard {
@@ -184,10 +193,10 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
 
         switch (this._kind) {
             case LinearContainerKind.FirstInLastOut:
-                return this._cards.splice(this._cards.length - count, count).reverse();
+                return this._cards.splice(this._cards.length - count, count).reverse().map(x => x.card);
 
             case LinearContainerKind.FirstInFirstOut:
-                return this._cards.splice(0, count);
+                return this._cards.splice(0, count).map(x => x.card);
 
             default:
                 throw new Error("Not implemented");

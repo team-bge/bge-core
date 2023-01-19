@@ -12,10 +12,8 @@ export interface IGameResult {
 }
 
 export interface IGame {
-    init(players: IPlayerConfig[], onUpdateView?: { (playerIndex: number, gameView: GameView): void }): void;
+    init(players: IPlayerConfig[], onUpdateViews?: { (gameViews: GameView[]): void }): void;
     run(): Promise<IGameResult>;
-    render(playerIndex?: number): GameView;
-
     respondToPrompt(playerIndex: number, promptIndex: number): void;
 
     nextActionIndex(): number;

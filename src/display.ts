@@ -11,7 +11,7 @@ export interface IParentInfo {
 };
 
 export interface IDisplayChild {
-    object: GameObject;
+    object: GameObject | { (): GameObject };
     options: IDisplayOptions;
     childId: number;
 }
@@ -80,7 +80,7 @@ export class RenderContext {
         }
 
         const wasHidden = this._isHidden;
-        this._isHidden = (options?.isHidden ?? false) || wasHidden;
+        this._isHidden = (options?.isHidden ?? false) && options?.owner != this.player || wasHidden;
 
         const view = object.render(this);
 
@@ -141,7 +141,9 @@ export class RenderContext {
                 continue;
             }
 
-            views.push(this.renderChild(child.object, parent, child.childId, child.options));
+            let obj = typeof child.object === "function" ? child.object() : child.object;
+
+            views.push(this.renderChild(obj, parent, child.childId, child.options));
         }
 
         return views;
@@ -152,28 +154,35 @@ export class RenderContext {
         
         let nextId = 0;
 
-        for (let key in parent) {
-            const options: IDisplayOptions = Reflect.getMetadata(displayKey, parent, key);
-            if (options == null) {
-                continue;
+        for (let container of [parent, Object.getPrototypeOf(parent)]) {
+            for (let key of Object.getOwnPropertyNames(container)) {
+                const options: IDisplayOptions = Reflect.getMetadata(displayKey, parent, key);
+                if (options == null) {
+                    continue;
+                }
+    
+                ++nextId;
+                
+                let value = (parent as any)[key];
+    
+                if (typeof value === "function") {
+                    value = value();
+                }
+    
+                if (value == null) {
+                    continue;
+                }
+    
+                let view: IView;
+                
+                if (value instanceof GameObject) {
+                    view = this.renderChild(value, parent, nextId, options);
+                } else {
+                    throw new Error("Unexpected display value type.");
+                }
+    
+                views.push(view);
             }
-
-            ++nextId;
-            
-            const value = (parent as any)[key];
-            if (value == null) {
-                continue;
-            }
-
-            let view: IView;
-
-            if (value instanceof GameObject) {
-                view = this.renderChild(value, parent, nextId, options);
-            } else {
-                throw new Error("Unexpected display value type.");
-            }
-
-            views.push(view);
         }
 
         return views;
@@ -208,6 +217,7 @@ export interface IDisplayOptions {
     isHidden?: boolean;
     localPosition?: Vector3;
     localRotation?: Vector3;
+    owner?: Player;
 }
 
 const displayKey = Symbol("display");

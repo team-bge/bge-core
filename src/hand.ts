@@ -44,10 +44,11 @@ export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
             ctx.setParentView(this, view);
 
             for (let i = 0; i < this.count; ++i) {
-                const cardView = ctx.renderChild(this.getCard(i), this, i, {
+                const orientation = this.getOrientation(i);
+                const cardView = ctx.renderChild(this.getCard(i), this, this.getChildId(i), {
                     localPosition: { x: innerWidth * -0.5 + dims.width * 0.5 + i * dx, y: dims.thickness * (i + 0.5) },
-                    localRotation: this.orientation == CardOrientation.FaceUp ? undefined : { z: 180 },
-                    isHidden: this.orientation == CardOrientation.FaceDown
+                    localRotation: orientation == CardOrientation.FaceUp ? undefined : { z: 180 },
+                    isHidden: orientation == CardOrientation.FaceDown
                 }) as CardView;
 
                 view.cards.push(cardView);

@@ -10,6 +10,7 @@ export type IView =
 
 export interface GameView {
     table: TableView;
+    hasPrompts: boolean;
 }
 
 export interface TableView extends IContainerView {
@@ -21,7 +22,7 @@ export interface TableView extends IContainerView {
     tempChildren?: IView[];
 }
 
-export interface ZoneView extends IContainerView, ISizedView, IOutlinedView, ITransformView {
+export interface ZoneView extends ITransformView, IContainerView, ISizedView, IOutlinedView {
     type: ViewType.Zone;
     childId?: number;
     containerId?: number;
@@ -30,7 +31,7 @@ export interface ZoneView extends IContainerView, ISizedView, IOutlinedView, ITr
     tempChildren?: IView[];
 }
 
-export interface CardView extends IContainerView, ISizedView, IThicknessView, ITransformView {
+export interface CardView extends ITransformView, IContainerView, ISizedView, IThicknessView {
     type: ViewType.Card;
     childId?: number;
     containerId?: number;
@@ -42,7 +43,7 @@ export interface CardView extends IContainerView, ISizedView, IThicknessView, IT
     back?: ImageView;
 }
 
-export interface DeckView extends ISizedView, IOutlinedView, ITransformView {
+export interface DeckView extends ITransformView, ISizedView, IOutlinedView {
     type: ViewType.Deck;
     childId?: number;
     containerId?: number;
@@ -53,7 +54,7 @@ export interface DeckView extends ISizedView, IOutlinedView, ITransformView {
     count: number;
 }
 
-export interface HandView extends ISizedView, IOutlinedView, ITransformView {
+export interface HandView extends ITransformView, ISizedView, IOutlinedView {
     type: ViewType.Hand;
     childId?: number;
     containerId?: number;
@@ -89,6 +90,11 @@ export interface Prompt {
     index: number;
 }
 
+export interface ITransformView {
+    localPosition?: Vector3;
+    localRotation?: Vector3;
+}
+
 export interface ISizedView {
     width: number;
     height: number;
@@ -97,11 +103,6 @@ export interface ISizedView {
 export interface IOutlinedView {
     outlineStyle: OutlineStyle;
     label?: string;
-}
-
-export interface ITransformView {
-    localPosition?: Vector3;
-    localRotation?: Vector3;
 }
 
 export interface IThicknessView {

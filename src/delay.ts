@@ -7,6 +7,10 @@ export class Delay {
         this._game = game;
     }
 
+    beat(): Promise<void> {
+        return this.seconds(0.5);
+    }
+
     short(): Promise<void> {
         return this.seconds(1);
     }
