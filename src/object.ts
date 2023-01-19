@@ -17,8 +17,20 @@ export interface Footprint {
     height: number;
 }
 
+/**
+ * Base class for all gameplay related objects and containers.
+ */
 export abstract class GameObject {
     _lastActionIndex: number;
+
+    /**
+     * Builds a view of this object from the perspective of a player.
+     * @param ctx Information about where the object is in the scene, and who's viewing it.
+     */
     abstract render(ctx: RenderContext): IView;
+    
+    /**
+     * How much space does this object take up on the table.
+     */
     abstract get footprint(): Footprint | undefined;
 }

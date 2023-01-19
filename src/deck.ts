@@ -3,9 +3,19 @@ import { RenderContext } from "./display.js";
 import { _Internal } from "./internal.js";
 import { CardView, DeckView, OutlineStyle, ViewType } from "./views.js";
 
+/**
+ * Stores a first-in-last-out stack of cards. Only the top card is visible, but players can see how many cards are in the stack.
+ */
 export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
     constructor(CardType: { new(...args: any[]): TCard }, orientation?: CardOrientation) {
         super(CardType, LinearContainerKind.FirstInLastOut, orientation);
+    }
+
+    /**
+     * Top-most card, the one that will be next drawn. This is null for empty decks.
+     */
+    get top(): TCard | null {
+        return this.count == 0 ? null : this.getCard(this.count - 1);
     }
 
     render(ctx: RenderContext): DeckView {
