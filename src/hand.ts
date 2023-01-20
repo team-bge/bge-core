@@ -27,6 +27,8 @@ export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
 
         const view: HandView = {
             type: ViewType.Hand,
+            
+            prompt: ctx.player?.prompt.get(this),
 
             width: this.width,
             height: dims.height,

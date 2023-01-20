@@ -23,6 +23,8 @@ export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
 
         const view: DeckView = {
             type: ViewType.Deck,
+            
+            prompt: ctx.player?.prompt.get(this),
 
             width: dims.width,
             height: dims.height,

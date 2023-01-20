@@ -11,27 +11,27 @@ export class Delay {
     }
 
     /**
-     * Very short delay of 0.5 seconds, mostly to allow animations to play out.
-     * @returns A promise that fulfils after 0.5 seconds.
+     * Very short delay of 1 second.
+     * @returns A promise that fulfils after 1 seconds
      */
     beat(): Promise<void> {
-        return this.seconds(0.5);
-    }
-
-    /**
-     * Short delay of 1 second.
-     * @returns A promise that fulfils after 1 second.
-     */
-    short(): Promise<void> {
         return this.seconds(1);
     }
 
     /**
-     * Long delay of 2 seconds.
+     * Short delay of 1 second.
      * @returns A promise that fulfils after 2 seconds.
      */
-    long(): Promise<void>{
+    short(): Promise<void> {
         return this.seconds(2);
+    }
+
+    /**
+     * Long delay of 2 seconds.
+     * @returns A promise that fulfils after 3 seconds.
+     */
+    long(): Promise<void>{
+        return this.seconds(3);
     }
 
     /**

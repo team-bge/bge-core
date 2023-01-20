@@ -1,4 +1,5 @@
-import { GameView } from "./views.js";
+import { RenderContext } from "./display.js";
+import { GameView, TextEmbedView } from "./views.js";
 
 export const apiVersion = 1;
 
@@ -23,4 +24,8 @@ export interface IGameConfig {
     Game: new() => IGame;
     minPlayers: number;
     maxPlayers: number;
+}
+
+export interface ITextEmbeddable {
+    renderTextEmbed(ctx: RenderContext): TextEmbedView;
 }

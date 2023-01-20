@@ -10,6 +10,7 @@ export type IView =
 
 export interface GameView {
     table: TableView;
+    topBar: TopBarView;
     hasPrompts: boolean;
 }
 
@@ -64,6 +65,11 @@ export interface HandView extends ITransformView, ISizedView, IOutlinedView {
     cards: CardView[];
 }
 
+export interface TopBarView {
+    format?: string;
+    embeds?: TextEmbedView[];
+}
+
 export interface IContainerView {
     children?: IView[];
 }
@@ -115,6 +121,14 @@ export interface ImageView {
     cols?: number;
     row?: number;
     col?: number;
+    aspectRatio?: number;
+}
+
+export interface TextEmbedView {
+    icon?: ImageView;
+    label?: string;
+    items?: TextEmbedView[];
+    color?: Color;
 }
 
 export interface Vector3 {
@@ -132,5 +146,11 @@ export enum OutlineStyle {
     Solid = 1,
     SolidFilled = 2,
     Dashed = 3,
+}
+
+export interface Color {
+    r?: number;
+    g?: number;
+    b?: number;
 }
 

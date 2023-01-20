@@ -23,6 +23,8 @@ export interface Footprint {
 export abstract class GameObject {
     _lastActionIndex: number;
 
+    name?: string;
+
     /**
      * Builds a view of this object from the perspective of a player.
      * @param ctx Information about where the object is in the scene, and who's viewing it.

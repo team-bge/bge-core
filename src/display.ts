@@ -1,7 +1,8 @@
 import "reflect-metadata";
+import { ITextEmbeddable } from "./interfaces.js";
 import { Footprint, GameObject } from "./object.js";
 import { Player } from "./player.js";
-import { IOutlinedView, ITransformView, IView, Origin, Vector3, ViewType } from "./views.js";
+import { IOutlinedView, ITransformView, IView, Origin, TextEmbedView, Vector3, ViewType } from "./views.js";
 
 export interface IParentInfo {
     parent: Object;
@@ -272,6 +273,35 @@ export class RenderContext {
 
         for (let [_, origin] of this._origins.sort(([indexA, originA], [indexB, originB]) => indexA - indexB)) {
             origin.delay = index++ * delay;
+        }
+    }
+
+    renderTextEmbed(value: any): TextEmbedView {
+        switch (typeof value) {
+            case "string":
+            case "number":
+            case "boolean":
+            case "bigint":
+                return { label: value.toString() };
+
+            case "object":
+                if (value == null) {
+                    return { label: "null" };
+                }
+
+                if (Array.isArray(value)) {
+                    return { items: value.map(x => this.renderTextEmbed(x)) };
+                }
+
+                if (typeof value.renderTextEmbed === "function") {
+                    const textEmbeddable = value as ITextEmbeddable;
+                    return textEmbeddable.renderTextEmbed(this);
+                }
+                
+                throw new Error("Value doesn't implement ITextEmbeddable.");
+
+            default:
+                throw new Error("Value isn't embeddable in text.");
         }
     }
 }

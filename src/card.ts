@@ -1,7 +1,8 @@
 import { RenderContext } from "./display.js";
+import { ITextEmbeddable } from "./interfaces.js";
 import { _Internal } from "./internal.js";
 import { Footprint, GameObject } from "./object.js";
-import { CardView, ImageView, ViewType } from "./views.js";
+import { CardView, ImageView, TextEmbedView, ViewType } from "./views.js";
 
 export interface ICardFace {
     image?: ImageView;
@@ -51,7 +52,7 @@ export interface ICardDimensions {
  * @description Can have arbitrary front and back images, dimensions (including thickness), and rounded corners.
  * Specify dimensions using the `@Card.width()`, `@Card.height()`, and `@Card.thickness` decorators on your custom class.
  */
-export class Card extends GameObject {
+export class Card extends GameObject implements ITextEmbeddable {
     /**
      * Specify the width of a custom card class.
      * @param cm Width in centimeters.
@@ -89,6 +90,10 @@ export class Card extends GameObject {
         };
     }
 
+    width: number;
+    height: number;
+    thickness: number;
+
     /**
      * Stores graphical information about the front face of the card, as seen if the card isn't hidden.
      */
@@ -104,13 +109,24 @@ export class Card extends GameObject {
      */
     back: ICardFace = {};
 
+    constructor() {
+        super();
+
+        const dims = Card.getDimensions(Object.getPrototypeOf(this).constructor);
+
+        this.width = dims.width;
+        this.height = dims.height;
+        this.thickness = dims.thickness;
+    }
+
     override get footprint(): Footprint {
-        return Card.getDimensions(Object.getPrototypeOf(this).constructor);
+        return {
+            width: this.width,
+            height: this.height
+        };
     }
     
     render(ctx: RenderContext): CardView {
-        const dims = Card.getDimensions(Object.getPrototypeOf(this).constructor);
-
         return {
             type: ViewType.Card,
 
@@ -121,9 +137,18 @@ export class Card extends GameObject {
 
             cornerRadius: 0.25,
 
-            width: dims.width,
-            height: dims.height,
-            thickness: dims.thickness
+            width: this.width,
+            height: this.height,
+            thickness: this.thickness
+        };
+    }
+    
+    renderTextEmbed(ctx: RenderContext): TextEmbedView {
+        const dims = Card.getDimensions(Object.getPrototypeOf(this).constructor);
+
+        return {
+            icon: { ...this.front.image, aspectRatio: this.width / this.height },
+            label: this.name
         };
     }
 }
@@ -132,6 +157,8 @@ export class Card extends GameObject {
  * Interface for anything that can receive dealt cards.
  */
 export interface ICardReceiver<TCard> {
+    get count(): number;
+
     /**
      * Add a single card to the default place in this container.
      * @param card Card to add.
@@ -214,6 +241,12 @@ export abstract class CardContainer<TCard extends Card> extends GameObject imple
      * @returns The removed cards.
      */
     removeAll(): TCard[];
+
+    /**
+     * Remove the given cards from this container.
+     * @returns The removed cards.
+     */
+    removeAll(cards: Iterable<TCard>): TCard[];
     
     /**
      * Remove all cards matching a predicate from this container.
@@ -221,8 +254,14 @@ export abstract class CardContainer<TCard extends Card> extends GameObject imple
      * @returns The removed cards.
      */
     removeAll(predicate: { (card: TCard): boolean }): TCard[];
-    removeAll(predicate?: { (card: TCard): boolean }): TCard[] {
-        return this.onRemoveAll(predicate);
+    removeAll(predicateOrCards?: { (card: TCard): boolean } | Iterable<TCard>): TCard[] {
+        if (predicateOrCards == null || typeof predicateOrCards === "function") {
+            return this.onRemoveAll(predicateOrCards as { (card: TCard): boolean });
+        }
+
+        const array = Array.from(predicateOrCards);
+
+        return this.onRemoveAll(x => array.indexOf(x) !== -1);
     }
     
     protected abstract onRemoveAll(predicate?: { (card: TCard): boolean }): TCard[];
@@ -252,7 +291,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
     /**
      * Default orientation of cards added to this container.
      */
-    readonly orientation: CardOrientation;
+    orientation: CardOrientation;
 
     constructor(CardType: { new(...args: any[]): TCard }, kind: LinearContainerKind, orientation: CardOrientation = CardOrientation.FaceUp) {
         super(CardType);
@@ -326,6 +365,12 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
     }
 
     /**
+     * Set all cards to the given orientation.
+     * @param orientation Orientation to set the cards to.
+     */
+    setOrientation(orientation: CardOrientation): void;
+
+    /**
      * Sets whether the given card is face up or down.
      * @param index Index of the card to set.
      * @param orientation Orientation to set the card to.
@@ -338,8 +383,17 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      * @param orientation Orientation to set the card to.
      */
     setOrientation(card: TCard, orientation: CardOrientation): void;
-    setOrientation(indexOrCard: number | TCard, orientation: CardOrientation): void {
-        this.getProperties(indexOrCard).orientation = orientation;
+
+    setOrientation(arg0: number | TCard | CardOrientation, orientation?: CardOrientation): void {
+        if (orientation === undefined) {
+            this.orientation = orientation;
+            for (let card of this._cards) {
+                card.orientation = orientation;
+            }
+            return;
+        }
+
+        this.getProperties(arg0).orientation = orientation;
     }
 
     /**
@@ -393,8 +447,34 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
         return this.getProperties(indexOrCard).selected;
     }
 
+    private createCardWrapper(card: TCard): ILinearContainerCard<TCard> {
+        return {card: card, orientation: this.orientation, selected: false, childId: this._nextChildId++};
+    }
+
+    /**
+     * Add a single card to the given place in this container.
+     * @param index Where to insert the card, starting at 0.
+     * @param card Card to add.
+     */
+    insert(index: number, card: TCard): void {
+        card._lastActionIndex = _Internal.getNextActionIndex();
+        this._cards.splice(index, 0, this.createCardWrapper(card));
+    }
+
+    /**
+     * Add a wad of cards to the given place in this container.
+     * @param index Where to insert the cards, starting at 0.
+     * @param cards Cards to add.
+     */
+    insertRange(index: number, cards: TCard[] | Iterable<TCard>): void {
+        for (let card of cards) {
+            card._lastActionIndex = _Internal.getNextActionIndex();
+        }
+        this._cards.splice(index, 0, ...Array.from(cards).map(x => this.createCardWrapper(x)));
+    }
+
     protected override onAdd(card: TCard): void {
-        this._cards.push({card: card, orientation: this.orientation, selected: false, childId: this._nextChildId++ });
+        this._cards.push(this.createCardWrapper(card));
     }
 
     protected override onRemove(card: TCard): void {
@@ -478,12 +558,31 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      * Deal up to the given number of cards to each target.
      * @param targets Recipients of the deal.
      * @param count Maximum number of cards to deal to each recipient.
+     * @param firstTargetIndex Index of the first recipient in `targets`.
      */
-    deal(targets: ICardReceiver<TCard>[], count: number = 1): void {
+    deal(targets: ICardReceiver<TCard>[], count: number = 1, firstTargetIndex: number = 0): void {
         for (let i = 0; i < count; ++i) {
-            for (let target of targets) {
+            for (let j = 0; j < targets.length; ++j) {
                 if (this.isEmpty) return;
-                target.add(this.draw());
+                targets[(j + firstTargetIndex) % targets.length].add(this.draw());
+            }
+        }
+    }
+
+    /**
+     * Deals up to the given total number of cards, divided between the given targets.
+     * @param targets Recipients of the deal.
+     * @param totalCount Maximum number of cards to deal in total.
+     * @param firstTargetIndex Index of the first recipient in `targets`.
+     */
+    dealTotal(targets: ICardReceiver<TCard>[], totalCount: number, handLimit?: number, firstTargetIndex: number = 0): void {
+        while (totalCount > 0 && this.count > 0 && (handLimit == null || targets.some(x => x.count < handLimit))) {
+            for (let j = 0; j < targets.length; ++j) {
+                if (this.isEmpty) return;
+                const target = targets[(j + firstTargetIndex) % targets.length];
+                if (handLimit != null && target.count < handLimit) {
+                    target.add(this.draw());
+                }
             }
         }
     }

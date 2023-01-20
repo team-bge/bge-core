@@ -21,6 +21,8 @@ export class Zone extends GameObject {
     render(ctx: RenderContext): IView {
         const view: ZoneView = {
             type: ViewType.Zone,
+            
+            prompt: ctx.player?.prompt.get(this),
 
             width: this.width,
             height: this.height,

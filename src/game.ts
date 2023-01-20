@@ -26,7 +26,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
     readonly children: DisplayContainer;
 
     /**
-     * Base constructor for `Game<TPlayer>`. You need to pass in your player type here so that BGE knows how to construct it.
+     * Base constructor for `Game<TPlayer>`. You need to pass in your player type here so that BGE knows how to make instances of it.
      * 
      * @param PlayerType Constructor for your custom player type.
      */
@@ -119,6 +119,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
 
         return {
             hasPrompts: player.prompt.count > 0,
+            topBar: player.topBar.render(new RenderContext(player, new Map())),
             table: table
         };
     }
@@ -131,5 +132,25 @@ export abstract class Game<TPlayer extends Player> implements IGame {
     getNextPlayer(player: TPlayer): TPlayer {
         const index = this._players.indexOf(player);
         return this._players[(index + 1) % this._players.length];
+    }
+
+    /**
+     * Set the top bar text for all players.
+     * @param format Message text with optional substitution points, like `"Hello {0}"`.
+     * @param args Values to be substituted in. The first arg will replace `{0}`, then `{1}`, and so on.
+     */
+    setTopBarText(format: string, ...args: any[]): void {
+        for (let player of this.players) {
+            player.topBar.setText(format, ...args);
+        }
+    }
+
+    /**
+     * Clear the top bars of all players.
+     */
+    clearTopBar(): void {
+        for (let player of this.players) {
+            player.topBar.clear();
+        }
     }
 }

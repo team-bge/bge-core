@@ -1,7 +1,7 @@
-import { ParentMap } from "./display.js";
-import { IGame, IPlayerConfig } from "./interfaces.js";
+import { ParentMap, RenderContext } from "./display.js";
+import { IGame, IPlayerConfig, ITextEmbeddable } from "./interfaces.js";
 import { GameObject } from "./object.js";
-import { Prompt, PromptKind } from "./views.js";
+import { Prompt, PromptKind, TextEmbedView, TopBarView } from "./views.js";
 
 interface IPromptInfo {
     index: number;
@@ -11,7 +11,7 @@ interface IPromptInfo {
 }
 
 export class PromptGroup {
-
+    
 }
 
 export class PromptHelper {
@@ -110,7 +110,42 @@ export class PromptHelper {
     }
 }
 
-export class Player {
+export class TopBar {
+    private _format?: string;
+    private _args?: any[];
+
+    clear(): void {
+        this._format = null;
+        this._args = null;
+    }
+
+    setText(format: string, ...args: any[]): void {
+        this._format = format;
+        this._args = args;
+
+        if (format != null) {
+            let maxIndex = -1;
+            
+            for(let match of format.matchAll(/\{\s*(?<index>[0-9]+)\s*(?::(?<format>[^}]*))?\}/gi)) {
+                const index = parseInt(match.groups["index"]);
+                maxIndex = Math.max(maxIndex, index);
+            }
+
+            if (maxIndex >= 0 && (args == null || args.length <= maxIndex)) {
+                throw new Error(`Expected at least ${maxIndex + 1} args, got ${args?.length ?? 0}.`);
+            }
+        }
+    }
+
+    render(ctx: RenderContext): TopBarView {
+        return {
+            format: this._format,
+            embeds: this._args?.map(x => ctx.renderTextEmbed(x))
+        };
+    }
+}
+
+export class Player implements ITextEmbeddable {
     private _index: number;
     private _config: IPlayerConfig;
     private _game: IGame;
@@ -118,6 +153,7 @@ export class Player {
     _oldParentMap?: ParentMap;
 
     readonly prompt = new PromptHelper(this);
+    readonly topBar = new TopBar();
 
     get game(): IGame {
         return this._game;
@@ -139,5 +175,11 @@ export class Player {
         this._game = game;
         this._index = index;
         this._config = config;
+    }
+    
+    renderTextEmbed(ctx: RenderContext): TextEmbedView {
+        return {
+            label: this.name
+        };
     }
 }
