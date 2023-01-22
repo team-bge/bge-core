@@ -6,7 +6,8 @@ export type IView =
     | ZoneView
     | CardView
     | DeckView
-    | HandView;
+    | HandView
+    | TextView;
 
 export interface GameView {
     table: TableView;
@@ -65,6 +66,17 @@ export interface HandView extends ITransformView, ISizedView, IOutlinedView {
     cards: CardView[];
 }
 
+export interface TextView extends ITransformView {
+    type: ViewType.Text;
+    childId?: number;
+    containerId?: number;
+    origin?: Origin;
+    prompt?: Prompt;
+    tempChildren?: IView[];
+    format?: string;
+    embeds?: TextEmbedView[];
+}
+
 export interface TopBarView {
     format?: string;
     embeds?: TextEmbedView[];
@@ -80,6 +92,7 @@ export enum ViewType {
     Card = 2,
     Deck = 3,
     Hand = 4,
+    Text = 5,
 }
 
 export interface Origin {

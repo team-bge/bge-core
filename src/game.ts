@@ -49,7 +49,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
      * @param players Information about who's playing.
      * @param onUpdateViews Callback that will be invoked when the game renders a new view for each player.
      */
-    run(players: IPlayerConfig[], onUpdateViews?: { (gameViews: GameView[]): void }): Promise<IGameResult> {
+    async run(players: IPlayerConfig[], onUpdateViews?: { (gameViews: GameView[]): void }): Promise<IGameResult> {
         this._players = [];
         this._onUpdateViews = onUpdateViews;
 
@@ -59,7 +59,11 @@ export abstract class Game<TPlayer extends Player> implements IGame {
             this._players.push(player);
         }
 
-        return this.onRun();
+        const result = await this.onRun();
+
+        this._dispatchUpdateView();
+
+        return result;
     }
     
     /**

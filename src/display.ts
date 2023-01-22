@@ -129,27 +129,37 @@ export class RenderContext {
         this._parentViews.set(parent, view);
     }
 
-    private _renderChild(object: GameObject, parent: Object, childId: number, options?: IDisplayOptions): IView;
-    private _renderChild(object: GameObject, parent: Object, parentView: IView, options?: IDisplayOptions): void;
-    private _renderChild(object: GameObject, parent: Object, childIdOrParentView: number | IView, options?: IDisplayOptions): IView | void {
+    private _renderChild(object: GameObject | string | number, parent: Object, childId: number, options?: IDisplayOptions): IView;
+    private _renderChild(object: GameObject | string | number, parent: Object, parentView: IView, options?: IDisplayOptions): void;
+    private _renderChild(object: GameObject | string | number, parent: Object, childIdOrParentView: number | IView, options?: IDisplayOptions): IView | void {
         const isInternal = typeof childIdOrParentView !== "number";
 
         const childId: number | null = isInternal ? null : childIdOrParentView;
         const parentView: IView | null = isInternal ? childIdOrParentView : null;
 
-        const oldParentInfo = this._oldParentMap.get(object);
-        this.newParentMap.set(object, { parent: parent, childId: childId, localPosition: options?.localPosition, localRotation: options?.localRotation });
-        
-        if (isInternal && oldParentInfo?.parent === parent) {
-            return;
+        let view: IView;
+        let oldParentInfo: IParentInfo;
+
+        if (object instanceof GameObject) {
+            oldParentInfo = this._oldParentMap.get(object);
+            this.newParentMap.set(object, { parent: parent, childId: childId, localPosition: options?.localPosition, localRotation: options?.localRotation });
+            
+            if (isInternal && oldParentInfo?.parent === parent) {
+                return;
+            }
+            
+            const wasHidden = this._isHidden;
+            this._isHidden = (options?.isHidden ?? false) && options?.owner != this.player || wasHidden;
+
+            view = object.render(this);
+
+            this._isHidden = wasHidden;
+        } else {
+            view = {
+                type: ViewType.Text,
+                format: object.toString()
+            };
         }
-
-        const wasHidden = this._isHidden;
-        this._isHidden = (options?.isHidden ?? false) && options?.owner != this.player || wasHidden;
-
-        const view = object.render(this);
-
-        this._isHidden = wasHidden;
 
         // TODO: we're assuming the view won't render with a transform
         if (options?.localPosition != null) {
@@ -164,15 +174,17 @@ export class RenderContext {
             (view as IOutlinedView).label = options.label;
         }
 
-        if (oldParentInfo?.parent !== parent && view.type == ViewType.Card) {
-            view.origin = {
-                containerId: oldParentInfo == null ? undefined : this.getParentId(oldParentInfo.parent),
-                childId: oldParentInfo?.childId,
-                localPosition: oldParentInfo == null ? { y: 100 } : oldParentInfo?.localPosition,
-                localRotation: oldParentInfo == null ? { x: Math.random() * 360, y: Math.random() * 360, z: Math.random() * 360 } : oldParentInfo?.localRotation
-            };
+        if (object instanceof GameObject) {
+            if (oldParentInfo?.parent !== parent && view.type == ViewType.Card) {
+                view.origin = {
+                    containerId: oldParentInfo == null ? undefined : this.getParentId(oldParentInfo.parent),
+                    childId: oldParentInfo?.childId,
+                    localPosition: oldParentInfo == null ? { y: 100 } : oldParentInfo?.localPosition,
+                    localRotation: oldParentInfo == null ? { x: Math.random() * 360, y: Math.random() * 360, z: Math.random() * 360 } : oldParentInfo?.localRotation
+                };
 
-            this._origins.push([object._lastActionIndex, view.origin]);
+                this._origins.push([object._lastActionIndex, view.origin]);
+            }
         }
 
         if (isInternal) {
@@ -238,15 +250,11 @@ export class RenderContext {
                     continue;
                 }
     
-                let view: IView;
-                
-                if (value instanceof GameObject) {
-                    view = this.renderChild(value, parent, nextId, options);
-                } else {
-                    throw new Error("Unexpected display value type.");
-                }
-    
-                views.push(view);
+                const view: IView = this.renderChild(value, parent, nextId, options);
+
+                if (view != null) {
+                    views.push(view);
+                }    
             }
         }
 

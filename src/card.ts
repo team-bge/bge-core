@@ -386,9 +386,9 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
 
     setOrientation(arg0: number | TCard | CardOrientation, orientation?: CardOrientation): void {
         if (orientation === undefined) {
-            this.orientation = orientation;
+            this.orientation = arg0 as CardOrientation;
             for (let card of this._cards) {
-                card.orientation = orientation;
+                card.orientation = this.orientation;
             }
             return;
         }
@@ -582,6 +582,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
                 const target = targets[(j + firstTargetIndex) % targets.length];
                 if (handLimit != null && target.count < handLimit) {
                     target.add(this.draw());
+                    --totalCount;
                 }
             }
         }
