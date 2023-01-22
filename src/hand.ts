@@ -37,13 +37,13 @@ export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
 
             outlineStyle: OutlineStyle.Dashed
         };
+        
+        ctx.setParentView(this, view);
 
         if (this.count > 0) {
             const slack = this.width - dims.width;
             const dx = this.count <= 1 ? 0 : Math.min(slack / (this.count - 1), dims.width * 0.95);
             const innerWidth = dims.width + (this.count - 1) * dx;
-
-            ctx.setParentView(this, view);
 
             for (let i = 0; i < this.count; ++i) {
                 const orientation = this.getOrientation(i);
