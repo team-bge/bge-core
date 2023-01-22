@@ -578,7 +578,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
     dealTotal(targets: ICardReceiver<TCard>[], totalCount: number, handLimit?: number, firstTargetIndex: number = 0): void {
         while (totalCount > 0 && this.count > 0 && (handLimit == null || targets.some(x => x.count < handLimit))) {
             for (let j = 0; j < targets.length; ++j) {
-                if (this.isEmpty) return;
+                if (this.isEmpty || totalCount <= 0) return;
                 const target = targets[(j + firstTargetIndex) % targets.length];
                 if (handLimit != null && target.count < handLimit) {
                     target.add(this.draw());
