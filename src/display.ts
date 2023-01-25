@@ -18,8 +18,9 @@ export interface IDisplayChild {
 }
 
 export enum Arrangement {
-    Radial,
-    Linear
+    Linear,
+    Rectangular,
+    Radial
 }
 
 export class DisplayContainer {
@@ -38,39 +39,145 @@ export class DisplayContainer {
         });
     }
 
-    addRange(name: string, objects: GameObject[], options?: IDisplayOptions | IDisplayOptions[], arrangement: Arrangement = Arrangement.Linear, avoid?: Footprint): void {
-        const footprints = objects.map(x => x.footprint ?? { width: 0, height: 0 });
+    private static generateLinearArrangement(footprints: Footprint[], center: Vector3, pivot: number, angle: number): ITransformView[] {
+        if (footprints.length === 0) {
+            return [];
+        }
 
+        const totalWidth = footprints.reduce((s, x) => s + x.width, 0);
+
+        let offsetX = (center.x ?? 0) + totalWidth * -0.5;
+        
+        const arrangement: ITransformView[] = [];
+
+        const xx = Math.cos(angle);
+        const xy = Math.sin(angle);
+        
+        const yx = -Math.sin(angle);
+        const yy = Math.cos(angle);
+
+        for (let i = 0; i < footprints.length; i++) {
+            const footprint = footprints[i];
+            const offsetZ = (center.z ?? 0) - (0.5 - pivot) * footprint.height;
+
+            offsetX += footprint.width * 0.5;
+
+            arrangement.push({
+                localPosition: { x: xx * offsetX + xy * offsetZ, z: yx * offsetX + yy * offsetZ },
+                localRotation: { y: angle * 180 / Math.PI }
+            });
+
+            offsetX += footprint.width * 0.5;
+        }
+
+        return arrangement;
+    }
+
+    private static generateArrangement(footprints: Footprint[], type: Arrangement, avoid?: Footprint): ITransformView[] {
         const maxFootprint: Footprint = {
             width: Math.max(...footprints.map(x => x.width)),
             height: Math.max(...footprints.map(x => x.height))
         };
+        
+        const arrangement: ITransformView[] = [];
 
-        const deltaTheta = 2 * Math.PI / objects.length;
-        let dist = objects.length < 2 ? 0 : maxFootprint.width / (2 * Math.tan(deltaTheta * 0.5));
+        switch (type) {
+            case Arrangement.Linear: {
+                if (avoid == null) {
+                    return DisplayContainer.generateLinearArrangement(footprints, { }, 0.5, 0);
+                } else {
+                    return DisplayContainer.generateLinearArrangement(footprints, { z: avoid.height * -0.5 }, 0, 0);
+                }
+            }
 
-        if (avoid != null) {
-            dist = Math.max(dist, Math.sqrt(avoid.width * avoid.width + avoid.height * avoid.height) * 0.5);
+            case Arrangement.Rectangular: {
+                // TODO: handle different-sized footprints
+                const aspectRatio = avoid?.width / avoid?.height ?? 1;
+
+                const totalWeight = 2 + aspectRatio * 2;
+                const horzWeight = aspectRatio / totalWeight;
+                const vertWeight = 1 / totalWeight;
+
+                const sides = [
+                    { weight: horzWeight, count: 0 },
+                    { weight: horzWeight, count: 0 },
+                    { weight: vertWeight, count: 0 },
+                    { weight: vertWeight, count: 0 }
+                ];
+
+                for (let i = 0; i < footprints.length; ++i) {
+                    let bestScore = Number.MAX_VALUE;
+                    let bestIndex = 0;
+                    for (let j = 0; j < sides.length; ++j) {
+                        const score = sides[j].weight * (sides[j].count + 1);
+                        if (score < bestScore) {
+                            bestScore = score;
+                            bestIndex = j;
+                        }
+                    }
+
+                    sides[bestIndex].count += 1;
+                }
+
+                const width = Math.max(avoid?.width ?? 0, sides[0].count * maxFootprint.width, sides[1].count * maxFootprint.width);
+                const height = Math.max(avoid?.height ?? 0, sides[2].count * maxFootprint.width, sides[3].count * maxFootprint.width);
+
+                let addedCount = 0;
+
+                arrangement.push(...DisplayContainer.generateLinearArrangement(footprints.slice(addedCount, addedCount += sides[0].count), { z: -height * 0.5 }, 0, 0));
+                arrangement.push(...DisplayContainer.generateLinearArrangement(footprints.slice(addedCount, addedCount += sides[2].count), { x: -width * 0.5 }, 0, Math.PI * 0.5));
+                arrangement.push(...DisplayContainer.generateLinearArrangement(footprints.slice(addedCount, addedCount += sides[1].count), { z: height * 0.5 }, 0, Math.PI));
+                arrangement.push(...DisplayContainer.generateLinearArrangement(footprints.slice(addedCount, addedCount += sides[3].count), { x: width * 0.5 }, 0, Math.PI * -0.5));
+
+                break;
+            }
+
+            case Arrangement.Radial: {
+                const deltaTheta = 2 * Math.PI / footprints.length;
+                let dist = footprints.length < 2 ? 0 : maxFootprint.width / (2 * Math.tan(deltaTheta * 0.5));
+        
+                if (avoid != null) {
+                    dist = Math.max(dist, Math.sqrt(avoid.width * avoid.width + avoid.height * avoid.height) * 0.5);
+                }
+                
+                for (let i = 0; i < footprints.length; i++) {
+                    const footprint = footprints[i];
+                    
+                    const r = dist + footprint.height * 0.5;
+                    const theta = Math.PI + deltaTheta * i;
+        
+                    arrangement.push({
+                        localPosition: { x: Math.sin(theta) * r, z: Math.cos(theta) * r },
+                        localRotation: { y: theta * 180 / Math.PI + 180 }
+                    });
+                }
+        
+                break;
+            }
+
+            default:
+                throw new Error("Unknown arrangement type");
         }
+        
+        return arrangement;
+    }
+
+    addRange(name: string, objects: GameObject[], options?: IDisplayOptions | IDisplayOptions[], arrangementType: Arrangement = Arrangement.Linear, avoid?: Footprint): void {
+        const footprints = objects.map(x => x.footprint ?? { width: 0, height: 0 });
+        const arrangement = DisplayContainer.generateArrangement(footprints, arrangementType, avoid);
 
         for (let i = 0; i < objects.length; ++i) {
             const object = objects[i];
-            const footprint = object.footprint;
-
-            const r = dist + footprint.height * 0.5;
-            const theta = Math.PI + deltaTheta * i;
+            const transform = arrangement[i];
 
             let childOptions: IDisplayOptions;
 
             if (options != null) {
                 const baseOptions = Array.isArray(options) ? options[i] : options;
-                childOptions = { ...baseOptions };
+                childOptions = { ...baseOptions, ...transform };
             } else {
-                childOptions = { };
+                childOptions = { ...transform };
             }
-
-            childOptions.localPosition = { x: Math.sin(theta) * r, z: Math.cos(theta) * r };
-            childOptions.localRotation = { y: theta * 180 / Math.PI + 180 };
 
             this.add(`${name}[${i}]`, object, childOptions);
         }
