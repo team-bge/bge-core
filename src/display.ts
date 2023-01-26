@@ -18,6 +18,7 @@ export interface IDisplayChild {
 }
 
 export enum Arrangement {
+    Auto,
     Linear,
     Rectangular,
     Radial
@@ -46,7 +47,7 @@ export class DisplayContainer {
 
         const totalWidth = footprints.reduce((s, x) => s + x.width, 0);
 
-        let offsetX = (center.x ?? 0) + totalWidth * -0.5;
+        let offsetX = totalWidth * -0.5;
         
         const arrangement: ITransformView[] = [];
 
@@ -58,12 +59,12 @@ export class DisplayContainer {
 
         for (let i = 0; i < footprints.length; i++) {
             const footprint = footprints[i];
-            const offsetZ = (center.z ?? 0) - (0.5 - pivot) * footprint.height;
+            const offsetZ = (pivot - 0.5) * footprint.height;
 
             offsetX += footprint.width * 0.5;
 
             arrangement.push({
-                localPosition: { x: xx * offsetX + xy * offsetZ, z: yx * offsetX + yy * offsetZ },
+                localPosition: { x: (center.x ?? 0) + xx * offsetX + xy * offsetZ, y: center.y, z: (center.z ?? 0) + yx * offsetX + yy * offsetZ },
                 localRotation: { y: angle * 180 / Math.PI }
             });
 
@@ -73,7 +74,12 @@ export class DisplayContainer {
         return arrangement;
     }
 
-    private static generateArrangement(footprints: Footprint[], type: Arrangement, avoid?: Footprint): ITransformView[] {
+    private static generateArrangement(footprints: Footprint[], avoid?: Footprint, type: Arrangement = Arrangement.Auto): ITransformView[] {
+        if (type === Arrangement.Auto) {
+            const aspect = (avoid?.width ?? 1) / (avoid?.height ?? 1);
+            type = footprints.length < 4 || Math.max(aspect, 1 / aspect) > 2 ? Arrangement.Rectangular : Arrangement.Radial;
+        }
+
         const maxFootprint: Footprint = {
             width: Math.max(...footprints.map(x => x.width)),
             height: Math.max(...footprints.map(x => x.height))
@@ -95,12 +101,12 @@ export class DisplayContainer {
                 const aspectRatio = avoid?.width / avoid?.height ?? 1;
 
                 const totalWeight = 2 + aspectRatio * 2;
-                const horzWeight = aspectRatio / totalWeight;
-                const vertWeight = 1 / totalWeight;
+                const horzWeight = 1 / totalWeight;
+                const vertWeight = aspectRatio / totalWeight;
 
                 const sides = [
                     { weight: horzWeight, count: 0 },
-                    { weight: horzWeight, count: 0 },
+                    { weight: horzWeight * (footprints.length == 3 ? 1.5 : 1), count: 0 },
                     { weight: vertWeight, count: 0 },
                     { weight: vertWeight, count: 0 }
                 ];
@@ -124,10 +130,10 @@ export class DisplayContainer {
 
                 let addedCount = 0;
 
-                arrangement.push(...DisplayContainer.generateLinearArrangement(footprints.slice(addedCount, addedCount += sides[0].count), { z: -height * 0.5 }, 0, 0));
-                arrangement.push(...DisplayContainer.generateLinearArrangement(footprints.slice(addedCount, addedCount += sides[2].count), { x: -width * 0.5 }, 0, Math.PI * 0.5));
-                arrangement.push(...DisplayContainer.generateLinearArrangement(footprints.slice(addedCount, addedCount += sides[1].count), { z: height * 0.5 }, 0, Math.PI));
-                arrangement.push(...DisplayContainer.generateLinearArrangement(footprints.slice(addedCount, addedCount += sides[3].count), { x: width * 0.5 }, 0, Math.PI * -0.5));
+                arrangement.push(...DisplayContainer.generateLinearArrangement(footprints.slice(addedCount, addedCount += sides[0].count), { z: -height * 0.5 }, 0, 0).reverse());
+                arrangement.push(...DisplayContainer.generateLinearArrangement(footprints.slice(addedCount, addedCount += sides[2].count), { x: -width * 0.5 }, 0, Math.PI * 0.5).reverse());
+                arrangement.push(...DisplayContainer.generateLinearArrangement(footprints.slice(addedCount, addedCount += sides[1].count), { z: height * 0.5 }, 0, Math.PI).reverse());
+                arrangement.push(...DisplayContainer.generateLinearArrangement(footprints.slice(addedCount, addedCount += sides[3].count), { x: width * 0.5 }, 0, Math.PI * -0.5).reverse());
 
                 break;
             }
@@ -162,9 +168,9 @@ export class DisplayContainer {
         return arrangement;
     }
 
-    addRange(name: string, objects: GameObject[], options?: IDisplayOptions | IDisplayOptions[], arrangementType: Arrangement = Arrangement.Linear, avoid?: Footprint): void {
+    addRange(name: string, objects: GameObject[], options?: IDisplayOptions | IDisplayOptions[], avoid?: Footprint, arrangementType: Arrangement = Arrangement.Auto): void {
         const footprints = objects.map(x => x.footprint ?? { width: 0, height: 0 });
-        const arrangement = DisplayContainer.generateArrangement(footprints, arrangementType, avoid);
+        const arrangement = DisplayContainer.generateArrangement(footprints, avoid, arrangementType);
 
         for (let i = 0; i < objects.length; ++i) {
             const object = objects[i];
