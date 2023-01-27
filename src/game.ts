@@ -30,7 +30,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
      * 
      * @param PlayerType Constructor for your custom player type.
      */
-    constructor(PlayerType: { new(): TPlayer }) {
+    protected constructor(PlayerType: { new(): TPlayer }) {
         this._PlayerType = PlayerType;
         this._actionIndex = 0;
         this.delay = new Delay(this);
