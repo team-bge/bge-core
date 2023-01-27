@@ -2,6 +2,7 @@ import { RenderContext } from "./display.js";
 import { ITextEmbeddable } from "./interfaces.js";
 import { _Internal } from "./internal.js";
 import { Footprint, GameObject } from "./object.js";
+import { Random } from "./random.js";
 import { CardView, ImageView, TextEmbedView, ViewType } from "./views.js";
 
 export interface ICardFace {
@@ -590,21 +591,23 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
 
     /**
      * Shuffle all cards in this container.
+     * @param random Random number generator to use.
      */
-    shuffle(): void;
+    shuffle(random: Random): void;
 
     /**
      * Shuffle a range of cards in this container.
+     * @param random Random number generator to use.
      * @param from Start of the range to shuffle, from 0.
      * @param to Exclusive end of the range to shuffle.
      */
-    shuffle(from: number, to: number): void;
-    shuffle(from?: number, to?: number): void {
+    shuffle(random: Random, from: number, to: number): void;
+    shuffle(random: Random, from?: number, to?: number): void {
         from ??= 0;
         to ??= this._cards.length;
 
         for (let i = from; i < to - 1; ++i) {
-            const swapIndex = i + Math.floor(Math.random() * (to - i));
+            const swapIndex = random.int(i, to);
 
             const a = this._cards[i];
             const b = this._cards[swapIndex];

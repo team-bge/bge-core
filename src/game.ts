@@ -2,6 +2,7 @@ import { Delay } from "./delay.js";
 import { RenderContext, DisplayContainer } from "./display.js";
 import { IGame, IGameResult, IPlayerConfig } from "./interfaces.js";
 import { Player } from "./player.js";
+import { Random } from "./random.js";
 import { GameView, TableView, ViewType } from "./views.js";
 
 /**
@@ -19,6 +20,11 @@ export abstract class Game<TPlayer extends Player> implements IGame {
      * Helper with methods to suspend the game for various amounts of time.
      */
     readonly delay: Delay;
+
+    /**
+     * Helper with methods to generate random numbers.
+     */
+    readonly random: Random;
     
     /**
      * Dynamically add or remove objects to be displayed here.
@@ -34,6 +40,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
         this._PlayerType = PlayerType;
         this._actionIndex = 0;
         this.delay = new Delay(this);
+        this.random = new Random(this);
         this.children = new DisplayContainer();
     }
 

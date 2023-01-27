@@ -8,5 +8,6 @@ export * from "./image.js";
 export * from "./interfaces.js";
 export * from "./object.js";
 export * from "./player.js";
+export * from "./random.js";
 export * from "./views.js";
 export * from "./zone.js";
