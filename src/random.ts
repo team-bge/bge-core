@@ -46,7 +46,7 @@ export class Random {
         }
         
         if (min > max) {
-            throw new Error("Expected min <= max.");
+            throw new Error("Expected min <= max");
         }
 
         if (min === max) {
@@ -81,14 +81,14 @@ export class Random {
         max = Math.floor(max);
 
         if (min > max) {
-            throw new Error("Expected min <= max.");
+            throw new Error("Expected min <= max");
         }
 
-        if (min === max) {
+        if (min >= max - 1) {
             return min;
         }
 
-        return Math.floor(this.source() * (max - min));
+        return min + Math.floor(this.source() * (max - min));
     }
 
     /**
