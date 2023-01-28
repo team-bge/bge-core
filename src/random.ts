@@ -106,4 +106,17 @@ export class Random {
 
         return this.source() <= probability;
     }
+
+    /**
+     * Returns a uniformly selected random item from an array.
+     * @param items Array of items to select from.
+     * @returns An item chosed from the given array.
+     */
+    item<TItem>(items: ReadonlyArray<TItem>): TItem {
+        if (items.length < 1) {
+            throw new Error("Expected at least one item");
+        }
+
+        return items[this.int(items.length)];
+    }
 }
