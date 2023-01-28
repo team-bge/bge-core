@@ -232,6 +232,7 @@ export class RenderContext {
     private readonly _origins: [actionIndex: number, origin: Origin][];
 
     private _isHidden: boolean;
+    private _owner: Player;
 
     get isHidden(): boolean {
         return this._isHidden;
@@ -249,6 +250,7 @@ export class RenderContext {
         this._origins = [];
 
         this._isHidden = false;
+        this._owner = null;
     }
 
     getParentId(parent: Object): number {
@@ -285,11 +287,15 @@ export class RenderContext {
                 return;
             }
             
+            const oldOwner = this._owner;
             const wasHidden = this._isHidden;
-            this._isHidden = (options?.isHidden ?? false) && options?.owner != this.player || wasHidden;
+
+            this._owner = options?.owner ?? oldOwner;
+            this._isHidden = (options?.isHidden ?? false) && this._owner != this.player || wasHidden && !(options?.isHidden ?? true);
 
             view = object.render(this);
 
+            this._owner = oldOwner;
             this._isHidden = wasHidden;
         } else {
             view = {
