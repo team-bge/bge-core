@@ -16,6 +16,14 @@ export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
         };
     }
 
+    get first(): TCard | null {
+        return this.count === 0 ? null : this.getCard(0);
+    }
+    
+    get last(): TCard | null {
+        return this.count === 0 ? null : this.getCard(this.count - 1);
+    }
+
     constructor(CardType: { new(...args: any[]): TCard }, width: number, orientation?: CardOrientation) {
         super(CardType, LinearContainerKind.FirstInLastOut, orientation);
     
