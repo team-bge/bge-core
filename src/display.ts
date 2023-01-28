@@ -2,7 +2,7 @@ import "reflect-metadata";
 import { ITextEmbeddable } from "./interfaces.js";
 import { Footprint, GameObject } from "./object.js";
 import { Player } from "./player.js";
-import { IOutlinedView, ITransformView, IView, Origin, TextEmbedView, Vector3, ViewType } from "./views.js";
+import { ILabelView, ITransformView, IView, Origin, TextEmbedView, Vector3, ViewType } from "./views.js";
 
 export interface IParentInfo {
     parent: Object;
@@ -291,7 +291,7 @@ export class RenderContext {
             const wasHidden = this._isHidden;
 
             this._owner = options?.owner ?? oldOwner;
-            this._isHidden = (options?.isHidden ?? false) && this._owner != this.player || wasHidden && !(options?.isHidden ?? true);
+            this._isHidden = (options?.isHidden ?? wasHidden) && this._owner != this.player;
 
             view = object.render(this);
 
@@ -314,7 +314,7 @@ export class RenderContext {
         }
 
         if (options?.label != null) {
-            (view as IOutlinedView).label = options.label;
+            (view as ILabelView).label = options.label;
         }
 
         if (object instanceof GameObject) {
@@ -449,10 +449,10 @@ export class RenderContext {
                     return textEmbeddable.renderTextEmbed(this);
                 }
                 
-                throw new Error("Value doesn't implement ITextEmbeddable.");
+                throw new Error(`Value ${value} doesn't implement ITextEmbeddable.`);
 
             default:
-                throw new Error("Value isn't embeddable in text.");
+                throw new Error(`Value ${typeof value} isn't embeddable in text.`);
         }
     }
 }

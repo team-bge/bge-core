@@ -24,7 +24,7 @@ export interface TableView extends IContainerView {
     tempChildren?: IView[];
 }
 
-export interface ZoneView extends ITransformView, IContainerView, ISizedView, IOutlinedView {
+export interface ZoneView extends IOutlinedView, ILabelView, ITransformView, IContainerView, ISizedView {
     type: ViewType.Zone;
     childId?: number;
     containerId?: number;
@@ -33,7 +33,7 @@ export interface ZoneView extends ITransformView, IContainerView, ISizedView, IO
     tempChildren?: IView[];
 }
 
-export interface CardView extends ITransformView, IContainerView, ISizedView, IThicknessView {
+export interface CardView extends IThicknessView, ITransformView, IContainerView, ISizedView {
     type: ViewType.Card;
     childId?: number;
     containerId?: number;
@@ -45,7 +45,7 @@ export interface CardView extends ITransformView, IContainerView, ISizedView, IT
     back?: ImageView;
 }
 
-export interface DeckView extends ITransformView, ISizedView, IOutlinedView {
+export interface DeckView extends IOutlinedView, ILabelView, ITransformView, ISizedView {
     type: ViewType.Deck;
     childId?: number;
     containerId?: number;
@@ -54,9 +54,10 @@ export interface DeckView extends ITransformView, ISizedView, IOutlinedView {
     tempChildren?: IView[];
     topCard?: CardView;
     count: number;
+    showCount: boolean;
 }
 
-export interface HandView extends ITransformView, ISizedView, IOutlinedView {
+export interface HandView extends IOutlinedView, ILabelView, ITransformView, ISizedView {
     type: ViewType.Hand;
     childId?: number;
     containerId?: number;
@@ -66,7 +67,7 @@ export interface HandView extends ITransformView, ISizedView, IOutlinedView {
     cards: CardView[];
 }
 
-export interface TextView extends ITransformView {
+export interface TextView extends ILabelView, ITransformView {
     type: ViewType.Text;
     childId?: number;
     containerId?: number;
@@ -109,6 +110,14 @@ export interface Prompt {
     index: number;
 }
 
+export interface IOutlinedView {
+    outlineStyle: OutlineStyle;
+}
+
+export interface ILabelView {
+    label?: string;
+}
+
 export interface ITransformView {
     localPosition?: Vector3;
     localRotation?: Vector3;
@@ -117,11 +126,6 @@ export interface ITransformView {
 export interface ISizedView {
     width: number;
     height: number;
-}
-
-export interface IOutlinedView {
-    outlineStyle: OutlineStyle;
-    label?: string;
 }
 
 export interface IThicknessView {
@@ -140,6 +144,7 @@ export interface ImageView {
 export interface TextEmbedView {
     icon?: ImageView;
     label?: string;
+    prompt?: Prompt;
     items?: TextEmbedView[];
     color?: Color;
 }

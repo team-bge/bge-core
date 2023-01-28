@@ -3,12 +3,21 @@ import { RenderContext } from "./display.js";
 import { _Internal } from "./internal.js";
 import { CardView, DeckView, OutlineStyle, ViewType } from "./views.js";
 
+export interface IDeckOptions {
+    orientation?: CardOrientation;
+    alwaysShowCount?: boolean;
+}
+
 /**
  * Stores a first-in-last-out stack of cards. Only the top card is visible, but players can see how many cards are in the stack.
  */
 export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
-    constructor(CardType: { new(...args: any[]): TCard }, orientation?: CardOrientation) {
-        super(CardType, LinearContainerKind.FirstInLastOut, orientation);
+    readonly alwaysShowCount: boolean;
+
+    constructor(CardType: { new(...args: any[]): TCard }, options?: IDeckOptions) {
+        super(CardType, LinearContainerKind.FirstInLastOut, options?.orientation);
+    
+        this.alwaysShowCount = options?.alwaysShowCount ?? false;
     }
 
     /**
@@ -30,6 +39,7 @@ export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
             height: dims.height,
 
             count: this.count,
+            showCount: this.alwaysShowCount,
 
             outlineStyle: OutlineStyle.Dashed
         };

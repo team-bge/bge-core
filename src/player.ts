@@ -79,7 +79,7 @@ export class PromptHelper {
         match.resolve();
     }
 
-    click(object: GameObject, group?: PromptGroup): Promise<void> {
+    click<TValue>(object: GameObject, group?: PromptGroup, value?: TValue): Promise<TValue> {
         if (this._prompts.get(object) != null) {
             throw new Error("Tried to create multiple prompts for the same object.");
         }
@@ -95,7 +95,7 @@ export class PromptHelper {
         this._player.game._dispatchUpdateView();
 
         return new Promise((resolve, reject) => {
-            promptInfo.resolve = resolve;
+            promptInfo.resolve = () => resolve(value);
             promptInfo.reject = reject;
         });
     }
@@ -103,10 +103,7 @@ export class PromptHelper {
     clickAny<TObject extends GameObject>(objects: ArrayLike<TObject> | Iterable<TObject>, group?: PromptGroup): Promise<TObject> {
         const objectArray = Array.from(objects);
         group ??= new PromptGroup();
-        return Promise.any(objectArray.map(async x => {
-            await this.click(x, group);
-            return x;
-        }));
+        return Promise.any(objectArray.map(x => this.click(x, group, x)));
     }
 }
 

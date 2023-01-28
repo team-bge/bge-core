@@ -280,6 +280,8 @@ interface ILinearContainerCard<TCard extends Card> {
     childId: number;
 }
 
+export type CardComparer<TCard extends Card> = { (a: TCard, b: TCard): number };
+
 /**
  * Base class for card containers that store their contents as an ordered list of cards, like hands and decks.
  */
@@ -292,14 +294,20 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
     /**
      * Default orientation of cards added to this container.
      */
-    orientation: CardOrientation;
+    defaultOrientation: CardOrientation;
 
-    constructor(CardType: { new(...args: any[]): TCard }, kind: LinearContainerKind, orientation: CardOrientation = CardOrientation.FaceUp) {
+    /**
+     * Comparison function to use to automatically sort added cards.
+     */
+    readonly autoSort?: CardComparer<TCard>;
+
+    constructor(CardType: { new(...args: any[]): TCard }, kind: LinearContainerKind, orientation: CardOrientation = CardOrientation.FaceUp, autoSort?: CardComparer<TCard>) {
         super(CardType);
 
         this._kind = kind;
 
-        this.orientation = orientation;
+        this.defaultOrientation = orientation;
+        this.autoSort = autoSort;
     }
 
     [Symbol.iterator](): Iterator<TCard> {
@@ -387,9 +395,9 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
 
     setOrientation(arg0: number | TCard | CardOrientation, orientation?: CardOrientation): void {
         if (orientation === undefined) {
-            this.orientation = arg0 as CardOrientation;
+            this.defaultOrientation = arg0 as CardOrientation;
             for (let card of this._cards) {
-                card.orientation = this.orientation;
+                card.orientation = this.defaultOrientation;
             }
             return;
         }
@@ -415,6 +423,12 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
     }
 
     /**
+     * Set all cards to be either selected or deselected.
+     * @param selected Selection state to set all cards to.
+     */
+    setSelected(selected: boolean): void;
+
+    /**
      * Sets whether the given card is marked as selected.
      * @param index Index of the card to set.
      * @param selected Selection state to set the card to.
@@ -427,8 +441,19 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      * @param selected Selection state to set the card to.
      */
     setSelected(card: TCard, selected: boolean): void;
-    setSelected(indexOrCard: number | TCard, selected: boolean): void {
-        this.getProperties(indexOrCard).selected = selected;
+
+    setSelected(indexOrCardOrSelected: number | TCard | boolean, selected?: boolean): void {
+        if (typeof indexOrCardOrSelected === "boolean") {
+            selected = indexOrCardOrSelected;
+
+            for (let card of this._cards) {
+                card.selected = selected;
+            }
+
+            return;
+        }
+        
+        this.getProperties(indexOrCardOrSelected).selected = selected;
     }
 
     /**
@@ -449,7 +474,13 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
     }
 
     private createCardWrapper(card: TCard): ILinearContainerCard<TCard> {
-        return {card: card, orientation: this.orientation, selected: false, childId: this._nextChildId++};
+        return {card: card, orientation: this.defaultOrientation, selected: false, childId: this._nextChildId++};
+    }
+
+    private assertNoAutoSort(): void {
+        if (this.autoSort != null) {
+            throw new Error("Can't insert into an auto-sorted container");
+        }
     }
 
     /**
@@ -458,6 +489,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      * @param card Card to add.
      */
     insert(index: number, card: TCard): void {
+        this.assertNoAutoSort();
         card._lastActionIndex = _Internal.getNextActionIndex();
         this._cards.splice(index, 0, this.createCardWrapper(card));
     }
@@ -468,6 +500,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      * @param cards Cards to add.
      */
     insertRange(index: number, cards: TCard[] | Iterable<TCard>): void {
+        this.assertNoAutoSort();
         for (let card of cards) {
             card._lastActionIndex = _Internal.getNextActionIndex();
         }
@@ -476,6 +509,10 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
 
     protected override onAdd(card: TCard): void {
         this._cards.push(this.createCardWrapper(card));
+
+        if (this.autoSort != null) {
+            this._cards.sort((a, b) => this.autoSort(a.card, b.card));
+        }
     }
 
     protected override onRemove(card: TCard): void {
@@ -484,6 +521,10 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
                 this._cards.splice(i, 1);
                 return;
             }
+        }
+        
+        if (this.autoSort != null) {
+            this._cards.sort((a, b) => this.autoSort(a.card, b.card));
         }
     }
 
@@ -602,6 +643,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      * @param to Exclusive end of the range to shuffle.
      */
     shuffle(random: Random, from: number, to: number): void;
+    
     shuffle(random: Random, from?: number, to?: number): void {
         from ??= 0;
         to ??= this._cards.length;
