@@ -168,6 +168,29 @@ export class DisplayContainer {
         return arrangement;
     }
 
+    static applyTransform(a: ITransformView, b: ITransformView, out?: ITransformView): ITransformView {
+
+        out ??= { };
+
+        out.localPosition = {
+            x: (a.localPosition?.x ?? 0) + (b.localPosition?.x ?? 0),
+            y: (a.localPosition?.y ?? 0) + (b.localPosition?.y ?? 0),
+            z: (a.localPosition?.z ?? 0) + (b.localPosition?.z ?? 0)
+        };
+
+        // TODO: this is wrong!
+        // convert rotations to quaternions or something first
+        // also apply rotation to b's position
+
+        out.localRotation = {
+            x: (a.localRotation?.x ?? 0) + (b.localRotation?.x ?? 0),
+            y: (a.localRotation?.y ?? 0) + (b.localRotation?.y ?? 0),
+            z: (a.localRotation?.z ?? 0) + (b.localRotation?.z ?? 0)
+        };
+
+        return out;
+    }
+
     addRange(name: string, objects: GameObject[], options?: IDisplayOptions | IDisplayOptions[], avoid?: Footprint, arrangementType: Arrangement = Arrangement.Auto): void {
         const footprints = objects.map(x => x.footprint ?? { width: 0, height: 0 });
         const arrangement = DisplayContainer.generateArrangement(footprints, avoid, arrangementType);
@@ -180,7 +203,8 @@ export class DisplayContainer {
 
             if (options != null) {
                 const baseOptions = Array.isArray(options) ? options[i] : options;
-                childOptions = { ...baseOptions, ...transform };
+                childOptions = { ...baseOptions };
+                DisplayContainer.applyTransform(baseOptions, transform, childOptions);
             } else {
                 childOptions = { ...transform };
             }
