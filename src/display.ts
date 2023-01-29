@@ -363,6 +363,10 @@ export class RenderContext {
 
             let obj = typeof child.object === "function" ? child.object() : child.object;
 
+            if (obj == null) {
+                continue;
+            }
+
             views.push(this.renderChild(obj, parent, child.childId, child.options));
         }
 

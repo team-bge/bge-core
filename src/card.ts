@@ -145,8 +145,6 @@ export class Card extends GameObject implements ITextEmbeddable {
     }
     
     renderTextEmbed(ctx: RenderContext): TextEmbedView {
-        const dims = Card.getDimensions(Object.getPrototypeOf(this).constructor);
-
         return {
             icon: { ...this.front.image, aspectRatio: this.width / this.height },
             label: this.name
