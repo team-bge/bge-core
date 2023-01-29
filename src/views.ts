@@ -13,6 +13,7 @@ export interface GameView {
     table: TableView;
     topBar: TopBarView;
     hasPrompts: boolean;
+    cameras: CameraView[];
 }
 
 export interface TableView extends IContainerView {
@@ -81,6 +82,13 @@ export interface TextView extends ILabelView, ITransformView {
 export interface TopBarView {
     format?: string;
     embeds?: TextEmbedView[];
+}
+
+export interface CameraView {
+    target?: Vector3;
+    pitch?: number;
+    yaw?: number;
+    zoom?: number;
 }
 
 export interface IContainerView {

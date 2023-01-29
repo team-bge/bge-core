@@ -131,7 +131,8 @@ export abstract class Game<TPlayer extends Player> implements IGame {
         return {
             hasPrompts: player.prompt.count > 0,
             topBar: player.topBar.render(new RenderContext(player, new Map())),
-            table: table
+            table: table,
+            cameras: player.cameras
         };
     }
 

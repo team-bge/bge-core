@@ -28,16 +28,28 @@ export class DisplayContainer {
     private _nextChildId = 0x10000;
     private readonly _children = new Map<string, IDisplayChild>();
 
-    add(name: string, object: GameObject | { (): GameObject }, options?: IDisplayOptions): void {
+    get(name: string, index?: number): IDisplayChild {
+        if (index == null) {
+            return this._children.get(name);
+        } else {
+            return this._children.get(`${name}[${index}]`);
+        }
+    }
+
+    add(name: string, object: GameObject | { (): GameObject }, options?: IDisplayOptions): IDisplayChild {
         if (this._children.has(name)) {
             throw new Error("A child already exists with that name");
         }
 
-        this._children.set(name, {
+        const info = {
             object: object,
             childId: this._nextChildId++,
             options: options ?? { }
-        });
+        };
+
+        this._children.set(name, info);
+
+        return info;
     }
 
     private static generateLinearArrangement(footprints: Footprint[], center: Vector3, pivot: number, angle: number): ITransformView[] {
@@ -191,9 +203,16 @@ export class DisplayContainer {
         return out;
     }
 
-    addRange(name: string, objects: GameObject[], options?: IDisplayOptions | IDisplayOptions[], avoid?: Footprint, arrangementType: Arrangement = Arrangement.Auto): void {
+    addRange(name: string,
+        objects: GameObject[],
+        options?: IDisplayOptions | IDisplayOptions[],
+        avoid?: Footprint,
+        arrangementType: Arrangement = Arrangement.Auto): IDisplayChild[] {
+
         const footprints = objects.map(x => x.footprint ?? { width: 0, height: 0 });
         const arrangement = DisplayContainer.generateArrangement(footprints, avoid, arrangementType);
+
+        const children: IDisplayChild[] = [];
 
         for (let i = 0; i < objects.length; ++i) {
             const object = objects[i];
@@ -209,8 +228,10 @@ export class DisplayContainer {
                 childOptions = { ...transform };
             }
 
-            this.add(`${name}[${i}]`, object, childOptions);
+            children.push(this.add(`${name}[${i}]`, object, childOptions));
         }
+
+        return children;
     }
 
     render(ctx: RenderContext, parent: Object, views?: IView[]): IView[] {

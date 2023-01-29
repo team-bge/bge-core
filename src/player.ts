@@ -1,7 +1,7 @@
 import { ParentMap, RenderContext } from "./display.js";
 import { IGame, IPlayerConfig, ITextEmbeddable } from "./interfaces.js";
 import { GameObject } from "./object.js";
-import { Prompt, PromptKind, TextEmbedView, TopBarView } from "./views.js";
+import { CameraView, Prompt, PromptKind, TextEmbedView, TopBarView } from "./views.js";
 
 interface IPromptInfo {
     index: number;
@@ -163,6 +163,9 @@ export class Player implements ITextEmbeddable {
     get name(): string {
         return this._config.name;
     }
+
+    // TODO: wrap this
+    cameras: CameraView[] = [];
 
     _init(game: IGame, index: number, config: IPlayerConfig): void {
         if (this._config != null) {
