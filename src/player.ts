@@ -4,14 +4,32 @@ import { GameObject } from "./object.js";
 import { CameraView, Prompt, PromptKind, TextEmbedView, TopBarView } from "./views.js";
 
 interface IPromptInfo {
+    parent: PromptHelper;
     index: number;
-    group?: PromptGroup;
+    groups?: PromptGroup[];
     resolve: { (): void };
-    reject: { (): void };
+    reject: { (reason?: any): void };
 }
 
 export class PromptGroup {
+    private readonly _prompts = new Set<IPromptInfo>();
     
+    add(prompt: IPromptInfo): void {
+        this._prompts.add(prompt);
+    }
+
+    remove(prompt: IPromptInfo): void {
+        this._prompts.delete(prompt);
+    }
+
+    cancel(): void {
+        const prompts = [...this._prompts];
+        this._prompts.clear();
+
+        for (let prompt of prompts) {
+            prompt.reject("Cancelled");
+        }
+    }
 }
 
 export class PromptHelper {
@@ -56,37 +74,45 @@ export class PromptHelper {
             return;
         }
 
-        if (match.group != null) {
-            const toDelete: GameObject[] = [];
-            const toReject: IPromptInfo[] = [];
-
-            for (let [object, prompt] of this._prompts) {
-                if (prompt.group == match.group) {
-                    toDelete.push(object);
-                    toReject.push(prompt);
-                }
-            }
-
-            for (let object of toDelete) {
-                this._prompts.delete(object);
-            }
-
-            for (let prompt of toReject) {
-                prompt.reject();
-            }
-        }
-
         match.resolve();
     }
+    
+    click(object: GameObject): Promise<undefined>;
 
-    click<TValue>(object: GameObject, group?: PromptGroup, value?: TValue): Promise<TValue> {
+    click(object: GameObject, groups: PromptGroup[] | PromptGroup): Promise<undefined>;
+
+    click<TValue>(object: GameObject, value: TValue): Promise<TValue>;
+
+    click<TValue>(object: GameObject, value: TValue, groups: PromptGroup[] | PromptGroup): Promise<TValue>;
+
+    click<TValue>(object: GameObject, valueOrGroups?: TValue | PromptGroup[] | PromptGroup, groups?: PromptGroup[] | PromptGroup): Promise<TValue | undefined> {
         if (this._prompts.get(object) != null) {
-            throw new Error("Tried to create multiple prompts for the same object.");
+            throw new Error("Tried to create multiple prompts from the same player for the same object.");
+        }
+
+        let value: TValue;
+
+        if (groups == null) {
+            if (valueOrGroups instanceof PromptGroup
+                || Array.isArray(valueOrGroups)
+                    && valueOrGroups.length > 0
+                    && valueOrGroups.every(x => x instanceof PromptGroup)) {
+                groups = valueOrGroups;
+                value = undefined;
+            } else {
+                groups = undefined;
+                value = valueOrGroups as TValue;
+            }
+        } else {
+            value = valueOrGroups as TValue;
         }
 
         const promptInfo: IPromptInfo = {
+            parent: this,
             index: this._nextPromptIndex++,
-            group: group,
+            groups: groups == null ? null
+                : groups instanceof PromptGroup ? [groups]
+                : [...groups],
             resolve: null,
             reject: null
         };
@@ -94,16 +120,55 @@ export class PromptHelper {
         this._prompts.set(object, promptInfo);
         this._player.game._dispatchUpdateView();
 
+        if (promptInfo.groups != null) {
+            for (let group of promptInfo.groups) {
+                group.add(promptInfo);
+            }
+        }
+
         return new Promise((resolve, reject) => {
-            promptInfo.resolve = () => resolve(value);
-            promptInfo.reject = reject;
+            promptInfo.resolve = () => {
+                this._prompts.delete(object);
+
+                const groups = promptInfo.groups;
+                promptInfo.groups = null;
+
+                if (groups != null) {
+                    for (let group of groups) {
+                        group.remove(promptInfo);
+                    }
+            
+                    for (let group of groups) {
+                        group.cancel();
+                    }
+                }
+
+                resolve(value);
+            },
+
+            promptInfo.reject = (reason?: any) => {
+                this._prompts.delete(object);
+                
+                const groups = promptInfo.groups;
+                promptInfo.groups = null;
+
+                if (groups != null) {
+                    for (let group of groups) {
+                        group.remove(promptInfo);
+                    }
+                }
+
+                reject(reason);
+            }
         });
     }
 
-    clickAny<TObject extends GameObject>(objects: ArrayLike<TObject> | Iterable<TObject>, group?: PromptGroup): Promise<TObject> {
+    clickAny<TObject extends GameObject>(objects: ArrayLike<TObject> | Iterable<TObject>, groups?: PromptGroup[] | PromptGroup): Promise<TObject> {
         const objectArray = Array.from(objects);
-        group ??= new PromptGroup();
-        return Promise.any(objectArray.map(x => this.click(x, group, x)));
+        
+        groups ??= new PromptGroup();
+
+        return Promise.any(objectArray.map(x => this.click(x, x, groups)));
     }
 }
 
