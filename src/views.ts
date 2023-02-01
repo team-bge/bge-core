@@ -11,7 +11,7 @@ export type IView =
 
 export interface GameView {
     table: TableView;
-    topBar: TopBarView;
+    topBars: TopBarView[];
     hasPrompts: boolean;
     cameras: CameraView[];
 }

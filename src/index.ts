@@ -1,3 +1,4 @@
+export * from "./action.js";
 export * from "./button.js";
 export * from "./card.js";
 export * from "./deck.js";
@@ -9,6 +10,8 @@ export * from "./image.js";
 export * from "./interfaces.js";
 export * from "./object.js";
 export * from "./player.js";
+export * from "./prompt.js";
 export * from "./random.js";
+export * from "./topbar.js";
 export * from "./views.js";
 export * from "./zone.js";

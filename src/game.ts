@@ -1,9 +1,27 @@
 import { Delay } from "./delay.js";
-import { RenderContext, DisplayContainer } from "./display.js";
+import { RenderContext, DisplayContainer, Arrangement, IDisplayChild } from "./display.js";
 import { IGame, IGameResult, IPlayerConfig } from "./interfaces.js";
+import { Footprint } from "./object.js";
 import { Player } from "./player.js";
 import { Random } from "./random.js";
-import { GameView, TableView, ViewType } from "./views.js";
+import { TopBar } from "./topbar.js";
+import { CameraView, GameView, TableView, ViewType } from "./views.js";
+import { Zone } from "./zone.js";
+
+export interface IZoneCameraOptions {
+    zoom?: number;
+    pitch?: number;
+    yaw?: number;
+}
+
+export interface IPlayerZoneOptions {
+    avoid?: Footprint;
+    arrangement?: Arrangement;
+    isHidden?: boolean;
+
+    globalCameras?: IZoneCameraOptions[];
+    playerCamera?: IZoneCameraOptions;
+}
 
 /**
  * Base class for a custom game, using a custom Player type.
@@ -25,6 +43,11 @@ export abstract class Game<TPlayer extends Player> implements IGame {
      * Helper with methods to generate random numbers.
      */
     readonly random: Random;
+
+    /**
+     * Helper for displaying text, buttons and images in the top bar.
+     */
+    readonly topBar: TopBar;
     
     /**
      * Dynamically add or remove objects to be displayed here.
@@ -41,6 +64,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
         this._actionIndex = 0;
         this.delay = new Delay(this);
         this.random = new Random(this);
+        this.topBar = new TopBar(this);
         this.children = new DisplayContainer();
     }
 
@@ -72,7 +96,52 @@ export abstract class Game<TPlayer extends Player> implements IGame {
 
         return result;
     }
+
+    /**
+     * Override this to implement your game, moving objects around as players respond to prompts.
+     */
+    protected abstract onRun(): Promise<IGameResult>;
     
+    addPlayerZones<TZone extends Zone>(
+        zoneMap: { (player: TPlayer): TZone },
+        options?: IPlayerZoneOptions): IDisplayChild[] {
+        
+        const zones = this.children.addRange("__playerZones",
+            this.players.map(zoneMap),
+            this.players.map(x => ({ isHidden: options?.isHidden ?? false, owner: x, label: x.name })),
+            options?.avoid, options?.arrangement);
+
+        // Set up cameras
+
+        const playerCameras = options?.playerCamera === null ? []
+            : zones.map(child => {
+                return {
+                    zoom: options?.playerCamera?.zoom ?? 0.3,
+                    pitch: options?.playerCamera?.pitch ?? 75,
+                    target: child.options.localPosition,
+                    yaw: (options?.playerCamera?.yaw ?? 0) + child.options.localRotation?.y
+                } as CameraView;
+            });
+
+        const globalCameras = options?.globalCameras ?? [{}];
+
+        for (let player of this.players) {
+            for (let globalCamera of globalCameras) {
+                player.cameras.push({
+                    zoom: globalCamera?.zoom ?? 0.4,
+                    pitch: globalCamera?.pitch ?? 85,
+                    yaw: globalCamera?.yaw ?? 0
+                });
+            }
+
+            for (let i = 0; i < playerCameras.length; ++i) {
+                player.cameras.push(playerCameras[(i + player.index) % playerCameras.length]);
+            }
+        }
+
+        return zones;
+    }
+
     /**
      * Called by the host when a player has responded to a prompt for input.
      * @param playerIndex Which player responded.
@@ -82,11 +151,6 @@ export abstract class Game<TPlayer extends Player> implements IGame {
         const player = this._players[playerIndex];
         player.prompt.respond(promptIndex);
     }
-
-    /**
-     * Override this to implement your game, moving objects around as players respond to prompts.
-     */
-    protected abstract onRun(): Promise<IGameResult>;
 
     /**
      * Used internally to schedule renders to be sent to players.
@@ -130,7 +194,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
 
         return {
             hasPrompts: player.prompt.count > 0,
-            topBar: player.topBar.render(new RenderContext(player, new Map())),
+            topBars: this.topBar.render(new RenderContext(player, new Map())),
             table: table,
             cameras: player.cameras
         };
@@ -144,25 +208,5 @@ export abstract class Game<TPlayer extends Player> implements IGame {
     getNextPlayer(player: TPlayer): TPlayer {
         const index = this._players.indexOf(player);
         return this._players[(index + 1) % this._players.length];
-    }
-
-    /**
-     * Set the top bar text for all players.
-     * @param format Message text with optional substitution points, like `"Hello {0}"`.
-     * @param args Values to be substituted in. The first arg will replace `{0}`, then `{1}`, and so on.
-     */
-    setTopBarText(format: string, ...args: any[]): void {
-        for (let player of this.players) {
-            player.topBar.setText(format, ...args);
-        }
-    }
-
-    /**
-     * Clear the top bars of all players.
-     */
-    clearTopBar(): void {
-        for (let player of this.players) {
-            player.topBar.clear();
-        }
     }
 }

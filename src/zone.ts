@@ -13,8 +13,8 @@ export class Zone extends GameObject {
 
     override get footprint(): Footprint {
         return {
-            width: this.width + 2,
-            height: this.height + 2
+            width: this.width + 3,
+            height: this.height + 3
         };
     }
 

@@ -89,7 +89,7 @@ export class DisplayContainer {
     private static generateArrangement(footprints: Footprint[], avoid?: Footprint, type: Arrangement = Arrangement.Auto): ITransformView[] {
         if (type === Arrangement.Auto) {
             const aspect = (avoid?.width ?? 1) / (avoid?.height ?? 1);
-            type = footprints.length < 4 || Math.max(aspect, 1 / aspect) > 2 ? Arrangement.Rectangular : Arrangement.Radial;
+            type = footprints.length <= 4 || Math.max(aspect, 1 / aspect) > 2 ? Arrangement.Rectangular : Arrangement.Radial;
         }
 
         const maxFootprint: Footprint = {
@@ -453,31 +453,43 @@ export class RenderContext {
     }
 
     renderTextEmbed(value: any): TextEmbedView {
-        switch (typeof value) {
-            case "string":
-            case "number":
-            case "boolean":
-            case "bigint":
-                return { label: value.toString() };
+        try {
+            switch (typeof value) {
+                case "string":
+                case "number":
+                case "boolean":
+                case "bigint":
+                    return { label: value.toString() };
 
-            case "object":
-                if (value == null) {
-                    return { label: "null" };
-                }
+                case "function":
+                    return this.renderTextEmbed(value());
 
-                if (Array.isArray(value)) {
-                    return { items: value.map(x => this.renderTextEmbed(x)) };
-                }
+                case "object":
+                    if (value == null) {
+                        return { label: "null" };
+                    }
 
-                if (typeof value.renderTextEmbed === "function") {
-                    const textEmbeddable = value as ITextEmbeddable;
-                    return textEmbeddable.renderTextEmbed(this);
-                }
-                
-                throw new Error(`Value ${value} doesn't implement ITextEmbeddable.`);
+                    if (Array.isArray(value)) {
+                        return { items: value.map(x => this.renderTextEmbed(x)) };
+                    }
 
-            default:
-                throw new Error(`Value ${typeof value} isn't embeddable in text.`);
+                    if (typeof value.renderTextEmbed === "function") {
+                        const textEmbeddable = value as ITextEmbeddable;
+                        return textEmbeddable.renderTextEmbed(this);
+                    }
+                    
+                    return {
+                        label: value.toString()
+                    };
+
+                default:
+                    throw new Error(`Value ${typeof value} isn't embeddable in text.`);
+            }
+        } catch (e) {
+            console.log(e);
+            return { 
+                label: "ERROR"
+            };
         }
     }
 }
