@@ -1,6 +1,6 @@
-import { Card, CardOrientation, LinearCardContainer, LinearContainerKind } from "./card.js";
+import { Card, CardOrientation } from "./card.js";
+import { LinearCardContainer, LinearContainerKind } from "./cardcontainer.js";
 import { RenderContext } from "./display.js";
-import { _Internal } from "./internal.js";
 import { CardView, DeckView, OutlineStyle, ViewType } from "./views.js";
 
 export interface IDeckOptions {

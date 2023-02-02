@@ -1,6 +1,6 @@
-import { Card, CardComparer, CardOrientation, LinearCardContainer, LinearContainerKind } from "./card.js";
+import { Card, CardComparer, CardOrientation } from "./card.js";
+import { LinearCardContainer, LinearContainerKind } from "./cardcontainer.js";
 import { RenderContext } from "./display.js";
-import { _Internal } from "./internal.js";
 import { Footprint } from "./object.js";
 import { CardView, HandView, OutlineStyle, ViewType } from "./views.js";
 

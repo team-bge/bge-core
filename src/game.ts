@@ -1,10 +1,11 @@
 import { Delay } from "./delay.js";
 import { RenderContext, DisplayContainer, Arrangement, IDisplayChild } from "./display.js";
 import { IGame, IGameResult, IPlayerConfig } from "./interfaces.js";
+import { AllGroup, AnyGroup, PromiseGroup } from "./internal.js";
 import { Footprint } from "./object.js";
 import { Player } from "./player.js";
 import { Random } from "./random.js";
-import { TopBar } from "./topbar.js";
+import { MessageBar } from "./messagebar.js";
 import { CameraView, GameView, TableView, ViewType } from "./views.js";
 import { Zone } from "./zone.js";
 
@@ -34,6 +35,17 @@ export abstract class Game<TPlayer extends Player> implements IGame {
     private _onUpdateViews?: { (gameViews: GameView[]): void };
     private _scheduledUpdateView: boolean;
 
+    private readonly _promiseGroups: (PromiseGroup | null)[] = [];
+
+    /**
+     * @internal
+     */
+    get promiseGroup(): PromiseGroup | null {
+        return this._promiseGroups.length > 0
+            ? this._promiseGroups[this._promiseGroups.length - 1]
+            : null;
+    }
+
     /**
      * Helper with methods to suspend the game for various amounts of time.
      */
@@ -47,7 +59,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
     /**
      * Helper for displaying text, buttons and images in the top bar.
      */
-    readonly topBar: TopBar;
+    readonly message: MessageBar;
     
     /**
      * Dynamically add or remove objects to be displayed here.
@@ -64,7 +76,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
         this._actionIndex = 0;
         this.delay = new Delay(this);
         this.random = new Random(this);
-        this.topBar = new TopBar(this);
+        this.message = new MessageBar(this);
         this.children = new DisplayContainer();
     }
 
@@ -92,7 +104,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
 
         const result = await this.onRun();
 
-        this._dispatchUpdateView();
+        this.dispatchUpdateView();
 
         return result;
     }
@@ -154,8 +166,9 @@ export abstract class Game<TPlayer extends Player> implements IGame {
 
     /**
      * Used internally to schedule renders to be sent to players.
+     * @internal
      */
-    _dispatchUpdateView(): void {
+    dispatchUpdateView(): void {
         if (this._scheduledUpdateView) return;
 
         this._scheduledUpdateView = true;
@@ -194,7 +207,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
 
         return {
             hasPrompts: player.prompt.count > 0,
-            topBars: this.topBar.render(new RenderContext(player, new Map())),
+            messages: this.message.render(new RenderContext(player, new Map())),
             table: table,
             cameras: player.cameras
         };
@@ -208,5 +221,74 @@ export abstract class Game<TPlayer extends Player> implements IGame {
     getNextPlayer(player: TPlayer): TPlayer {
         const index = this._players.indexOf(player);
         return this._players[(index + 1) % this._players.length];
+    }
+    
+    /**
+     * Creates a Promise that is resolved with an array of results when all of the provided Promises
+     * resolve, or rejected when any Promise is rejected. Wraps Promise.all<T>.
+     * 
+     * @param createPromises A function that should return an array or iterable of Promises. The promises should
+     * be created inside this function.
+     * 
+     * @returns A new Promise.
+     */
+    all<T>(createPromises: { (): Iterable<T | PromiseLike<T>> }) {
+        return Promise.all(this.wrapPromises(createPromises, new AllGroup(this.promiseGroup)));
+    }
+
+    /**
+     * Creates a Promise that is fulfilled by the first given Promise to be fulfilled, or rejected with
+     * an AggregateError containing an array of rejection reasons if all of the given promises are rejected.
+     * All the given promises can still independently fulfill after the first one, unlike with anyExclusive<T>.
+     * Wraps Promise.all<T>.
+     * 
+     * @param createPromises A function that should return an array or iterable of Promises. The promises should
+     * be created inside this function.
+     * 
+     * @returns A new Promise.
+     */
+    any<T extends readonly unknown[] | []>(createPromises: { (): T }): Promise<Awaited<T[number]>>;
+    any<T>(createPromises: { (): Iterable<T | PromiseLike<T>> }): Promise<Awaited<T>> {
+        return Promise.any(createPromises());
+    }
+
+    /**
+     * Creates a Promise that is fulfilled by the first given Promise to be fulfilled, or rejected with
+     * an AggregateError containing an array of rejection reasons if all of the given promises are rejected.
+     * Unlike any<T>, after any of the given promises fulfills an inner prompt or delay, the other promises
+     * are forcibly rejected. This is useful for letting players select from a range of actions, where responding
+     * to the first prompt of any action commits that player to only that action.
+     * 
+     * Note that you must pass in a function that returns an array of Promises. That function will be invoked
+     * once, and only any promises created during invokation will be exclusive. If that function returns promises
+     * that were previously created elsewhere, they won't be exclusive.
+     * 
+     * @param createPromises A function that should return an array or iterable of Promises. The promises should
+     * be created inside this function.
+     * 
+     * @returns A new Promise.
+     */
+    anyExclusive<T extends readonly unknown[] | []>(createPromises: { (): T }): Promise<Awaited<T[number]>>;
+    anyExclusive<T>(createPromises: { (): Iterable<T | PromiseLike<T>> }): Promise<Awaited<T>> {
+        return Promise.any(this.wrapPromises(createPromises, new AnyGroup(this.promiseGroup)));
+    }
+
+    /**
+     * @internal
+     */
+    wrapPromises<T>(func: { (): T }, group: PromiseGroup): T {
+        this._promiseGroups.push(group);
+
+        let result: T;
+
+        try {
+            result = func();
+        } finally {
+            if (this._promiseGroups.pop() != group) {
+                throw new Error("Expected different PromiseGroup");
+            }
+        }
+
+        return result;
     }
 }

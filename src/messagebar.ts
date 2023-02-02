@@ -1,20 +1,13 @@
 import { RenderContext } from "./display.js";
-import { IGame } from "./interfaces.js";
+import { Message } from "./interfaces.js";
 import { Player } from "./player.js";
-import { TopBarView } from "./views.js";
+import { MessageView } from "./views.js";
 
-export interface ITopBarRow {
-    readonly format?: string;
-    readonly args?: any[];
-}
+export class MessageRow {
+    readonly message: Message;
 
-export class TopBarRow implements ITopBarRow {
-    readonly format?: string;
-    readonly args?: any[];
-
-    constructor(format?: string, args?: any[]) {
-        this.format = format;
-        this.args = args;
+    constructor(message: Message) {
+        this.message = message;
     }
 }
 
@@ -22,7 +15,7 @@ interface IPlayerSource {
     get players(): readonly Player[];
 }
 
-export class TopBar {
+export class MessageBar {
     static validate(format: string, args: any[]): void {
         let maxIndex = -1;
             
@@ -37,7 +30,7 @@ export class TopBar {
     }
 
     private readonly _game: IPlayerSource;
-    private readonly _playerMap = new Map<Player, TopBarRow[]>();
+    private readonly _playerMap = new Map<Player, MessageRow[]>();
 
     constructor(game: IPlayerSource) {
         this._game = game;
@@ -64,13 +57,13 @@ export class TopBar {
         }
     }
 
-    set(format: string, ...args: any[]): TopBarRow;
+    set(format: string, ...args: any[]): MessageRow;
 
-    set(player: Player, format: string, ...args: any[]): TopBarRow;
+    set(player: Player, format: string, ...args: any[]): MessageRow;
     
-    set(players: Iterable<Player>, format: string, ...args: any[]): TopBarRow;
+    set(players: Iterable<Player>, format: string, ...args: any[]): MessageRow;
 
-    set(...args: any[]): TopBarRow {
+    set(...args: any[]): MessageRow {
         let players: Iterable<Player>;
         let format: string;
 
@@ -88,13 +81,13 @@ export class TopBar {
         return this.add(players, format, ...args);
     }
 
-    add(format: string, ...args: any[]): TopBarRow;
+    add(format: string, ...args: any[]): MessageRow;
 
-    add(player: Player, format: string, ...args: any[]): TopBarRow;
+    add(player: Player, format: string, ...args: any[]): MessageRow;
     
-    add(players: Iterable<Player>, format: string, ...args: any[]): TopBarRow;
+    add(players: Iterable<Player>, format: string, ...args: any[]): MessageRow;
 
-    add(...args: any[]): TopBarRow {
+    add(...args: any[]): MessageRow {
         let players: Iterable<Player>;
         let format: string;
 
@@ -108,13 +101,13 @@ export class TopBar {
             args = args.slice(2);
         }
 
-        TopBar.validate(format, args);
+        MessageBar.validate(format, args);
 
         if (players instanceof Player) {
             players = [players];
         }
 
-        const row = new TopBarRow(format, args);
+        const row = new MessageRow({ format: format, args: args });
 
         if (players == null) {
             players = this._game.players;
@@ -134,10 +127,10 @@ export class TopBar {
         return row;
     }
 
-    remove(row: TopBarRow): void;
-    remove(row: TopBarRow, player: Player): void;
-    remove(row: TopBarRow, players: Iterable<Player>): void;
-    remove(row: TopBarRow, playerOrPlayers?: Player | Iterable<Player>): void {
+    remove(row: MessageRow): void;
+    remove(row: MessageRow, player: Player): void;
+    remove(row: MessageRow, players: Iterable<Player>): void;
+    remove(row: MessageRow, playerOrPlayers?: Player | Iterable<Player>): void {
         let players = playerOrPlayers instanceof Player
             ? [playerOrPlayers] : playerOrPlayers;
 
@@ -160,8 +153,20 @@ export class TopBar {
         }
     }
 
-    render(ctx: RenderContext): TopBarView[] {
-        const views: TopBarView[] = [];
+    renderMessage(ctx: RenderContext, message: Message, prompt: boolean): MessageView {
+        if (typeof message === "string") {
+            return { format: message, prompt: prompt };
+        } else {
+            return {
+                format: message.format,
+                embeds: message.args?.map(x => ctx.renderTextEmbed(x)),
+                prompt: prompt
+            };
+        }
+    }
+
+    render(ctx: RenderContext): MessageView[] {
+        const views: MessageView[] = [];
 
         const rows = ctx.player != null
             ? this._playerMap.get(ctx.player)
@@ -169,19 +174,13 @@ export class TopBar {
             
         if (rows != null) {
             for (let row of rows) {
-                views.push({
-                    format: row.format,
-                    embeds: row.args?.map(x => ctx.renderTextEmbed(x))
-                });
+                views.push(this.renderMessage(ctx, row.message, false));
             }
         }
 
         if (ctx.player != null) {
-            for (let row of ctx.player.prompt.topBarRows) {
-                views.push({
-                    format: row.format,
-                    embeds: row.args?.map(x => ctx.renderTextEmbed(x))
-                });
+            for (let message of ctx.player.prompt.messages) {
+                views.push(this.renderMessage(ctx, message, true));
             }
         }
 

@@ -40,7 +40,19 @@ export class Delay {
      * @returns A promise that fulfils after the given time.
      */
     seconds(value: number): Promise<void> {
-        this._game._dispatchUpdateView();
-        return new Promise(resolve => setTimeout(resolve, value * 1000));
+        this._game.dispatchUpdateView();
+
+        const group = this._game.promiseGroup;
+
+        return new Promise((resolve, reject) => {
+            group?.catch(reason => {
+                reject(reason);
+            });
+
+            setTimeout(() => {
+                group?.itemResolved();
+                resolve();
+            }, value * 1000)
+        });
     }
 }

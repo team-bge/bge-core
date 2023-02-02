@@ -11,7 +11,7 @@ export type IView =
 
 export interface GameView {
     table: TableView;
-    topBars: TopBarView[];
+    messages: MessageView[];
     hasPrompts: boolean;
     cameras: CameraView[];
 }
@@ -79,9 +79,10 @@ export interface TextView extends ILabelView, ITransformView {
     embeds?: TextEmbedView[];
 }
 
-export interface TopBarView {
+export interface MessageView {
     format?: string;
     embeds?: TextEmbedView[];
+    prompt?: boolean;
 }
 
 export interface CameraView {
