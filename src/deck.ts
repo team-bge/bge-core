@@ -3,8 +3,18 @@ import { LinearCardContainer, LinearContainerKind } from "./cardcontainer.js";
 import { RenderContext } from "./display.js";
 import { CardView, DeckView, OutlineStyle, ViewType } from "./views.js";
 
+/**
+ * Configuration for a deck.
+ */
 export interface IDeckOptions {
+    /**
+     * Optional default card orientation for the deck.
+     */
     orientation?: CardOrientation;
+
+    /**
+     * If true, the deck count will always be displayed on top of the deck.
+     */
     alwaysShowCount?: boolean;
 }
 
@@ -14,6 +24,11 @@ export interface IDeckOptions {
 export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
     readonly alwaysShowCount: boolean;
 
+    /**
+     * Stores a first-in-last-out stack of cards.
+     * @param CardType Constructor for the type of card stored in this container. Used to find the card dimensions.
+     * @param options Optional configuration for the deck.
+     */
     constructor(CardType: { new(...args: any[]): TCard }, options?: IDeckOptions) {
         super(CardType, LinearContainerKind.FirstInLastOut, options?.orientation);
     

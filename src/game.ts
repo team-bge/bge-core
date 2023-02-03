@@ -83,7 +83,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
     /**
      * Array of all the players in this running game. Only valid after `init()` has been called.
      */
-    get players(): ReadonlyArray<TPlayer> {
+    get players(): readonly TPlayer[] {
         return this._players;
     }
 
@@ -120,8 +120,11 @@ export abstract class Game<TPlayer extends Player> implements IGame {
         
         const zones = this.children.addRange("__playerZones",
             this.players.map(zoneMap),
-            this.players.map(x => ({ isHidden: options?.isHidden ?? false, owner: x, label: x.name })),
-            options?.avoid, options?.arrangement);
+            {
+                avoid: options?.avoid,
+                arrangement: options?.arrangement,
+                childOptions: this.players.map(x => ({ isHidden: options?.isHidden ?? false, owner: x, label: x.name }))
+            });
 
         // Set up cameras
 

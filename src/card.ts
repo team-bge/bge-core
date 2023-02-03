@@ -81,7 +81,7 @@ export class Card extends GameObject implements ITextEmbeddable {
     /**
      * Get the dimensions of a card class, as specified by `width` / `height` / `thickness` decorators.
      * @param CardType Type of card to get the dimensions of.
-     * @returns Width, height, and thickness of the card.
+     * @returns Width, height, and thickness of the card in centimeters.
      */
     static getDimensions(CardType: { new(...args: any[]): Card }): ICardDimensions {
         return {
@@ -91,9 +91,20 @@ export class Card extends GameObject implements ITextEmbeddable {
         };
     }
 
-    width: number;
-    height: number;
-    thickness: number;
+    /**
+     * Width of the card in centimeters.
+     */
+    readonly width: number;
+    
+    /**
+     * Height of the card in centimeters.
+     */
+    readonly height: number;
+    
+    /**
+     * Thickness of the card in centimeters.
+     */
+    readonly thickness: number;
 
     /**
      * Stores graphical information about the front face of the card, as seen if the card isn't hidden.

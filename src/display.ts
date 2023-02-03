@@ -1,32 +1,134 @@
 import "reflect-metadata";
+
 import { ITextEmbeddable } from "./interfaces.js";
 import { Footprint, GameObject } from "./object.js";
 import { Player } from "./player.js";
 import { ILabelView, ITransformView, IView, Origin, TextEmbedView, Vector3, ViewType } from "./views.js";
 
-export interface IParentInfo {
+interface IParentInfo {
     parent: Object;
     childId?: number;
     localPosition?: Vector3;
     localRotation?: Vector3;
 };
 
+/**
+ * Options for positioning and styling an object.
+ */
+export interface IDisplayOptions {
+    /**
+     * For objects that support it, this text will be displayed next to the object on the table.
+     */
+    label?: string;
+
+    /**
+     * If true, the identity of this object will only be displayed to the owner.
+     * If undefined, this value is inherited from the parent object.
+     */
+    isHidden?: boolean;
+    
+    /**
+     * Sets which player will always see the identity of this object, even if `isHidden` is true.
+     * If undefined, this value is inherited from the parent object.
+     */
+    owner?: Player;
+
+    /**
+     * Offset in centimeters, relative to the parent transform.
+     */
+    localPosition?: Vector3;
+
+    /**
+     * Euler angles in degrees, relative to the parent rotation.
+     */
+    localRotation?: Vector3;
+}
+
+/**
+ * Describes how a child object is displayed.
+ */
 export interface IDisplayChild {
+    /**
+     * Child object, or a function that returns the child object.
+     */
     object: GameObject | { (): GameObject };
+
+    /**
+     * Positioning, style, and visibility options.
+     */
     options: IDisplayOptions;
+
+    /**
+     * Ordinal for this child, to help renderers maintain identity when animating.
+     */
     childId: number;
 }
 
+/**
+ * Ways to arrange a set of child objects.
+ */
 export enum Arrangement {
+    /**
+     * Guess the best arrangement based on object count and dimensions.
+     */
     Auto,
+
+    /**
+     * Put all the objects in a line on the x-axis.
+     */
     Linear,
+
+    /**
+     * Put the objects around the edges of a rectangle.
+     */
     Rectangular,
+
+    /**
+     * Put the N objects around the edges of an N-sided polygon.
+     */
     Radial
 }
 
+/**
+ * Options to use with `DisplayContainer.addRange(objects)`.
+ */
+export interface IRangeDisplayOptions {
+    /**
+     * Optional area to avoid when positioning child objects.
+     */
+    avoid?: Footprint;
+
+    /**
+     * Strategy to use when arranging child objects, defaults to `Auto`.
+     */
+    arrangement?: Arrangement;
+
+    /**
+     * Either a single `IDisplayOptions` that will be used with every child object,
+     * or an array containing separate options for each child.
+     */
+    childOptions?: IDisplayOptions | IDisplayOptions[];
+}
+
+/**
+ * Container for dynamically adding, removing, and repositioning objects for display.
+ */
 export class DisplayContainer {
     private _nextChildId = 0x10000;
     private readonly _children = new Map<string, IDisplayChild>();
+
+    /**
+     * Get a child by name.
+     * @param name Name used when adding this child.
+     */
+    get(name: string): IDisplayChild;
+
+    /**
+     * Get a child added with `addRange()`, by name and index.
+     * @param name Name used when adding an array of children.
+     * @param index Index into the array of children.
+     */
+    get(name: string, index: number): IDisplayChild;
 
     get(name: string, index?: number): IDisplayChild {
         if (index == null) {
@@ -36,6 +138,13 @@ export class DisplayContainer {
         }
     }
 
+    /**
+     * Add a named child object, with optional display options.
+     * @param name Name of the child, to be used later with `get(name)`
+     * @param object Child object to add.
+     * @param options Optional display options to position and style the object.
+     * @returns Reference to an object containing the added child, along with its display options.
+     */
     add(name: string, object: GameObject | { (): GameObject }, options?: IDisplayOptions): IDisplayChild {
         if (this._children.has(name)) {
             throw new Error("A child already exists with that name");
@@ -50,6 +159,50 @@ export class DisplayContainer {
         this._children.set(name, info);
 
         return info;
+    }
+    
+    /**
+     * Add a named array of child objects, with optional display options.
+     * @param name Name to give this array of children, to be used later with `get(name, index)`.
+     * @param objects Array of objects to add as children.
+     * @param options Optional options to use when arranging these children.
+     * @returns An array of objects containing each child, with their associated display options.
+     */
+    addRange(name: string,
+        objects: GameObject[],
+        options?: IRangeDisplayOptions): IDisplayChild[] {
+
+        const footprints = objects.map(x => x.footprint ?? { width: 0, height: 0 });
+        const arrangement = DisplayContainer.generateArrangement(footprints, options?.avoid,
+            options?.arrangement ?? Arrangement.Auto);
+
+        const children: IDisplayChild[] = [];
+
+        if (Array.isArray(options?.childOptions) && options.childOptions.length !== objects.length) {
+            throw new Error("Expected childOptions array length to match objects array.");
+        }
+
+        for (let i = 0; i < objects.length; ++i) {
+            const object = objects[i];
+            const transform = arrangement[i];
+
+            let childOptions: IDisplayOptions;
+
+            if (options?.childOptions != null) {
+                const baseOptions = Array.isArray(options.childOptions)
+                    ? options.childOptions[i]
+                    : options.childOptions;
+
+                childOptions = { ...baseOptions };
+                DisplayContainer.applyTransform(baseOptions, transform, childOptions);
+            } else {
+                childOptions = { ...transform };
+            }
+
+            children.push(this.add(`${name}[${i}]`, object, childOptions));
+        }
+
+        return children;
     }
 
     private static generateLinearArrangement(footprints: Footprint[], center: Vector3, pivot: number, angle: number): ITransformView[] {
@@ -180,6 +333,23 @@ export class DisplayContainer {
         return arrangement;
     }
 
+    /**
+     * Applies transform `a` to transform `b`, returning the result. Neither `a` nor `b` are modified.
+     * @param a Outer transformation.
+     * @param b Inner transformation.
+     * @returns The combined transformation.
+     */
+    static applyTransform(a: ITransformView, b: ITransformView): ITransformView;
+    
+    /**
+     * Applies transform `a` to transform `b`, storing the result in `out`. Neither `a` nor `b` are modified.
+     * @param a Outer transformation.
+     * @param b Inner transformation.
+     * @param out Target for the combined transformation.
+     * @returns `out`
+     */
+    static applyTransform(a: ITransformView, b: ITransformView, out: ITransformView): ITransformView;
+
     static applyTransform(a: ITransformView, b: ITransformView, out?: ITransformView): ITransformView {
 
         out ??= { };
@@ -203,48 +373,30 @@ export class DisplayContainer {
         return out;
     }
 
-    addRange(name: string,
-        objects: GameObject[],
-        options?: IDisplayOptions | IDisplayOptions[],
-        avoid?: Footprint,
-        arrangementType: Arrangement = Arrangement.Auto): IDisplayChild[] {
-
-        const footprints = objects.map(x => x.footprint ?? { width: 0, height: 0 });
-        const arrangement = DisplayContainer.generateArrangement(footprints, avoid, arrangementType);
-
-        const children: IDisplayChild[] = [];
-
-        for (let i = 0; i < objects.length; ++i) {
-            const object = objects[i];
-            const transform = arrangement[i];
-
-            let childOptions: IDisplayOptions;
-
-            if (options != null) {
-                const baseOptions = Array.isArray(options) ? options[i] : options;
-                childOptions = { ...baseOptions };
-                DisplayContainer.applyTransform(baseOptions, transform, childOptions);
-            } else {
-                childOptions = { ...transform };
-            }
-
-            children.push(this.add(`${name}[${i}]`, object, childOptions));
-        }
-
-        return children;
-    }
-
     render(ctx: RenderContext, parent: Object, views?: IView[]): IView[] {
         return ctx.renderChildren(this._children.values(), parent, views);
     }
 }
 
+/**
+ * @internal
+ */
 export type ParentMap = Map<GameObject, IParentInfo>;
 
+/**
+ * Context used when rendering objects, containing information about visibility and ownership.
+ */
 export class RenderContext {
-    readonly player: Player;
+    /**
+     * Player that a view is being rendered for.
+     */
+    readonly player: Player | null;
 
+    /**
+     * @internal
+     */
     readonly newParentMap: ParentMap;
+
     private readonly _oldParentMap: ParentMap;
 
     private readonly _parentViews: Map<Object, IView>;
@@ -255,10 +407,17 @@ export class RenderContext {
     private _isHidden: boolean;
     private _owner: Player;
 
+    /**
+     * If true, objects should be rendered in a hidden state. For example,
+     * cards won't show their true face, but a generic hidden face.
+     */
     get isHidden(): boolean {
         return this._isHidden;
     }
 
+    /**
+     * @internal 
+     */
     constructor(player: Player, oldParentMap: ParentMap) {
         this.player = player;
 
@@ -274,6 +433,9 @@ export class RenderContext {
         this._owner = null;
     }
 
+    /**
+     * @internal
+     */
     getParentId(parent: Object): number {
         let parentId = this._parentIds.get(parent);
 
@@ -285,6 +447,9 @@ export class RenderContext {
         return parentId;
     }
 
+    /**
+     * @internal
+     */
     setParentView(parent: Object, view: IView): void {
         this._parentViews.set(parent, view);
     }
@@ -360,10 +525,16 @@ export class RenderContext {
         }
     }
     
+    /**
+     * @internal
+     */
     renderChild(object: GameObject, parent: Object, childId: number, options?: IDisplayOptions): IView {
         return this._renderChild(object, parent, childId, options);
     }
 
+    /**
+     * @internal
+     */
     renderInternalChild(object: GameObject, parent: Object, parentView: IView, options?: IDisplayOptions): void {
         this._renderChild(object, parent, parentView, options);
     }
@@ -374,6 +545,9 @@ export class RenderContext {
         return (a ?? 0) + (b ?? 0);
     }
 
+    /**
+     * @internal
+     */
     renderChildren(children: Iterable<IDisplayChild>, parent: Object, views?: IView[]): IView[] {
         views ??= [];
 
@@ -394,6 +568,9 @@ export class RenderContext {
         return views;
     }
 
+    /**
+     * @internal
+     */
     renderProperties(parent: Object, views?: IView[]): IView[] {
         views ??= [];
         
@@ -429,6 +606,9 @@ export class RenderContext {
         return views;
     }
 
+    /**
+     * @internal
+     */
     processAnimations(): void {
         for (let [parent, parentId] of this._parentIds) {
             const view = this._parentViews.get(parent);
@@ -452,6 +632,9 @@ export class RenderContext {
         }
     }
 
+    /**
+     * @internal
+     */
     renderTextEmbed(value: any): TextEmbedView {
         try {
             switch (typeof value) {
@@ -494,16 +677,13 @@ export class RenderContext {
     }
 }
 
-export interface IDisplayOptions {
-    label?: string;
-    isHidden?: boolean;
-    localPosition?: Vector3;
-    localRotation?: Vector3;
-    owner?: Player;
-}
-
 const displayKey = Symbol("display");
 
+/**
+ * Decorates a property to be displayed as a child of the containing object.
+ * Supported for `GameObject` values, or `string` / `number` values to display them as text.
+ * @param options Optional positioning and styling options.
+ */
 export function display(options?: IDisplayOptions) : PropertyDecorator {
     return Reflect.metadata(displayKey, options ?? { });
 }

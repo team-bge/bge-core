@@ -7,6 +7,9 @@ import { Random } from "./random.js";
  * Interface for anything that can receive dealt cards.
  */
 export interface ICardReceiver<TCard> {
+    /**
+     * The total number of cards in this container.
+     */
     get count(): number;
 
     /**
@@ -47,6 +50,10 @@ export abstract class CardContainer<TCard extends Card> extends GameObject imple
         return this.count == 0;
     }
 
+    /**
+     * Base class for general card containers, like decks and hands.
+     * @param CardType Constructor for the type of card stored in this container. Used to find the card dimensions.
+     */
     constructor(CardType: { new(...args: any[]): TCard }) {
         super();
 
@@ -62,6 +69,10 @@ export abstract class CardContainer<TCard extends Card> extends GameObject imple
         this.onAdd(card);
     }
 
+    /**
+     * Called when a card is to be added to this container.
+     * @param card Card to add.
+     */
     protected abstract onAdd(card: TCard): void;
     
     /**
@@ -84,6 +95,10 @@ export abstract class CardContainer<TCard extends Card> extends GameObject imple
         return card;
     }
 
+    /**
+     * Called when a card is to be removed from this container.
+     * @param card Card to remove.
+     */
     protected abstract onRemove(card: TCard): void;
 
     /**
@@ -114,14 +129,31 @@ export abstract class CardContainer<TCard extends Card> extends GameObject imple
         return this.onRemoveAll(x => array.indexOf(x) !== -1);
     }
     
+    /**
+     * Called when cards matching a predicate are to be removed.
+     * @param predicate Function that returns true for cards that should be removed.
+     */
     protected abstract onRemoveAll(predicate?: { (card: TCard): boolean }): TCard[];
 }
 
+/**
+ * Describes in which order items are added or removed from a linear container.
+ */
 export enum LinearContainerKind {
+    /**
+     * Like a queue.
+     */
     FirstInFirstOut,
+
+    /**
+     * Lile a stack.
+     */
     FirstInLastOut
 }
 
+/**
+ * @internal
+ */
 interface ILinearContainerCard<TCard extends Card> {
     card: TCard;
     orientation: CardOrientation;
@@ -148,6 +180,13 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      */
     readonly autoSort?: CardComparer<TCard>;
 
+    /**
+     * Base class for card containers that store their contents as an ordered list of cards, like hands and decks.
+     * @param CardType Constructor for the type of card stored in this container. Used to find the card dimensions.
+     * @param kind Describes in which order items are added or removed from a linear container.
+     * @param orientation Are newly added cards face up or face down.
+     * @param autoSort Optional comparison function to auto-sort newly added cards.
+     */
     constructor(CardType: { new(...args: any[]): TCard }, kind: LinearContainerKind, orientation: CardOrientation = CardOrientation.FaceUp, autoSort?: CardComparer<TCard>) {
         super(CardType);
 
@@ -265,6 +304,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      * @returns Orientation of the given card.
      */
     getOrientation(card: TCard): CardOrientation;
+
     getOrientation(indexOrCard: number | TCard): CardOrientation {
         return this.getProperties(indexOrCard).orientation;
     }
@@ -303,8 +343,18 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
         this.getProperties(indexOrCardOrSelected).selected = selected;
     }
 
+    /**
+     * Toggles the selection state of the given card.
+     * @param index Index of the card to toggle.
+     */
     toggleSelected(index: number): boolean;
+    
+    /**
+     * Toggles the selection state of the given card.
+     * @param index Card to toggle.
+     */
     toggleSelected(card: TCard): boolean;
+
     toggleSelected(indexOrCard: number | TCard): boolean {
         const properties = this.getProperties(indexOrCard);
         return properties.selected = !properties.selected;
@@ -323,6 +373,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      * @returns Selection state of the given card.
      */
     getSelected(card: TCard): boolean;
+    
     getSelected(indexOrCard: number | TCard): boolean {
         return this.getProperties(indexOrCard).selected;
     }
