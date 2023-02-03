@@ -1,5 +1,7 @@
+import { Button } from "./button.js";
 import { RenderContext } from "./display.js";
 import { PromiseGroup } from "./internal.js";
+import { GameObject } from "./object.js";
 import { GameView, TextEmbedView } from "./views.js";
 
 export const apiVersion = 1;
@@ -12,6 +14,8 @@ export interface IPlayerConfig {
 export interface IGameResult {
     winners?: number[];
 }
+
+export type Clickable = GameObject | Button;
 
 export type Message = string | { format: string, args?: any[] };
 

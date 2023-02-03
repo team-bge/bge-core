@@ -1,6 +1,6 @@
 import { Button } from "./button.js";
 import { Game } from "./game.js";
-import { Message } from "./interfaces.js";
+import { Clickable, Message } from "./interfaces.js";
 import { GameObject } from "./object.js";
 import { Player } from "./player.js";
 import { Prompt, PromptKind } from "./views.js";
@@ -31,7 +31,7 @@ export class PromptHelper {
     private readonly _player: Player;
 
     private _nextPromptIndex = 0;
-    private readonly _promptsByObject = new Map<GameObject, IPromptInfo>();
+    private readonly _promptsByObject = new Map<Clickable, IPromptInfo>();
     private readonly _promptsByIndex = new Map<number, IPromptInfo>();
 
     constructor(player: Player) {
@@ -70,7 +70,7 @@ export class PromptHelper {
         return sorted;
     }
 
-    get(object: GameObject): Prompt | undefined {
+    get(object: Clickable): Prompt | undefined {
         const prompt = this._promptsByObject.get(object);
         if (prompt == null) {
             return undefined;
@@ -93,7 +93,7 @@ export class PromptHelper {
         prompt.resolve();
     }
 
-    private remove(object: GameObject, index: number): boolean {
+    private remove(object: Clickable, index: number): boolean {
         return this._promptsByObject.delete(object) && this._promptsByIndex.delete(index);
     }
 
@@ -115,7 +115,7 @@ export class PromptHelper {
     click<TObject extends GameObject>(object: TObject, options: IClickOptions & { message: Message }): Promise<TObject>;
     click<TValue>(object: GameObject, options: IReturnClickOptions<TValue> & { message: Message }): Promise<TValue>;
     
-    click<TObject extends GameObject, TValue>(object: TObject, options?: IClickOptions | IReturnClickOptions<TValue>): Promise<TObject | TValue> {
+    click<TObject extends Clickable, TValue>(object: TObject, options?: IClickOptions | IReturnClickOptions<TValue>): Promise<TObject | TValue> {
         if (options?.if === false) {
             return Promise.reject("Prompt condition is false");
         }
