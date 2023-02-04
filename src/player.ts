@@ -3,6 +3,11 @@ import { IGame, IPlayerConfig, ITextEmbeddable } from "./interfaces.js";
 import { PromptHelper } from "./prompt.js";
 import { CameraView, TextEmbedView } from "./views.js";
 
+/**
+ * @summary Represents a player in a game.
+ * @description Use a deriving class to store any per-player properties, like scores or owned objects.
+ * Use `Player.prompt` to request inputs from a player.
+ */
 export class Player implements ITextEmbeddable {
     private _index: number;
     private _config: IPlayerConfig;
@@ -12,14 +17,23 @@ export class Player implements ITextEmbeddable {
 
     readonly prompt = new PromptHelper(this);
 
+    /**
+     * Which game this player was created by.
+     */
     get game(): IGame {
         return this._game;
     }
 
+    /**
+     * Index of this player in the `Game.players` array.
+     */
     get index(): number {
         return this._index;
     }
 
+    /**
+     * Displayable nickname of this player.
+     */
     get name(): string {
         return this._config.name;
     }
