@@ -1,5 +1,5 @@
 import { RenderContext } from "./display.js";
-import { Message } from "./interfaces.js";
+import { Message, MessageEmbed } from "./interfaces.js";
 import { Player } from "./player.js";
 import { MessageView } from "./views.js";
 
@@ -57,15 +57,20 @@ export class MessageBar {
     }
 
     /**
-     * Clears all non-prompt messages.
+     * Clears all non-prompt messages for all players.
      */
     clear(): void;
 
     /**
-     * Clears all non-prompt messages.
+     * Clears all non-prompt messages for the given player.
+     * @param player Player to clear messages for.
      */
     clear(player: Player): void;
 
+    /**
+     * Clears all non-prompt messages for the given players.
+     * @param player Players to clear messages for.
+     */
     clear(players: Iterable<Player>): void;
 
     clear(players?: Player | Iterable<Player>): void {
@@ -83,11 +88,28 @@ export class MessageBar {
         }
     }
 
-    set(format: string, ...args: any[]): MessageRow;
+    /**
+     * Clears any existing non-prompt messages, then adds the given formatted message for every player.
+     * @param format A string containing embed points, for example `"Hello {0}"` will insert `args[0]` after the word "Hello ".
+     * @param args Optional array of values to embed in the message.
+     */
+    set(format: string, ...args: MessageEmbed[]): MessageRow;
 
-    set(player: Player, format: string, ...args: any[]): MessageRow;
+    /**
+     * Clears any existing non-prompt messages, then adds the given formatted message for the given player.
+     * @param format A string containing embed points, for example `"Hello {0}"` will insert `args[0]` after the word "Hello ".
+     * @param args Optional array of values to embed in the message.
+     * @param player Player to set a message for.
+     */
+    set(player: Player, format: string, ...args: MessageEmbed[]): MessageRow;
     
-    set(players: Iterable<Player>, format: string, ...args: any[]): MessageRow;
+    /**
+     * Clears any existing non-prompt messages, then adds the given formatted message for the given players.
+     * @param format A string containing embed points, for example `"Hello {0}"` will insert `args[0]` after the word "Hello ".
+     * @param args Optional array of values to embed in the message.
+     * @param player Players to set a message for.
+     */
+    set(players: Iterable<Player>, format: string, ...args: MessageEmbed[]): MessageRow;
 
     set(...args: any[]): MessageRow {
         let players: Iterable<Player>;
@@ -107,11 +129,28 @@ export class MessageBar {
         return this.add(players, format, ...args);
     }
 
-    add(format: string, ...args: any[]): MessageRow;
+    /**
+     * Adds the given formatted message for every player, below any existing non-prompt messages.
+     * @param format A string containing embed points, for example `"Hello {0}"` will insert `args[0]` after the word "Hello ".
+     * @param args Optional array of values to embed in the message.
+     */
+    add(format: string, ...args: MessageEmbed[]): MessageRow;
 
-    add(player: Player, format: string, ...args: any[]): MessageRow;
+    /**
+     * Adds the given formatted message for the given player, below any existing non-prompt messages.
+     * @param format A string containing embed points, for example `"Hello {0}"` will insert `args[0]` after the word "Hello ".
+     * @param args Optional array of values to embed in the message.
+     * @param player Player to add a message for.
+     */
+    add(player: Player, format: string, ...args: MessageEmbed[]): MessageRow;
     
-    add(players: Iterable<Player>, format: string, ...args: any[]): MessageRow;
+    /**
+     * Adds the given formatted message for the given players, below any existing non-prompt messages.
+     * @param format A string containing embed points, for example `"Hello {0}"` will insert `args[0]` after the word "Hello ".
+     * @param args Optional array of values to embed in the message.
+     * @param player Players to add a message for.
+     */
+    add(players: Iterable<Player>, format: string, ...args: MessageEmbed[]): MessageRow;
 
     add(...args: any[]): MessageRow {
         let players: Iterable<Player>;
@@ -153,9 +192,26 @@ export class MessageBar {
         return row;
     }
 
+    /**
+     * Removes the given message for all players.
+     * @param row A previously-added message, as returned by `add()` or `set()`.
+     */
     remove(row: MessageRow): void;
+    
+    /**
+     * Removes the given message for the given player.
+     * @param row A previously-added message, as returned by `add()` or `set()`.
+     * @param player Player to remove a message for.
+     */
     remove(row: MessageRow, player: Player): void;
+    
+    /**
+     * Removes the given message for the given players.
+     * @param row A previously-added message, as returned by `add()` or `set()`.
+     * @param player Players to remove a message for.
+     */
     remove(row: MessageRow, players: Iterable<Player>): void;
+
     remove(row: MessageRow, playerOrPlayers?: Player | Iterable<Player>): void {
         let players = playerOrPlayers instanceof Player
             ? [playerOrPlayers] : playerOrPlayers;
@@ -179,7 +235,7 @@ export class MessageBar {
         }
     }
 
-    renderMessage(ctx: RenderContext, message: Message, prompt: boolean): MessageView {
+    private static renderMessage(ctx: RenderContext, message: Message, prompt: boolean): MessageView {
         if (typeof message === "string") {
             return { format: message, prompt: prompt };
         } else {
@@ -200,13 +256,13 @@ export class MessageBar {
             
         if (rows != null) {
             for (let row of rows) {
-                views.push(this.renderMessage(ctx, row.message, false));
+                views.push(MessageBar.renderMessage(ctx, row.message, false));
             }
         }
 
         if (ctx.player != null) {
             for (let message of ctx.player.prompt.messages) {
-                views.push(this.renderMessage(ctx, message, true));
+                views.push(MessageBar.renderMessage(ctx, message, true));
             }
         }
 

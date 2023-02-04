@@ -23,6 +23,9 @@ export interface Footprint {
 export abstract class GameObject {
     _lastActionIndex: number;
 
+    /**
+     * Optional display name for this object.
+     */
     name?: string;
 
     /**

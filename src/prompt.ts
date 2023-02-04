@@ -222,7 +222,7 @@ export class PromptHelper {
         const promptInfo: IPromptInfo = {
             parent: this,
             index: index,
-            message: options?.message ?? { format: "{0}", args: [ object ] },
+            message: options?.message ?? { format: "{0}", args: [ object as Button ] },
             resolve: null,
             reject: null
         };

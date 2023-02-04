@@ -37,9 +37,14 @@ export interface IGameResult {
 export type Clickable = GameObject | Button;
 
 /**
+ * Types of value that van be embedded in a message.
+ */
+export type MessageEmbed = string | boolean | number | ITextEmbeddable;
+
+/**
  * Describes a message displayed at the top of the screen. Can include embedded buttons or other objects.
  */
-export type Message = string | { format: string, args?: any[] };
+export type Message = string | { format: string, args?: MessageEmbed[] };
 
 /**
  * Base interface for a custom game. You'll want to extend @see Game<TPlayer> instead.
