@@ -1,10 +1,11 @@
-import { DisplayContainer, RenderContext } from "./display.js";
+import { RenderContext } from "./display.js";
+import { DisplayContainer } from "./displaycontainer.js";
 import { Footprint, GameObject } from "./object.js";
 import { IView, OutlineStyle, ViewType, ZoneView } from "./views.js";
 
 export class Zone extends GameObject {
-    width: number = 10;
-    height: number = 10;
+    width: number;
+    height: number;
 
     outlineStyle: OutlineStyle = OutlineStyle.Dashed;
     label?: string;
@@ -16,6 +17,15 @@ export class Zone extends GameObject {
             width: this.width + 3,
             height: this.height + 3
         };
+    }
+    
+    constructor(width = 10, height = 10) {
+        super();
+
+        this.children.addProperties(this);
+
+        this.width = width;
+        this.height = height;
     }
 
     render(ctx: RenderContext): IView {
@@ -35,7 +45,6 @@ export class Zone extends GameObject {
 
         ctx.setParentView(this, view);
 
-        ctx.renderProperties(this, view.children);
         this.children.render(ctx, this, view.children);
 
         return view;

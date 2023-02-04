@@ -3,9 +3,18 @@ import { Message } from "./interfaces.js";
 import { Player } from "./player.js";
 import { MessageView } from "./views.js";
 
+/**
+ * A single row of the `MessageBar`. Use `MessageBar.remove(row)` to remove it.
+ */
 export class MessageRow {
+    /**
+     * Displayed message in the row.
+     */
     readonly message: Message;
 
+    /**
+     * @internal
+     */
     constructor(message: Message) {
         this.message = message;
     }
@@ -15,8 +24,16 @@ interface IPlayerSource {
     get players(): readonly Player[];
 }
 
+/**
+ * Helper for displaying messages at the top of the screen.
+ */
 export class MessageBar {
-    static validate(format: string, args: any[]): void {
+    /**
+     * Validates a message format string, to make sure it matches the given argument array.
+     * @param format Message format string.
+     * @param args Array of embedded values to include in the message.
+     */
+    static validate(format: string, args?: any[]): void {
         let maxIndex = -1;
             
         for(let match of format.matchAll(/\{\s*(?<index>[0-9]+)\s*(?::(?<format>[^}]*))?\}/gi)) {
@@ -32,12 +49,21 @@ export class MessageBar {
     private readonly _game: IPlayerSource;
     private readonly _playerMap = new Map<Player, MessageRow[]>();
 
+    /**
+     * @internal
+     */
     constructor(game: IPlayerSource) {
         this._game = game;
     }
 
+    /**
+     * Clears all non-prompt messages.
+     */
     clear(): void;
 
+    /**
+     * Clears all non-prompt messages.
+     */
     clear(player: Player): void;
 
     clear(players: Iterable<Player>): void;

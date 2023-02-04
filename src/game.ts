@@ -1,5 +1,5 @@
 import { Delay } from "./delay.js";
-import { RenderContext, DisplayContainer, Arrangement, IDisplayChild } from "./display.js";
+import { RenderContext } from "./display.js";
 import { IGame, IGameResult, IPlayerConfig } from "./interfaces.js";
 import { AllGroup, AnyGroup, PromiseGroup } from "./internal.js";
 import { Footprint } from "./object.js";
@@ -8,6 +8,7 @@ import { Random } from "./random.js";
 import { MessageBar } from "./messagebar.js";
 import { CameraView, GameView, TableView, ViewType } from "./views.js";
 import { Zone } from "./zone.js";
+import { Arrangement, DisplayContainer, IDisplayChild } from "./displaycontainer.js";
 
 export interface IZoneCameraOptions {
     zoom?: number;
@@ -78,6 +79,8 @@ export abstract class Game<TPlayer extends Player> implements IGame {
         this.random = new Random(this);
         this.message = new MessageBar(this);
         this.children = new DisplayContainer();
+
+        this.children.addProperties(this);
     }
 
     /**
@@ -203,7 +206,6 @@ export abstract class Game<TPlayer extends Player> implements IGame {
         };
 
         ctx.setParentView(this, table);
-        ctx.renderProperties(this, table.children);
         this.children.render(ctx, this, table.children);
         
         ctx.processAnimations();

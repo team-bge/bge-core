@@ -4,20 +4,58 @@ import { RenderContext } from "./display.js";
 import { Footprint } from "./object.js";
 import { CardView, HandView, OutlineStyle, ViewType } from "./views.js";
 
+/**
+ * How cards in a hand are positioned when there is free space.
+ */
 export enum HandAlignment {
+    /**
+     * Align to the left edge of the hand.
+     */
     Left,
+
+    /**
+     * Center the cards in the hand.
+     */
     Center,
+
+    /**
+     * Align to the right edge of the hand.
+     */
     Right
 }
 
+/**
+ * Options for creating a `Hand<TCard>`.
+ */
 export interface IHandOptions<TCard extends Card> {
+    /**
+     * Default orientation of new cards added to the hand.
+     */
     orientation?: CardOrientation;
+
+    /**
+     * How cards in a hand are positioned when there is free space.
+     */
     alignment?: HandAlignment;
+
+    /**
+     * Optional comparison function to auto-sort newly added cards.
+     */
     autoSort?: CardComparer<TCard>;
 }
 
+/**
+ * Holds a wad of cards, where each card is displayed separately.
+ */
 export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
+    /** 
+     * Maximum width of the area that hand cards are displayed in, in centimeters.
+     */
     readonly width: number;
+
+    /**
+     * How cards in a hand are positioned when there is free space.
+     */
     readonly alignment: HandAlignment;
 
     override get footprint(): Footprint {
@@ -29,14 +67,26 @@ export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
         };
     }
 
+    /**
+     * Left-most card in the hand. The oldest added, and next to be drawn.
+     */
     get first(): TCard | null {
         return this.count === 0 ? null : this.getCard(0);
     }
     
+    /**
+     * Right-most card in the hand. The most recently added, and last to be drawn.
+     */
     get last(): TCard | null {
         return this.count === 0 ? null : this.getCard(this.count - 1);
     }
 
+    /**
+     * Holds a wad of cards, where each card is displayed separately.
+     * @param CardType Constructor for the type of card stored in this container. Used to find the card dimensions.
+     * @param width Maximum width of the area that hand cards are displayed in, in centimeters.
+     * @param options Optional configuration options.
+     */
     constructor(CardType: { new(...args: any[]): TCard }, width: number, options?: IHandOptions<TCard>) {
         super(CardType, LinearContainerKind.FirstInLastOut, options?.orientation, options?.autoSort);
     

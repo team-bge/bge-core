@@ -4,6 +4,7 @@ export * from "./cardcontainer.js";
 export * from "./deck.js";
 export * from "./delay.js";
 export * from "./display.js";
+export * from "./displaycontainer.js";
 export * from "./game.js";
 export * from "./hand.js";
 export * from "./image.js";
