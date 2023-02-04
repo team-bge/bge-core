@@ -39,7 +39,7 @@ export type Clickable = GameObject | Button;
 /**
  * Types of value that van be embedded in a message.
  */
-export type MessageEmbed = string | boolean | number | ITextEmbeddable;
+export type MessageEmbed = string | boolean | number | ITextEmbeddable | readonly MessageEmbed[];
 
 /**
  * Describes a message displayed at the top of the screen. Can include embedded buttons or other objects.
