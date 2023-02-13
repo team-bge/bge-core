@@ -1,21 +1,23 @@
 {
   "name": "bge-core",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Core TypeScript library for writing games.",
   "dependencies": {
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
-    "copyfiles": "^2.4.1",
     "rimraf": "^3.0.2",
-    "typescript": "^4.9.4",
-    "yarn": "^1.22.19"
+    "typescript": "^4.9.4"
   },
-  "main": "index.js",
+  "main": "dist/index.js",
+  "files": [
+    "README.md",
+    "dist/*.js",
+    "dist/*.d.ts"
+  ],
   "scripts": {
     "clean": "rimraf dist/*",
-    "copy-files": "copyfiles package.json README.md dist/",
-    "build": "tsc && yarn copy-files"
+    "build": "tsc"
   },
   "repository": {
     "type": "git",

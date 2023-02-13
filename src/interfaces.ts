@@ -37,7 +37,7 @@ export interface IGameResult {
 export type Clickable = GameObject | Button;
 
 /**
- * Types of value that van be embedded in a message.
+ * Types of value that can be embedded in a message.
  */
 export type MessageEmbed = string | boolean | number | ITextEmbeddable | readonly MessageEmbed[];
 
