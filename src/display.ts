@@ -64,6 +64,11 @@ export class RenderContext {
      */
     readonly newParentMap: ParentMap;
 
+    /**
+     * @internal
+     */
+    readonly noAnimations: boolean;
+
     private readonly _oldParentMap: ParentMap;
 
     private readonly _parentViews: Map<Object, IView>;
@@ -85,10 +90,11 @@ export class RenderContext {
     /**
      * @internal 
      */
-    constructor(player: Player, oldParentMap: ParentMap) {
+    constructor(player: Player, oldParentMap?: ParentMap) {
         this.player = player;
+        this.noAnimations = oldParentMap == null;
 
-        this._oldParentMap = oldParentMap;
+        this._oldParentMap = oldParentMap ?? new Map();
         this.newParentMap = new Map();
 
         this._parentViews = new Map();
@@ -136,7 +142,7 @@ export class RenderContext {
             oldParentInfo = this._oldParentMap.get(object);
             this.newParentMap.set(object, { parent: parent, childId: childId, localPosition: options?.localPosition, localRotation: options?.localRotation });
             
-            if (isInternal && oldParentInfo?.parent === parent) {
+            if (isInternal && (this.noAnimations || oldParentInfo?.parent === parent)) {
                 return;
             }
             
@@ -170,7 +176,7 @@ export class RenderContext {
             (view as ILabelView).label = options.label;
         }
 
-        if (object instanceof GameObject) {
+        if (object instanceof GameObject && !this.noAnimations) {
             if (oldParentInfo?.parent !== parent && view.type == ViewType.Card) {
                 view.origin = {
                     containerId: oldParentInfo == null ? undefined : this.getParentId(oldParentInfo.parent),

@@ -3,6 +3,7 @@ import { Game } from "./game.js";
 import { Clickable, Message } from "./interfaces.js";
 import { GameObject } from "./object.js";
 import { Player } from "./player.js";
+import { ReplayEventType } from "./replay.js";
 import { Prompt, PromptKind } from "./views.js";
 
 interface IPromptInfo {
@@ -202,7 +203,7 @@ export class PromptHelper {
      */
     click<TValue>(object: GameObject, options: IReturnClickOptions<TValue> & IObjectClickOptions): Promise<TValue>;
     
-    click<TObject extends Clickable, TValue>(object: TObject,
+    async click<TObject extends Clickable, TValue>(object: TObject,
         options?: (IButtonClickOptions | IObjectClickOptions) & (IReturnClickOptions<TValue> | {})): Promise<TObject | TValue> {
         if (options?.if === false) {
             return Promise.reject("Prompt condition is false");
@@ -228,41 +229,45 @@ export class PromptHelper {
         };
 
         const group = this.game.promiseGroup;
-
-        const promise = new Promise<TObject | TValue>((resolve, reject) => {
-            promptInfo.resolve = () => {
-                if (this.remove(object, index)) {
-                    console.log(`Resolving ${index} (${PromptHelper.messageToString(promptInfo.message)})`);
-                    group?.itemResolved();
-                    resolve(value);
-                }
-            },
-
-            promptInfo.reject = (reason?: any) => {
-                if (this.remove(object, index)) {
-                    console.log(`Rejecting ${index} (${PromptHelper.messageToString(promptInfo.message)})`);
-
-                    try {
-                        group?.itemRejected(reason);
-                    } finally {
-                        reject(reason);
-                    }
-                }
-            }
-        });
     
         this._promptsByObject.set(object, promptInfo);
         this._promptsByIndex.set(index, promptInfo);
 
-        group?.catch(reason => {
-            promptInfo.reject(reason);
-        });
-
-        if (this._promptsByIndex.has(index)) {
-            this.game.dispatchUpdateView();
+        if (!await this.game.replay.pendingEvent(ReplayEventType.PromptResponse, this._player.index, index)) {
+            const promise = new Promise<void>((resolve, reject) => {
+                promptInfo.resolve = () => {
+                    if (this.remove(object, index)) {
+                        resolve();
+                    }
+                };
+    
+                promptInfo.reject = (reason?: any) => {
+                    if (this.remove(object, index)) {
+                        reject(reason);
+                    }
+                };
+            });
+            
+            group?.catch(promptInfo.reject);
+    
+            if (this.game.replay.isRecording && this._promptsByIndex.has(index)) {
+                this.game.dispatchUpdateView();
+            }
+    
+            try {
+                await promise;
+                this.game.replay.writeEvent(ReplayEventType.PromptResponse, this._player.index, index);
+            } catch (e) {
+                group?.itemRejected(e);
+                throw e;
+            }
+        } else if (!this.remove(object, index)) {
+            throw new Error("Resolved an invalid prompt");
         }
 
-        return promise;
+        group?.itemResolved();
+
+        return value;
     }
 
     /**

@@ -2,9 +2,10 @@ import { Button } from "./button.js";
 import { RenderContext } from "./display.js";
 import { PromiseGroup } from "./internal.js";
 import { GameObject } from "./object.js";
+import { IReplayData, Replay } from "./replay.js";
 import { Color, GameView, TextEmbedView } from "./views.js";
 
-export const API_VERSION = 1;
+export const API_VERSION = 2;
 
 /**
  * Information configuring a player, including their name.
@@ -47,13 +48,22 @@ export type MessageEmbed = string | boolean | number | ITextEmbeddable | readonl
 export type Message = string | { format: string, args?: MessageEmbed[] };
 
 /**
+ * @internal
+ */
+export interface IRunConfig {
+    players: IPlayerConfig[];
+    replay?: IReplayData;
+    onUpdateViews?: { (gameViews: GameView[]): void };
+}
+
+/**
  * Base interface for a custom game. You'll want to extend @see Game<TPlayer> instead.
  */
 export interface IGame {
     /**
      * @internal
      */
-    run(players: IPlayerConfig[], onUpdateViews?: { (gameViews: GameView[]): void }): Promise<IGameResult>;
+    run(config: IRunConfig): Promise<IGameResult>;
 
     /**
      * @internal
@@ -69,6 +79,11 @@ export interface IGame {
      * @internal
      */
     get promiseGroup(): PromiseGroup | null;
+
+    /**
+     * @internal
+     */
+    get replayData(): IReplayData;
 }
 
 /**

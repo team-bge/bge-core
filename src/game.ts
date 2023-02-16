@@ -1,6 +1,6 @@
 import { Delay } from "./delay.js";
 import { RenderContext } from "./display.js";
-import { IGame, IGameResult, IPlayerConfig } from "./interfaces.js";
+import { IGame, IGameResult, IPlayerConfig, IRunConfig } from "./interfaces.js";
 import { AllGroup, AnyGroup, PromiseGroup } from "./internal.js";
 import { Footprint } from "./object.js";
 import { Player } from "./player.js";
@@ -9,6 +9,7 @@ import { MessageBar } from "./messagebar.js";
 import { CameraView, GameView, TableView, ViewType } from "./views.js";
 import { Zone } from "./zone.js";
 import { Arrangement, DisplayContainer, IDisplayChild } from "./displaycontainer.js";
+import { IReplayData, Replay } from "./replay.js";
 
 export interface IZoneCameraOptions {
     zoom?: number;
@@ -28,13 +29,13 @@ export interface IPlayerZoneOptions {
 /**
  * Base class for a custom game, using a custom Player type.
  */
-export abstract class Game<TPlayer extends Player> implements IGame {
+export abstract class Game<TPlayer extends Player = Player> implements IGame {
     private readonly _PlayerType: { new(): TPlayer };
     private _players: TPlayer[];
     private _actionIndex: number;
 
     private _onUpdateViews?: { (gameViews: GameView[]): void };
-    private _scheduledUpdateView: boolean;
+    private _scheduledUpdateView = false;
 
     private readonly _promiseGroups: (PromiseGroup | null)[] = [];
 
@@ -68,6 +69,11 @@ export abstract class Game<TPlayer extends Player> implements IGame {
     readonly children: DisplayContainer;
 
     /**
+     * @internal
+     */
+    readonly replay: Replay;
+
+    /**
      * Base constructor for `Game<TPlayer>`. You need to pass in your player type here so that BGE knows how to make instances of it.
      * 
      * @param PlayerType Constructor for your custom player type.
@@ -78,6 +84,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
         this.delay = new Delay(this);
         this.random = new Random(this);
         this.message = new MessageBar(this);
+        this.replay = new Replay(this);
         this.children = new DisplayContainer();
 
         this.children.addProperties(this);
@@ -91,21 +98,51 @@ export abstract class Game<TPlayer extends Player> implements IGame {
     }
 
     /**
-     * Called exactly once by a host to run a game.
-     * @param players Information about who's playing.
-     * @param onUpdateViews Callback that will be invoked when the game renders a new view for each player.
+     * Information describing inputs fed to the game so far. Can be passed to {@see Game.run(config)} to
+     * resume a suspended game, or recreate the final state of a completed game.
      */
-    async run(players: IPlayerConfig[], onUpdateViews?: { (gameViews: GameView[]): void }): Promise<IGameResult> {
-        this._players = [];
-        this._onUpdateViews = onUpdateViews;
+    get replayData(): IReplayData {
+        return {
+            seed: this.random.seed,
+            events: [...this.replay.events]
+        };
+    }
 
-        for (let i = 0; i < players.length; ++i) {
+    /**
+     * Called exactly once by a host to run a game.
+     * @param config Configuration containing info like player count and names
+     */
+    async run(config: IRunConfig): Promise<IGameResult> {
+        const seed = config.replay != null
+            ? config.replay.seed
+            : `EqCaDdMmVfLDjzGH ${new Date().toISOString()} ${(Math.random() * 4294967296).toString(16)}`;
+
+        this.random.initialize(seed);
+
+        this._players = [];
+        this._onUpdateViews = config.onUpdateViews;
+
+        for (let i = 0; i < config.players.length; ++i) {
             const player = new this._PlayerType();
-            player._init(this, i, players[i]);
+            player._init(this, i, config.players[i]);
             this._players.push(player);
         }
 
-        const result = await this.onRun();
+        let runPromise: Promise<IGameResult>;
+
+        if (config.replay != null) {
+            console.log(`Replay playback started (${config.replay.events.length} events)`);
+
+            const replayPromise = this.replay.run(config.replay);
+            runPromise = this.onRun();
+            await replayPromise;
+
+            console.log("Replay playback ended");
+        } else {
+            runPromise = this.onRun();
+        }
+
+        const result = await runPromise;
 
         this.dispatchUpdateView();
 
@@ -196,7 +233,7 @@ export abstract class Game<TPlayer extends Player> implements IGame {
 
     private render(playerIndex?: number): GameView {
         const player = playerIndex !== undefined ? this.players[playerIndex] : null;
-        const ctx = new RenderContext(player, player._oldParentMap ?? new Map());
+        const ctx = new RenderContext(player, player._oldParentMap);
 
         player._oldParentMap = ctx.newParentMap;
 

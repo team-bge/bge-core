@@ -1,13 +1,16 @@
-import { IGame } from "./interfaces.js";
+import { Game } from "./game.js";
+import { ReplayEventType } from "./replay.js";
 
 /**
  * Helper with methods to suspend the game for various amounts of time.
  */
 export class Delay {
-    private readonly _game: IGame;
+    private readonly _game: Game<any>;
+    private _nextIndex: number;
 
-    constructor(game: IGame) {
+    constructor(game: Game<any>) {
         this._game = game;
+        this._nextIndex = 0;
     }
 
     /**
@@ -39,20 +42,24 @@ export class Delay {
      * @param value How long to delay for, in seconds.
      * @returns A promise that fulfils after the given time.
      */
-    seconds(value: number): Promise<void> {
-        this._game.dispatchUpdateView();
-
+    async seconds(value: number): Promise<void> {
+        const index = this._nextIndex++;
+        
         const group = this._game.promiseGroup;
 
-        return new Promise((resolve, reject) => {
-            group?.catch(reason => {
-                reject(reason);
-            });
+        if (!await this._game.replay.pendingEvent(ReplayEventType.DelayComplete, index)) {
+            if (this._game.replay.isRecording) {
+                this._game.dispatchUpdateView();
+            }
 
-            setTimeout(() => {
-                group?.itemResolved();
-                resolve();
-            }, value * 1000)
-        });
+            await new Promise((resolve, reject) => {
+                group?.catch(reject);
+                setTimeout(resolve, value * 1000);
+            });
+    
+            this._game.replay.writeEvent(ReplayEventType.DelayComplete, index);
+        }
+        
+        group?.itemResolved();
     }
 }
