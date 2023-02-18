@@ -1,15 +1,17 @@
 import { RenderContext } from "./display.js";
+import { DisplayContainer } from "./displaycontainer.js";
 import { ITextEmbeddable } from "./interfaces.js";
 import { Footprint, GameObject } from "./object.js";
 import { CardView, ImageView, TextEmbedView, ViewType } from "./views.js";
 
-export interface ICardFace {
+export class CardFace {
     image?: ImageView;
 }
 
 const cardWidthKey = Symbol("width");
 const cardHeightKey = Symbol("height");
 const cardThicknessKey = Symbol("thickness");
+const cardCornerRadiusKey = Symbol("cornerRadius");
 
 /**
  * Describes whether a card is face up or down.
@@ -46,6 +48,43 @@ export interface ICardDimensions {
      * Thickness of the card in centimeters.
      */
     thickness: number;
+
+    /**
+     * Corner radius of the card in centimeters.
+     */
+    cornerRadius: number;
+}
+
+/**
+ * Specify the width of a custom card class.
+ * @param cm Width in centimeters.
+ */
+export function width(cm: number): ClassDecorator {
+    return Reflect.metadata(cardWidthKey, cm);
+}
+
+/**
+ * Specify the height of a custom card class.
+ * @param cm Height in centimeters.
+ */
+export function height(cm: number): ClassDecorator {
+    return Reflect.metadata(cardHeightKey, cm);
+}
+
+/**
+ * Specify the thickness of a custom card class.
+ * @param cm Thickness in centimeters.
+ */
+export function thickness(cm: number): ClassDecorator {
+    return Reflect.metadata(cardThicknessKey, cm);
+}
+
+/**
+ * Specify the corner radius of a custom card class.
+ * @param cm Radius in centimeters.
+ */
+export function cornerRadius(cm: number): ClassDecorator {
+    return Reflect.metadata(cardCornerRadiusKey, cm);
 }
 
 /**
@@ -55,30 +94,6 @@ export interface ICardDimensions {
  */
 export class Card extends GameObject implements ITextEmbeddable {
     /**
-     * Specify the width of a custom card class.
-     * @param cm Width in centimeters.
-     */
-    static width(cm: number): ClassDecorator {
-        return Reflect.metadata(cardWidthKey, cm);
-    }
-
-    /**
-     * Specify the height of a custom card class.
-     * @param cm Height in centimeters.
-     */
-    static height(cm: number): ClassDecorator {
-        return Reflect.metadata(cardHeightKey, cm);
-    }
-
-    /**
-     * Specify the thickness of a custom card class.
-     * @param cm Thickness in centimeters.
-     */
-    static thickness(cm: number): ClassDecorator {
-        return Reflect.metadata(cardThicknessKey, cm);
-    }
-
-    /**
      * Get the dimensions of a card class, as specified by `width` / `height` / `thickness` decorators.
      * @param CardType Type of card to get the dimensions of.
      * @returns Width, height, and thickness of the card in centimeters.
@@ -87,7 +102,8 @@ export class Card extends GameObject implements ITextEmbeddable {
         return {
             width: Reflect.getMetadata(cardWidthKey, CardType) ?? 10,
             height: Reflect.getMetadata(cardHeightKey, CardType) ?? 10,
-            thickness: Reflect.getMetadata(cardThicknessKey, CardType) ?? 0.02
+            thickness: Reflect.getMetadata(cardThicknessKey, CardType) ?? 0.02,
+            cornerRadius: Reflect.getMetadata(cardCornerRadiusKey, CardType) ?? 0.25
         };
     }
 
@@ -107,19 +123,31 @@ export class Card extends GameObject implements ITextEmbeddable {
     readonly thickness: number;
 
     /**
+     * Corner radius of the card in centimeters.
+     */
+    readonly cornerRadius: number;
+
+    /**
      * Stores graphical information about the front face of the card, as seen if the card isn't hidden.
      */
-    front: ICardFace = {};
+    readonly front = new CardFace();
     
     /**
      * Stores graphical information about the front face of the card, as seen if the card is hidden.
      */
-    hidden: ICardFace = {};
+    readonly hidden = new CardFace();
     
     /**
      * Stores graphical information about the back face of the card.
      */
-    back: ICardFace = {};
+    readonly back = new CardFace();
+
+    /**
+     * @summary Contains child objects that are displayed on top of this card.
+     * @description This will also contain objects from `@display()` annotated properties,
+     * using the property keys as names.
+     */
+    readonly children = new DisplayContainer();
 
     constructor() {
         super();
@@ -129,6 +157,9 @@ export class Card extends GameObject implements ITextEmbeddable {
         this.width = dims.width;
         this.height = dims.height;
         this.thickness = dims.thickness;
+        this.cornerRadius = dims.cornerRadius;
+
+        this.children.addProperties(this);
     }
 
     override get footprint(): Footprint {
@@ -138,8 +169,8 @@ export class Card extends GameObject implements ITextEmbeddable {
         };
     }
     
-    render(ctx: RenderContext): CardView {
-        return {
+    override render(ctx: RenderContext): CardView {
+        let view = {
             type: ViewType.Card,
 
             prompt: ctx.player?.prompt.get(this),
@@ -147,12 +178,20 @@ export class Card extends GameObject implements ITextEmbeddable {
             front: ctx.isHidden ? this.hidden.image : this.front.image,
             back: this.back.image,
 
-            cornerRadius: 0.25,
-
             width: this.width,
             height: this.height,
-            thickness: this.thickness
-        };
+            thickness: this.thickness,
+            cornerRadius: this.cornerRadius,
+
+            children: this.children.count === 0 ? undefined : []
+        } as CardView;
+        
+        if (this.children.count > 0) {
+            ctx.setParentView(this, view);
+            this.children.render(ctx, this, view.children);
+        }
+
+        return view;
     }
     
     renderTextEmbed(ctx: RenderContext): TextEmbedView {

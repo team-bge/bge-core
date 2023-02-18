@@ -65,8 +65,12 @@ export abstract class CardContainer<TCard extends Card> extends GameObject imple
      * @param card Card to add.
      */
     add(card: TCard): void {
-        card._lastActionIndex = Internal.getNextActionIndex();
-        this.onAdd(card);
+        if (card instanceof Card) {
+            card._lastActionIndex = Internal.getNextActionIndex();
+            this.onAdd(card);
+        } else {
+            throw new Error("Expected a card");
+        }
     }
 
     /**

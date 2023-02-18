@@ -1,8 +1,9 @@
 import "reflect-metadata";
+import { Card } from "./card.js";
 import { IDisplayChild } from "./displaycontainer.js";
 
 import { ITextEmbeddable } from "./interfaces.js";
-import { Footprint, GameObject } from "./object.js";
+import { GameObject } from "./object.js";
 import { Player } from "./player.js";
 import { ILabelView, ITransformView, IView, Origin, TextEmbedView, Vector3, ViewType } from "./views.js";
 
@@ -23,16 +24,27 @@ export interface IDisplayOptions {
     label?: string;
 
     /**
-     * If true, the identity of this object will only be displayed to the owner.
-     * If undefined, this value is inherited from the parent object.
+     * Set of players for which the identity of this object should be hidden. Opposite of revealedFor.
+     * This mainly affects cards, making them display their "hidden" face rather than "front" face.
      */
-    isHidden?: boolean;
+    hiddenFor?: Player[];
+
+    /**
+     * Set of players for which the identity of this object is revealed. Opposite of hiddenFor.
+     * Defaults to everyone, unless hiddenFor is given.
+     */
+    revealedFor?: Player[];
+
+    /**
+     * Set of players for which this object is fully invisible. Opposite of visibleFor.
+     */
+    invisibleFor?: Player[]
     
     /**
-     * Sets which player will always see the identity of this object, even if `isHidden` is true.
-     * If undefined, this value is inherited from the parent object.
+     * Set of players for which this object is visible. Opposite of invisibleFor.
+     * Defaults to everyone, unless invisibleFor is given.
      */
-    owner?: Player;
+    visibleFor?: Player[]
 
     /**
      * Offset in centimeters, relative to the parent transform.
@@ -77,7 +89,6 @@ export class RenderContext {
     private readonly _origins: [actionIndex: number, origin: Origin][];
 
     private _isHidden: boolean;
-    private _owner: Player;
 
     /**
      * If true, objects should be rendered in a hidden state. For example,
@@ -103,7 +114,6 @@ export class RenderContext {
         this._origins = [];
 
         this._isHidden = false;
-        this._owner = null;
     }
 
     /**
@@ -138,24 +148,48 @@ export class RenderContext {
         let view: IView;
         let oldParentInfo: IParentInfo;
 
+        let localPosition = options?.localPosition;
+
+        if (localPosition?.y == null && object instanceof Card) {
+            localPosition ??= {};
+            localPosition.y = object.thickness * 0.5;
+        }
+
         if (object instanceof GameObject) {
             oldParentInfo = this._oldParentMap.get(object);
-            this.newParentMap.set(object, { parent: parent, childId: childId, localPosition: options?.localPosition, localRotation: options?.localRotation });
+            this.newParentMap.set(object, { parent: parent, childId: childId, localPosition: localPosition, localRotation: options?.localRotation });
             
             if (isInternal && (this.noAnimations || oldParentInfo?.parent === parent)) {
                 return;
             }
             
-            const oldOwner = this._owner;
             const wasHidden = this._isHidden;
 
-            this._owner = options?.owner ?? oldOwner;
-            this._isHidden = (options?.isHidden ?? wasHidden) && this._owner != this.player;
+            if (this.player != null) {
+                if (options?.invisibleFor != null && options.invisibleFor.includes(this.player)) {
+                    return null;
+                }
 
-            view = object.render(this);
+                if (options?.visibleFor != null && !options.visibleFor.includes(this.player)) {
+                    return null;
+                }
 
-            this._owner = oldOwner;
-            this._isHidden = wasHidden;
+                if (options?.hiddenFor != null) {
+                    this._isHidden = options.hiddenFor.includes(this.player);
+                }
+                
+                if (options?.revealedFor != null) {
+                    this._isHidden = !options.revealedFor.includes(this.player);
+                }
+            }
+
+            try {
+                view = object.render(this);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                this._isHidden = wasHidden;
+            }
         } else {
             view = {
                 type: ViewType.Text,
@@ -163,9 +197,13 @@ export class RenderContext {
             };
         }
 
+        if (view == null) {
+            return null;
+        }
+
         // TODO: we're assuming the view won't render with a transform
         if (options?.localPosition != null) {
-            (view as ITransformView).localPosition = options.localPosition;
+            (view as ITransformView).localPosition = localPosition;
         }
 
         if (options?.localRotation != null) {
@@ -229,13 +267,17 @@ export class RenderContext {
                 continue;
             }
 
-            let obj = typeof child.object === "function" ? child.object() : child.object;
+            const obj = typeof child.object === "function" ? child.object() : child.object;
 
             if (obj == null) {
                 continue;
             }
 
-            views.push(this.renderChild(obj, parent, child.childId, child.options));
+            const childView = this.renderChild(obj, parent, child.childId, child.options);
+
+            if (childView != null) {
+                views.push(childView);
+            }
         }
 
         return views;

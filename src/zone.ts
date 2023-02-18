@@ -57,7 +57,7 @@ export class Zone extends GameObject {
         this.height = height;
     }
 
-    render(ctx: RenderContext): IView {
+    override render(ctx: RenderContext): IView {
         const view: ZoneView = {
             type: ViewType.Zone,
             

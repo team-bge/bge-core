@@ -1,5 +1,5 @@
 import { Delay } from "./delay.js";
-import { RenderContext } from "./display.js";
+import { IDisplayOptions, RenderContext } from "./display.js";
 import { IGame, IGameResult, IPlayerConfig, IRunConfig } from "./interfaces.js";
 import { AllGroup, AnyGroup, PromiseGroup } from "./internal.js";
 import { Footprint } from "./object.js";
@@ -163,7 +163,10 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
             {
                 avoid: options?.avoid,
                 arrangement: options?.arrangement,
-                childOptions: this.players.map(x => ({ isHidden: options?.isHidden ?? false, owner: x, label: x.name }))
+                childOptions: this.players.map(x => ({
+                    revealedFor: options?.isHidden ?? false ? [x] : undefined,
+                    label: x.name
+                } as IDisplayOptions))
             });
 
         // Set up cameras

@@ -72,6 +72,7 @@ const displayKey = Symbol("display");
 
 /**
  * Decorates a property to be displayed as a child of the containing object.
+ * This is only fully supported with readonly or getter properties.
  * Supported for `GameObject` values, or `string` / `number` values to display them as text.
  * @param options Optional positioning and styling options.
  */
@@ -87,6 +88,14 @@ export class DisplayContainer {
     private readonly _children = new Map<string, IDisplayChild>();
 
     private readonly _pendingPropertyParents: Object[] = [];
+
+    /**
+     * Total number of child objects added to this container.
+     */
+    get count(): number {
+        this.finishAddingProperties();
+        return this._children.size;
+    }
 
     /**
      * Get a child by name.

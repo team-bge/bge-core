@@ -42,7 +42,7 @@ export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
         return this.count == 0 ? null : this.getCard(this.count - 1);
     }
 
-    render(ctx: RenderContext): DeckView {
+    override render(ctx: RenderContext): DeckView {
         const dims = this.cardDimensions;
 
         const view: DeckView = {
@@ -67,7 +67,7 @@ export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
                 ctx.renderInternalChild(this.getCard(i), this, view, {
                     localPosition: { y: dims.thickness * (i + 0.5) },
                     localRotation: orientation == CardOrientation.FaceUp ? undefined : { z: 180 },
-                    isHidden: orientation == CardOrientation.FaceDown
+                    revealedFor: orientation == CardOrientation.FaceDown ? [] : undefined
                 });
             }
 
@@ -75,7 +75,7 @@ export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
             view.topCard = ctx.renderChild(this.getCard(this.count - 1), this, this.getChildId(this.count - 1), {
                 localPosition: { y: dims.thickness * (this.count - 0.5) },
                 localRotation: topOrientation == CardOrientation.FaceUp ? undefined : { z: 180 },
-                isHidden: topOrientation == CardOrientation.FaceDown
+                revealedFor: topOrientation == CardOrientation.FaceDown ? [] : undefined
             }) as CardView;
         }
 

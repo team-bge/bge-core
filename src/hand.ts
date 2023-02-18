@@ -101,7 +101,7 @@ export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
         this.alignment = options?.alignment ?? HandAlignment.Center;
     }
 
-    render(ctx: RenderContext): HandView {
+    override render(ctx: RenderContext): HandView {
         const dims = this.cardDimensions;
 
         const view: HandView = {
@@ -146,7 +146,7 @@ export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
                 const cardView = ctx.renderChild(this.getCard(i), this, this.getChildId(i), {
                     localPosition: { x: dims.width * 0.5 - this.width * 0.5 + (this.width - innerWidth) * pivot + i * dx, y: dims.thickness * (i + 0.5), z: isSelected ? 1.0 : undefined },
                     localRotation: orientation == CardOrientation.FaceUp ? undefined : { z: 180 },
-                    isHidden: orientation == CardOrientation.FaceDown ? true : undefined
+                    revealedFor: orientation == CardOrientation.FaceDown ? [] : undefined
                 }) as CardView;
 
                 view.cards.push(cardView);
