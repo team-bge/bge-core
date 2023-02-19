@@ -68,16 +68,21 @@ export interface IRangeDisplayOptions {
     childOptions?: IDisplayOptions | IDisplayOptions[];
 }
 
-const displayKey = Symbol("display");
+const displayOptionsKey = Symbol("display:options");
+const displayListKey = Symbol("display:list");
 
 /**
  * Decorates a property to be displayed as a child of the containing object.
- * This is only fully supported with readonly or getter properties.
  * Supported for `GameObject` values, or `string` / `number` values to display them as text.
  * @param options Optional positioning and styling options.
  */
 export function display(options?: IDisplayOptions) : PropertyDecorator {
-    return Reflect.metadata(displayKey, options ?? { });
+    return (target, propertyKey) => {
+        Reflect.defineMetadata(displayOptionsKey, options ?? { }, target, propertyKey);
+        const displayList = Reflect.getOwnMetadata(displayListKey, target.constructor) ?? [];
+        displayList.push(propertyKey);
+        Reflect.defineMetadata(displayListKey, displayList, target.constructor);
+    };
 }
 
 /**
@@ -87,13 +92,10 @@ export class DisplayContainer {
     private _nextChildId = 0x10000;
     private readonly _children = new Map<string, IDisplayChild>();
 
-    private readonly _pendingPropertyParents: Object[] = [];
-
     /**
      * Total number of child objects added to this container.
      */
     get count(): number {
-        this.finishAddingProperties();
         return this._children.size;
     }
 
@@ -111,8 +113,6 @@ export class DisplayContainer {
     get(name: string, index: number): IDisplayChild;
 
     get(name: string, index?: number): IDisplayChild {
-        this.finishAddingProperties();
-
         if (index == null) {
             return this._children.get(name);
         } else {
@@ -128,8 +128,6 @@ export class DisplayContainer {
      * @returns Reference to an object containing the added child, along with its display options.
      */
     add(name: string, object: GameObject | { (): GameObject }, options?: IDisplayOptions): IDisplayChild {
-        this.finishAddingProperties();
-
         if (this._children.has(name)) {
             throw new Error("A child already exists with that name");
         }
@@ -155,7 +153,6 @@ export class DisplayContainer {
     addRange(name: string,
         objects: GameObject[],
         options?: IRangeDisplayOptions): IDisplayChild[] {
-        this.finishAddingProperties();
 
         const footprints = objects.map(x => x.footprint ?? { width: 0, height: 0 });
         const arrangement = DisplayContainer.generateArrangement(footprints, options?.avoid,
@@ -197,36 +194,31 @@ export class DisplayContainer {
      * @param parent Object to search through the properties of.
      */
     addProperties(parent: Object): void {
-        this._pendingPropertyParents.push(parent);
-    }
+        const displayList = Reflect.getOwnMetadata(displayListKey, Object.getPrototypeOf(parent).constructor);
+        if (displayList == null || displayList.length === 0) {
+            return;
+        }
 
-    private finishAddingProperties(): void {
-        while (this._pendingPropertyParents.length > 0) {
-            const parent = this._pendingPropertyParents.shift();
+        for (let key of displayList) {
+            const options: IDisplayOptions = Reflect.getMetadata(displayOptionsKey, parent, key);
 
-            for (let container of [parent, Object.getPrototypeOf(parent)]) {
-                for (let key of Object.getOwnPropertyNames(container)) {
-                    const options: IDisplayOptions = Reflect.getMetadata(displayKey, parent, key);
-    
-                    if (options == null) {
-                        continue;
-                    }
-                    
-                    let value: any;
-                    
-                    try {
-                        value = (parent as any)[key];
-                    } catch (e) {
-                        value = null;
-                    }
-        
-                    if (typeof value !== "function") {
-                        value = () => (parent as any)[key];
-                    }
-    
-                    this.add(key, value, options);
-                }
+            if (options == null) {
+                continue;
             }
+            
+            let value: any;
+            
+            try {
+                value = (parent as any)[key];
+            } catch (e) {
+                value = null;
+            }
+
+            if (typeof value !== "function") {
+                value = () => (parent as any)[key];
+            }
+
+            this.add(key, value, options);
         }
     }
 
@@ -399,7 +391,6 @@ export class DisplayContainer {
     }
 
     render(ctx: RenderContext, parent: Object, views?: IView[]): IView[] {
-        this.finishAddingProperties();
         return ctx.renderChildren(this._children.values(), parent, views);
     }
 }
