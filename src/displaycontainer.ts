@@ -188,6 +188,44 @@ export class DisplayContainer {
     }
 
     /**
+     * Remove the named child. Returns true if the child existed.
+     * @param name Name of the child given when it was added.
+     */
+    remove(name: string): boolean;
+
+    /**
+     * Remove the given child object. Returns true if the child existed.
+     * @param object Child object to remove.
+     */
+    remove(object: GameObject): boolean;
+
+    remove(nameOrObject: string | GameObject): boolean {
+        if (typeof nameOrObject === "string") {
+            return this._children.delete(nameOrObject);
+        }
+
+        for (let [name, info] of this._children) {
+            if (info.object == nameOrObject) {
+                return this._children.delete(name);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Removes all of the given child objects.
+     * @param objects Array of objects to remove.
+     */
+    removeRange(objects: GameObject[]): void {
+        for (let [name, info] of [...this._children]) {
+            if (info.object instanceof GameObject && objects.includes(info.object)) {
+                this._children.delete(name);
+            }
+        }
+    }
+
+    /**
      * @summary Adds all properties of `parent` annotated with `@display()`.
      * @description The value of each property will be fetched each time this container is rendered,
      * so new values assigned after `addProperties()` is called will always be displayed.
