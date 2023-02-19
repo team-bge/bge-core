@@ -5,6 +5,7 @@ import { IDisplayChild } from "./displaycontainer.js";
 import { ITextEmbeddable } from "./interfaces.js";
 import { GameObject } from "./object.js";
 import { Player } from "./player.js";
+import { Token } from "./token.js";
 import { ILabelView, ITransformView, IView, Origin, TextEmbedView, Vector3, ViewType } from "./views.js";
 
 interface IParentInfo {
@@ -150,9 +151,14 @@ export class RenderContext {
 
         let localPosition = options?.localPosition;
 
-        if (localPosition?.y == null && object instanceof Card) {
-            localPosition ??= {};
-            localPosition.y = object.thickness * 0.5;
+        if (localPosition?.y == null) {
+            if (object instanceof Card) {
+                localPosition ??= {};
+                localPosition.y = object.thickness * 0.5;
+            } else if (object instanceof Token) {
+                localPosition ??= {};
+                localPosition.y = object.scale * 0.5;
+            }
         }
 
         if (object instanceof GameObject) {

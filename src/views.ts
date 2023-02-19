@@ -7,7 +7,8 @@ export type IView =
     | CardView
     | DeckView
     | HandView
-    | TextView;
+    | TextView
+    | TokenView;
 
 export interface GameView {
     table: TableView;
@@ -20,24 +21,27 @@ export interface TableView extends IContainerView {
     type: ViewType.Table;
     childId?: number;
     containerId?: number;
+    allowAnimations?: boolean;
     origin?: Origin;
     prompt?: Prompt;
     tempChildren?: IView[];
 }
 
-export interface ZoneView extends IOutlinedView, ILabelView, ITransformView, IContainerView, ISizedView {
+export interface ZoneView extends IOutlinedView, ILabelView, IColorView, ITransformView, IContainerView, IRectangularView {
     type: ViewType.Zone;
     childId?: number;
     containerId?: number;
+    allowAnimations?: boolean;
     origin?: Origin;
     prompt?: Prompt;
     tempChildren?: IView[];
 }
 
-export interface CardView extends IThicknessView, ITransformView, IContainerView, ISizedView {
+export interface CardView extends IThicknessView, IColorView, ITransformView, IContainerView, IRectangularView {
     type: ViewType.Card;
     childId?: number;
     containerId?: number;
+    allowAnimations?: boolean;
     origin?: Origin;
     prompt?: Prompt;
     tempChildren?: IView[];
@@ -46,10 +50,11 @@ export interface CardView extends IThicknessView, ITransformView, IContainerView
     back?: ImageView;
 }
 
-export interface DeckView extends IOutlinedView, ILabelView, ITransformView, ISizedView {
+export interface DeckView extends IOutlinedView, ILabelView, ITransformView, IRectangularView {
     type: ViewType.Deck;
     childId?: number;
     containerId?: number;
+    allowAnimations?: boolean;
     origin?: Origin;
     prompt?: Prompt;
     tempChildren?: IView[];
@@ -58,25 +63,37 @@ export interface DeckView extends IOutlinedView, ILabelView, ITransformView, ISi
     showCount: boolean;
 }
 
-export interface HandView extends IOutlinedView, ILabelView, ITransformView, ISizedView {
+export interface HandView extends IOutlinedView, ILabelView, ITransformView, IRectangularView {
     type: ViewType.Hand;
     childId?: number;
     containerId?: number;
+    allowAnimations?: boolean;
     origin?: Origin;
     prompt?: Prompt;
     tempChildren?: IView[];
     cards: CardView[];
 }
 
-export interface TextView extends ILabelView, ITransformView {
+export interface TextView extends ILabelView, IColorView, ITransformView {
     type: ViewType.Text;
     childId?: number;
     containerId?: number;
+    allowAnimations?: boolean;
     origin?: Origin;
     prompt?: Prompt;
     tempChildren?: IView[];
     format?: string;
     embeds?: TextEmbedView[];
+}
+
+export interface TokenView extends IScaledView, IColorView, ITransformView {
+    type: ViewType.Token;
+    childId?: number;
+    containerId?: number;
+    allowAnimations?: boolean;
+    origin?: Origin;
+    prompt?: Prompt;
+    tempChildren?: IView[];
 }
 
 export interface MessageView {
@@ -103,6 +120,7 @@ export enum ViewType {
     Deck = 3,
     Hand = 4,
     Text = 5,
+    Token = 6,
 }
 
 export interface Origin {
@@ -127,12 +145,16 @@ export interface ILabelView {
     label?: string;
 }
 
+export interface IColorView {
+    color?: Color;
+}
+
 export interface ITransformView {
     localPosition?: Vector3;
     localRotation?: Vector3;
 }
 
-export interface ISizedView {
+export interface IRectangularView {
     width: number;
     height: number;
 }
@@ -148,6 +170,7 @@ export interface ImageView {
     row?: number;
     col?: number;
     aspectRatio?: number;
+    color?: Color;
 }
 
 export interface TextEmbedView {
@@ -156,6 +179,10 @@ export interface TextEmbedView {
     prompt?: Prompt;
     items?: TextEmbedView[];
     color?: Color;
+}
+
+export interface IScaledView {
+    scale?: number;
 }
 
 export interface Vector3 {

@@ -13,6 +13,7 @@ export * from "./object.js";
 export * from "./player.js";
 export * from "./prompt.js";
 export * from "./random.js";
+export * from "./token.js";
 export * from "./messagebar.js";
 export * from "./views.js";
 export * from "./zone.js";
