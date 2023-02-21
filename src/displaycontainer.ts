@@ -1,56 +1,13 @@
 import { IDisplayOptions, RenderContext } from "./display.js";
-import { Footprint, GameObject } from "./object.js";
+import { Bounds } from "./math.js";
+import { GameObject } from "./object.js";
 import { Vector3, ITransformView, IView } from "./views.js";
-
-interface IDisplayChild {
-    childId: number;
-    options: IDisplayOptions;
-}
-
-/**
- * Ways to arrange a set of child objects.
- */
-export enum Arrangement {
-    /**
-     * Guess the best arrangement based on object count and dimensions.
-     */
-    Auto,
-
-    /**
-     * Put all the objects in a line on the x-axis.
-     */
-    Linear,
-
-    /**
-     * Put the objects around the edges of a rectangle.
-     */
-    Rectangular,
-
-    /**
-     * Put the N objects around the edges of an N-sided polygon.
-     */
-    Radial
-}
 
 /**
  * Options to use with `DisplayContainer.addRange(objects)`.
  */
 export interface IRangeDisplayOptions {
-    /**
-     * Optional area to avoid when positioning child objects.
-     */
-    avoid?: Footprint;
-
-    /**
-     * Strategy to use when arranging child objects, defaults to `Auto`.
-     */
-    arrangement?: Arrangement;
-
-    /**
-     * Either a single `IDisplayOptions` that will be used with every child object,
-     * or an array containing separate options for each child.
-     */
-    childOptions?: IDisplayOptions | IDisplayOptions[];
+   
 }
 
 const displayOptionsKey = Symbol("display:options");
@@ -70,25 +27,38 @@ export function display(options?: IDisplayOptions) : PropertyDecorator {
     };
 }
 
+interface IChildProperty {
+    getter: { (): GameObject | Iterable<GameObject> };
+    options: IDisplayOptions;
+}
+
 /**
  * Container for dynamically adding, removing, and repositioning objects for display.
  */
 export class DisplayContainer {
-    private _nextChildId = 0;
-    private readonly _children = new Map<GameObject | { (): GameObject }, IDisplayChild>();
+    private readonly _dynamicChildren = new Map<GameObject, IDisplayOptions>();
+    private readonly _childProperties = new Map<string, IChildProperty>;
 
     /**
      * Total number of child objects added to this container.
+     * This doesn't include children retrieved through {@link addProperties} / {@link display}.
      */
     get count(): number {
-        return this._children.size;
+        return this._dynamicChildren.size;
     }
 
-    getOptions(child: GameObject | { (): GameObject }): IDisplayOptions {
-        return this._children.get(child)?.options;
+    getOptions(key: string): IDisplayOptions;
+    getOptions(child: GameObject): IDisplayOptions;
+    
+    getOptions(arg: string | GameObject): IDisplayOptions {
+        if (typeof arg === "string") {
+            return this._childProperties.get(arg)?.options;
+        } else {
+            return this._dynamicChildren.get(arg);
+        }
     }
 
-    add(object: GameObject | { (): GameObject }, options?: IDisplayOptions): IDisplayOptions {
+    add(object: GameObject, options?: IDisplayOptions): IDisplayOptions {
         if (this._children.get(object)) {
             throw new Error("Object is already a child of this container.");
         }
@@ -103,40 +73,6 @@ export class DisplayContainer {
         return info.options;
     }
     
-    addRange<T extends GameObject>(objects: T[], options?: IRangeDisplayOptions): { child: T, display: IDisplayOptions }[] {
-        const footprints = objects.map(x => x.footprint ?? { width: 0, height: 0 });
-        const arrangement = DisplayContainer.generateArrangement(footprints, options?.avoid,
-            options?.arrangement ?? Arrangement.Auto);
-
-        const children: { child: T, display: IDisplayOptions }[] = [];
-
-        if (Array.isArray(options?.childOptions) && options.childOptions.length !== objects.length) {
-            throw new Error("Expected childOptions array length to match objects array.");
-        }
-
-        for (let i = 0; i < objects.length; ++i) {
-            const object = objects[i];
-            const transform = arrangement[i];
-
-            let childOptions: IDisplayOptions;
-
-            if (options?.childOptions != null) {
-                const baseOptions = Array.isArray(options.childOptions)
-                    ? options.childOptions[i]
-                    : options.childOptions;
-
-                childOptions = { ...baseOptions };
-                DisplayContainer.applyTransform(baseOptions, transform, childOptions);
-            } else {
-                childOptions = { ...transform };
-            }
-
-            children.push({ child: object, display: this.add(object, childOptions) });
-        }
-
-        return children;
-    }
-
     /**
      * Remove the given child object. Returns true if the child was in this container.
      * @param object Child object to remove.
@@ -146,12 +82,23 @@ export class DisplayContainer {
     }
 
     /**
-     * Removes all of the given child objects.
-     * @param objects Array of objects to remove.
+     * Removes all child objects from this container.
      */
-    removeRange(objects: GameObject[]): void {
-        for (let child of objects) {
-            this.remove(child);
+    removeAll(): void;
+
+    /**
+     * Removes all of the given child objects.
+     * @param objects Iterable of objects to remove.
+     */
+    removeAll(objects: Iterable<GameObject>): void;
+    
+    removeAll(objects?: Iterable<GameObject>): void {
+        if (objects === undefined) {
+            this._children.clear();
+        } else {
+            for (let child of objects) {
+                this.remove(child);
+            }
         }
     }
 

@@ -27,7 +27,7 @@ export interface TableView extends IContainerView {
     tempChildren?: IView[];
 }
 
-export interface ZoneView extends IOutlinedView, ILabelView, IColorView, ITransformView, IContainerView, IRectangularView {
+export interface ZoneView extends IRectangularView, IOutlinedView, ILabelView, IColorView, ITransformView, IContainerView {
     type: ViewType.Zone;
     childId?: number;
     containerId?: number;
@@ -37,7 +37,7 @@ export interface ZoneView extends IOutlinedView, ILabelView, IColorView, ITransf
     tempChildren?: IView[];
 }
 
-export interface CardView extends IThicknessView, IColorView, ITransformView, IContainerView, IRectangularView {
+export interface CardView extends IRectangularView, IThicknessView, IColorView, ITransformView, IContainerView {
     type: ViewType.Card;
     childId?: number;
     containerId?: number;
@@ -50,7 +50,7 @@ export interface CardView extends IThicknessView, IColorView, ITransformView, IC
     back?: ImageView;
 }
 
-export interface DeckView extends IOutlinedView, ILabelView, ITransformView, IRectangularView {
+export interface DeckView extends IRectangularView, IOutlinedView, ILabelView, ITransformView {
     type: ViewType.Deck;
     childId?: number;
     containerId?: number;
@@ -63,7 +63,7 @@ export interface DeckView extends IOutlinedView, ILabelView, ITransformView, IRe
     showCount: boolean;
 }
 
-export interface HandView extends IOutlinedView, ILabelView, ITransformView, IRectangularView {
+export interface HandView extends IRectangularView, IOutlinedView, ILabelView, ITransformView {
     type: ViewType.Hand;
     childId?: number;
     containerId?: number;
@@ -137,8 +137,14 @@ export interface Prompt {
     index: number;
 }
 
+export interface IRectangularView {
+    width: number;
+    height: number;
+}
+
 export interface IOutlinedView {
     outlineStyle: OutlineStyle;
+    outlineColor?: Color;
 }
 
 export interface ILabelView {
@@ -152,11 +158,6 @@ export interface IColorView {
 export interface ITransformView {
     localPosition?: Vector3;
     localRotation?: Vector3;
-}
-
-export interface IRectangularView {
-    width: number;
-    height: number;
 }
 
 export interface IThicknessView {

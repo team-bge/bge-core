@@ -1,21 +1,6 @@
 import { RenderContext } from "./display.js";
+import { Bounds } from "./math.js";
 import { IView } from "./views.js";
-
-/**
- * Describes how much space something takes up on the table,
- * represented as a 2D box with a width and height.
- */
-export interface Footprint {
-    /**
-     * Size along the X-axis.
-     */
-    width: number;
-
-    /**
-     * Size along the Z-axis.
-     */
-    height: number;
-}
 
 /**
  * Base class for all gameplay related objects and containers.
@@ -35,7 +20,9 @@ export abstract class GameObject {
     abstract render(ctx: RenderContext): IView;
     
     /**
-     * How much space does this object take up on the table.
+     * How much space does this object take up.
      */
-    abstract get footprint(): Footprint | undefined;
+    get localBounds(): Bounds | undefined {
+        return undefined;
+    }
 }

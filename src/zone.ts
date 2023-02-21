@@ -1,7 +1,7 @@
 import { RenderContext } from "./display.js";
 import { DisplayContainer } from "./displaycontainer.js";
 import { Footprint, GameObject } from "./object.js";
-import { IView, OutlineStyle, ViewType, ZoneView } from "./views.js";
+import { Color, IView, OutlineStyle, ViewType, ZoneView } from "./views.js";
 
 /**
  * @summary Represents a rectangular region on the table, with an outline and optional label.
@@ -27,7 +27,12 @@ export class Zone extends GameObject {
     /**
      * Appearance of the outline around this zone when it is the target of a prompt.
      */
-    promptOutlineStyle: OutlineStyle = OutlineStyle.Solid;
+    promptOutlineStyle: OutlineStyle = OutlineStyle.SolidFilled;
+
+    /**
+     * Optional color of the outline around this zone. Defaults to white.
+     */
+    outlineColor?: Color;
 
     /**
      * Optional label text to describe this zone to players.
@@ -80,6 +85,8 @@ export class Zone extends GameObject {
             height: this.height,
 
             outlineStyle: prompt != null ? this.promptOutlineStyle : this.outlineStyle,
+            outlineColor: this.outlineColor,
+            
             label: this.label,
 
             children: []

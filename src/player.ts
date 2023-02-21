@@ -1,4 +1,4 @@
-import { ParentMap, RenderContext } from "./display.js";
+import { ChildIndexMap, ParentMap, RenderContext } from "./display.js";
 import { IGame, IPlayerConfig, ITextEmbeddable } from "./interfaces.js";
 import { PromptHelper } from "./prompt.js";
 import { CameraView, TextEmbedView } from "./views.js";
@@ -13,6 +13,14 @@ export class Player implements ITextEmbeddable {
     private _config: IPlayerConfig;
     private _game: IGame;
 
+    /**
+     * @internal
+     */
+    _oldChildIndexMap?: ChildIndexMap;
+    
+    /**
+     * @internal
+     */
     _oldParentMap?: ParentMap;
 
     readonly prompt = new PromptHelper(this);

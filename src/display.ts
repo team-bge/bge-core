@@ -1,21 +1,49 @@
 import "reflect-metadata";
-import { Card } from "./card.js";
 
 import { ITextEmbeddable } from "./interfaces.js";
+import { Bounds, Vector3 } from "./math.js";
 import { GameObject } from "./object.js";
 import { Player } from "./player.js";
-import { Token } from "./token.js";
-import { ILabelView, ITransformView, IView, Origin, TextEmbedView, Vector3, ViewType } from "./views.js";
-
-interface IParentInfo {
-    parent: Object;
-    childId?: number;
-    localPosition?: Vector3;
-    localRotation?: Vector3;
-};
+import { ILabelView, ITransformView, IView, Origin, TextEmbedView, ViewType } from "./views.js";
 
 /**
- * Options for positioning and styling an object.
+ * Ways to arrange a set of child objects.
+ */
+export enum Arrangement {
+    /**
+     * Guess the best arrangement based on object count and dimensions.
+     * Respects the {@link IDisplayOptions#avoid} setting.
+     */
+    Auto,
+
+    /**
+     * Put all the objects in a line on the x-axis.
+     */
+    LinearX,
+    
+    /**
+     * Put all the objects in a line on the y-axis.
+     */
+    LinearY,
+    
+    /**
+     * Put all the objects in a line on the z-axis.
+     */
+    LinearZ,
+
+    /**
+     * Put the objects around the edges of a rectangle. Respects the {@link IDisplayOptions#avoid} setting.
+     */
+    Rectangular,
+
+    /**
+     * Put the N objects around the edges of an N-sided polygon. Respects the {@link IDisplayOptions#avoid} setting.
+     */
+    Radial
+}
+
+/**
+ * Options for positioning and styling an object or array of objects.
  */
 export interface IDisplayOptions {
     /**
@@ -24,25 +52,25 @@ export interface IDisplayOptions {
     label?: string;
 
     /**
-     * Set of players for which the identity of this object should be hidden. Opposite of revealedFor.
+     * Set of players for which the identity of this object should be hidden. Opposite of {@link revealedFor}.
      * This mainly affects cards, making them display their "hidden" face rather than "front" face.
      */
     hiddenFor?: Player[];
 
     /**
-     * Set of players for which the identity of this object is revealed. Opposite of hiddenFor.
-     * Defaults to everyone, unless hiddenFor is given.
+     * Set of players for which the identity of this object is revealed. Opposite of {@link hiddenFor}.
+     * Defaults to everyone, unless {@link hiddenFor} is given.
      */
     revealedFor?: Player[];
 
     /**
-     * Set of players for which this object is fully invisible. Opposite of visibleFor.
+     * Set of players for which this object is fully invisible. Opposite of {@link visibleFor}.
      */
     invisibleFor?: Player[]
     
     /**
-     * Set of players for which this object is visible. Opposite of invisibleFor.
-     * Defaults to everyone, unless invisibleFor is given.
+     * Set of players for which this object is visible. Opposite of {@link invisibleFor}.
+     * Defaults to everyone, unless {@link invisibleFor} is given.
      */
     visibleFor?: Player[]
 
@@ -55,12 +83,73 @@ export interface IDisplayOptions {
      * Euler angles in degrees, relative to the parent rotation.
      */
     localRotation?: Vector3;
+
+    /**
+     * For displaying an array of objects, strategy to use when arranging. Defaults to {@link Arrangement.Auto}.
+     */
+    arrangement?: Arrangement;
+
+    /**
+     * For displaying an array of objects, optional area to avoid when arranging.
+     */
+    avoid?: Bounds;
+
+    /**
+     * For displaying an array of objects, either a single {@link IDisplayOptions} that will 
+     * be used with every child object, or an array containing separate options for each child.
+     */
+    childOptions?: IDisplayOptions | IDisplayOptions[];
 }
+
+interface IParentInfo {
+    parent: Object;
+    localPosition?: Vector3;
+    localRotation?: Vector3;
+};
 
 /**
  * @internal
  */
 export type ParentMap = Map<GameObject, IParentInfo>;
+
+interface IParentChildIndices {
+    nextChildIndex: number;
+    prev?: Map<GameObject, number>;
+    next: Map<GameObject, number>;
+}
+
+export class ChildIndexMap {
+    private readonly _map = new Map<(GameObject | GameObject[]), IParentChildIndices>();
+
+    get(parent: GameObject | GameObject[], child: GameObject): number {
+        let parentChildIndices = this._map.get(parent);
+
+        if (parentChildIndices == null) {
+            parentChildIndices = {
+                nextChildIndex: 0,
+                prev: null,
+                next: new Map()
+            };
+
+            this._map.set(parent, parentChildIndices);
+        }
+
+        let index = parentChildIndices.next.get(child);
+        if (index == null) {
+            index = parentChildIndices.prev?.get(child) ?? parentChildIndices.nextChildIndex++;
+            parentChildIndices.next.set(child, index);
+        }
+
+        return index;
+    }
+    
+    forgetUnused(): void {
+        for (let [_, info] of this._map) {
+            info.prev = info.next;
+            info.next = new Map();
+        }
+    }
+}
 
 /**
  * Context used when rendering objects, containing information about visibility and ownership.
@@ -75,6 +164,11 @@ export class RenderContext {
      * Player that a view is being rendered for.
      */
     readonly player: Player | null;
+
+    /**
+     * @internal
+     */
+    readonly childIndexMap: ChildIndexMap;
 
     /**
      * @internal
@@ -106,9 +200,11 @@ export class RenderContext {
     /**
      * @internal 
      */
-    constructor(player: Player, oldParentMap?: ParentMap) {
+    constructor(player: Player, oldChildIndexMap?: ChildIndexMap, oldParentMap?: ParentMap) {
         this.player = player;
         this.noAnimations = oldParentMap == null;
+
+        this.childIndexMap = oldChildIndexMap ?? new ChildIndexMap();
 
         this._oldParentMap = oldParentMap ?? new Map();
         this.newParentMap = new Map();
@@ -142,27 +238,18 @@ export class RenderContext {
         this._parentViews.set(parent, view);
     }
 
-    private _renderChild(object: GameObject | string | number, parent: Object, childId: number, options?: IDisplayOptions): IView;
+    private _renderChild(object: GameObject | string | number, parent: Object, parentView: null, options?: IDisplayOptions): IView;
     private _renderChild(object: GameObject | string | number, parent: Object, parentView: IView, options?: IDisplayOptions): void;
-    private _renderChild(object: GameObject | string | number, parent: Object, childIdOrParentView: number | IView, options?: IDisplayOptions): IView | void {
-        const isInternal = typeof childIdOrParentView !== "number";
-
-        const childId: number | null = isInternal ? null : childIdOrParentView;
-        const parentView: IView | null = isInternal ? childIdOrParentView : null;
+    private _renderChild(object: GameObject | string | number, parent: Object, parentView?: IView, options?: IDisplayOptions): IView | void {
+        const isInternal = parentView == null;
 
         let view: IView;
         let oldParentInfo: IParentInfo;
 
         let localPosition = options?.localPosition;
 
-        if (localPosition?.y == null) {
-            if (object instanceof Card) {
-                localPosition ??= {};
-                localPosition.y = object.thickness * 0.5;
-            } else if (object instanceof Token) {
-                localPosition ??= {};
-                localPosition.y = object.scale * 0.5;
-            }
+        if (localPosition?.y == null && object instanceof GameObject && object.localBounds != null) {
+            localPosition = (localPosition ?? Vector3.ZERO).withZ(-object.localBounds.min.z);
         }
 
         if (object instanceof GameObject) {

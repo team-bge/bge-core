@@ -1,15 +1,15 @@
 import { Delay } from "./delay.js";
-import { IDisplayOptions, RenderContext } from "./display.js";
-import { IGame, IGameResult, IPlayerConfig, IRunConfig } from "./interfaces.js";
+import { Arrangement, IDisplayOptions, RenderContext } from "./display.js";
+import { IGame, IGameResult, IRunConfig } from "./interfaces.js";
 import { AllGroup, AnyGroup, PromiseGroup } from "./internal.js";
-import { Footprint } from "./object.js";
 import { Player } from "./player.js";
 import { Random } from "./random.js";
 import { MessageBar } from "./messagebar.js";
 import { CameraView, GameView, TableView, ViewType } from "./views.js";
 import { Zone } from "./zone.js";
-import { Arrangement, DisplayContainer } from "./displaycontainer.js";
+import { DisplayContainer } from "./displaycontainer.js";
 import { IReplayData, Replay } from "./replay.js";
+import { Bounds } from "./math.js";
 
 export interface IZoneCameraOptions {
     zoom?: number;
@@ -18,7 +18,7 @@ export interface IZoneCameraOptions {
 }
 
 export interface IPlayerZoneOptions {
-    avoid?: Footprint;
+    avoid?: Bounds;
     arrangement?: Arrangement;
     isHidden?: boolean;
 
@@ -236,9 +236,14 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
 
     private render(playerIndex?: number): GameView {
         const player = playerIndex !== undefined ? this.players[playerIndex] : null;
-        const ctx = new RenderContext(player, player._oldParentMap);
+        const ctx = new RenderContext(player, player?._oldChildIndexMap, player?._oldParentMap);
 
-        player._oldParentMap = ctx.newParentMap;
+        if (player != null) {
+            player._oldChildIndexMap = ctx.childIndexMap;
+            player._oldParentMap = ctx.newParentMap;
+        }
+        
+        ctx.childIndexMap.forgetUnused();
 
         const table: TableView = {
             type: ViewType.Table,
@@ -252,7 +257,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
 
         return {
             hasPrompts: player.prompt.count > 0,
-            messages: this.message.render(new RenderContext(player, new Map())),
+            messages: this.message.render(new RenderContext(player)),
             table: table,
             cameras: player.cameras
         };
