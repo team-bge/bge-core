@@ -22,12 +22,23 @@ export class Zone extends GameObject {
     /**
      * Appearance of the outline around this zone.
      */
-    outlineStyle: OutlineStyle = OutlineStyle.Dashed;
+    outlineStyle: OutlineStyle = OutlineStyle.Solid;
+
+    /**
+     * Appearance of the outline around this zone when it is the target of a prompt.
+     */
+    promptOutlineStyle: OutlineStyle = OutlineStyle.Solid;
 
     /**
      * Optional label text to describe this zone to players.
      */
     label?: string;
+
+    /**
+     * If true, this zone will only be displayed if it contains visible children, or
+     * is the target of a prompt for the viewing player.
+     */
+    hideIfEmpty = false;
 
     /**
      * @summary Contains child objects that are displayed inside this zone.
@@ -58,15 +69,17 @@ export class Zone extends GameObject {
     }
 
     override render(ctx: RenderContext): IView {
+        const prompt = ctx.player?.prompt.get(this);
+
         const view: ZoneView = {
             type: ViewType.Zone,
             
-            prompt: ctx.player?.prompt.get(this),
+            prompt: prompt,
 
             width: this.width,
             height: this.height,
 
-            outlineStyle: this.outlineStyle,
+            outlineStyle: prompt != null ? this.promptOutlineStyle : this.outlineStyle,
             label: this.label,
 
             children: []
@@ -75,6 +88,13 @@ export class Zone extends GameObject {
         ctx.setParentView(this, view);
 
         this.children.render(ctx, this, view.children);
+
+        if (this.hideIfEmpty
+            && view.children.length === 0
+            && (view.tempChildren?.length ?? 0) === 0
+            && view.prompt == null) {
+            return null;
+        }
 
         return view;
     }

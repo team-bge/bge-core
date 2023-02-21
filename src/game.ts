@@ -8,7 +8,7 @@ import { Random } from "./random.js";
 import { MessageBar } from "./messagebar.js";
 import { CameraView, GameView, TableView, ViewType } from "./views.js";
 import { Zone } from "./zone.js";
-import { Arrangement, DisplayContainer, IDisplayChild } from "./displaycontainer.js";
+import { Arrangement, DisplayContainer } from "./displaycontainer.js";
 import { IReplayData, Replay } from "./replay.js";
 
 export interface IZoneCameraOptions {
@@ -156,9 +156,9 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
     
     addPlayerZones<TZone extends Zone>(
         zoneMap: { (player: TPlayer): TZone },
-        options?: IPlayerZoneOptions): IDisplayChild[] {
+        options?: IPlayerZoneOptions): { child: TZone, display: IDisplayOptions }[] {
         
-        const zones = this.children.addRange("__playerZones",
+        const zones = this.children.addRange(
             this.players.map(zoneMap),
             {
                 avoid: options?.avoid,
@@ -172,12 +172,12 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
         // Set up cameras
 
         const playerCameras = options?.playerCamera === null ? []
-            : zones.map(child => {
+            : zones.map(info => {
                 return {
                     zoom: options?.playerCamera?.zoom ?? 0.3,
                     pitch: options?.playerCamera?.pitch ?? 75,
-                    target: child.options.localPosition,
-                    yaw: (options?.playerCamera?.yaw ?? 0) + child.options.localRotation?.y
+                    target: info.display.localPosition,
+                    yaw: (options?.playerCamera?.yaw ?? 0) + info.display.localRotation?.y
                 } as CameraView;
             });
 

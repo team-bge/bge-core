@@ -2,24 +2,9 @@ import { IDisplayOptions, RenderContext } from "./display.js";
 import { Footprint, GameObject } from "./object.js";
 import { Vector3, ITransformView, IView } from "./views.js";
 
-/**
- * Describes how a child object is displayed.
- */
-export interface IDisplayChild {
-    /**
-     * Child object, or a function that returns the child object.
-     */
-    object: GameObject | { (): GameObject };
-
-    /**
-     * Positioning, style, and visibility options.
-     */
-    options: IDisplayOptions;
-
-    /**
-     * Ordinal for this child, to help renderers maintain identity when animating.
-     */
+interface IDisplayChild {
     childId: number;
+    options: IDisplayOptions;
 }
 
 /**
@@ -89,8 +74,8 @@ export function display(options?: IDisplayOptions) : PropertyDecorator {
  * Container for dynamically adding, removing, and repositioning objects for display.
  */
 export class DisplayContainer {
-    private _nextChildId = 0x10000;
-    private readonly _children = new Map<string, IDisplayChild>();
+    private _nextChildId = 0;
+    private readonly _children = new Map<GameObject | { (): GameObject }, IDisplayChild>();
 
     /**
      * Total number of child objects added to this container.
@@ -99,66 +84,31 @@ export class DisplayContainer {
         return this._children.size;
     }
 
-    /**
-     * Get a child by name.
-     * @param name Name used when adding this child.
-     */
-    get(name: string): IDisplayChild;
-
-    /**
-     * Get a child added with `addRange()`, by name and index.
-     * @param name Name used when adding an array of children.
-     * @param index Index into the array of children.
-     */
-    get(name: string, index: number): IDisplayChild;
-
-    get(name: string, index?: number): IDisplayChild {
-        if (index == null) {
-            return this._children.get(name);
-        } else {
-            return this._children.get(`${name}[${index}]`);
-        }
+    getOptions(child: GameObject | { (): GameObject }): IDisplayOptions {
+        return this._children.get(child)?.options;
     }
 
-    /**
-     * Add a named child object, with optional display options.
-     * @param name Name of the child, to be used later with `get(name)`
-     * @param object Child object to add.
-     * @param options Optional display options to position and style the object.
-     * @returns Reference to an object containing the added child, along with its display options.
-     */
-    add(name: string, object: GameObject | { (): GameObject }, options?: IDisplayOptions): IDisplayChild {
-        if (this._children.has(name)) {
-            throw new Error("A child already exists with that name");
+    add(object: GameObject | { (): GameObject }, options?: IDisplayOptions): IDisplayOptions {
+        if (this._children.get(object)) {
+            throw new Error("Object is already a child of this container.");
         }
-
+        
         const info = {
-            object: object,
             childId: this._nextChildId++,
             options: options ?? { }
-        };
+        } as IDisplayChild;
 
-        this._children.set(name, info);
+        this._children.set(object, info);
 
-        return info;
+        return info.options;
     }
     
-    /**
-     * Add a named array of child objects, with optional display options.
-     * @param name Name to give this array of children, to be used later with `get(name, index)`.
-     * @param objects Array of objects to add as children.
-     * @param options Optional options to use when arranging these children.
-     * @returns An array of objects containing each child, with their associated display options.
-     */
-    addRange(name: string,
-        objects: GameObject[],
-        options?: IRangeDisplayOptions): IDisplayChild[] {
-
+    addRange<T extends GameObject>(objects: T[], options?: IRangeDisplayOptions): { child: T, display: IDisplayOptions }[] {
         const footprints = objects.map(x => x.footprint ?? { width: 0, height: 0 });
         const arrangement = DisplayContainer.generateArrangement(footprints, options?.avoid,
             options?.arrangement ?? Arrangement.Auto);
 
-        const children: IDisplayChild[] = [];
+        const children: { child: T, display: IDisplayOptions }[] = [];
 
         if (Array.isArray(options?.childOptions) && options.childOptions.length !== objects.length) {
             throw new Error("Expected childOptions array length to match objects array.");
@@ -181,36 +131,18 @@ export class DisplayContainer {
                 childOptions = { ...transform };
             }
 
-            children.push(this.add(`${name}[${i}]`, object, childOptions));
+            children.push({ child: object, display: this.add(object, childOptions) });
         }
 
         return children;
     }
 
     /**
-     * Remove the named child. Returns true if the child existed.
-     * @param name Name of the child given when it was added.
-     */
-    remove(name: string): boolean;
-
-    /**
-     * Remove the given child object. Returns true if the child existed.
+     * Remove the given child object. Returns true if the child was in this container.
      * @param object Child object to remove.
      */
-    remove(object: GameObject): boolean;
-
-    remove(nameOrObject: string | GameObject): boolean {
-        if (typeof nameOrObject === "string") {
-            return this._children.delete(nameOrObject);
-        }
-
-        for (let [name, info] of this._children) {
-            if (info.object == nameOrObject) {
-                return this._children.delete(name);
-            }
-        }
-
-        return false;
+    remove(object: GameObject | { (): GameObject }): boolean {
+        return this._children.delete(object);
     }
 
     /**
@@ -218,10 +150,8 @@ export class DisplayContainer {
      * @param objects Array of objects to remove.
      */
     removeRange(objects: GameObject[]): void {
-        for (let [name, info] of [...this._children]) {
-            if (info.object instanceof GameObject && objects.includes(info.object)) {
-                this._children.delete(name);
-            }
+        for (let child of objects) {
+            this.remove(child);
         }
     }
 
@@ -256,7 +186,7 @@ export class DisplayContainer {
                 value = () => (parent as any)[key];
             }
 
-            this.add(key, value, options);
+            this.add(value, options);
         }
     }
 
@@ -429,6 +359,22 @@ export class DisplayContainer {
     }
 
     render(ctx: RenderContext, parent: Object, views?: IView[]): IView[] {
-        return ctx.renderChildren(this._children.values(), parent, views);
+        views ??= [];
+
+        for (let [child, info] of this._children) {
+            const obj = typeof child === "function" ? child() : child;
+
+            if (obj == null) {
+                continue;
+            }
+
+            const childView = ctx.renderChild(obj, parent, info.childId, info.options);
+
+            if (childView != null) {
+                views.push(childView);
+            }
+        }
+
+        return views;
     }
 }

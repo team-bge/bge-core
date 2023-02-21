@@ -1,6 +1,5 @@
 import "reflect-metadata";
 import { Card } from "./card.js";
-import { IDisplayChild } from "./displaycontainer.js";
 
 import { ITextEmbeddable } from "./interfaces.js";
 import { GameObject } from "./object.js";
@@ -67,6 +66,11 @@ export type ParentMap = Map<GameObject, IParentInfo>;
  * Context used when rendering objects, containing information about visibility and ownership.
  */
 export class RenderContext {
+    private static readonly _animatingViewTypes = new Set<ViewType>([
+        ViewType.Card,
+        ViewType.Token
+    ]);
+
     /**
      * Player that a view is being rendered for.
      */
@@ -221,7 +225,7 @@ export class RenderContext {
         }
 
         if (object instanceof GameObject && !this.noAnimations) {
-            if (oldParentInfo?.parent !== parent && view.type == ViewType.Card) {
+            if (oldParentInfo?.parent !== parent && RenderContext._animatingViewTypes.has(view.type)) {
                 view.origin = {
                     containerId: oldParentInfo == null ? undefined : this.getParentId(oldParentInfo.parent),
                     childId: oldParentInfo?.childId,
@@ -260,33 +264,6 @@ export class RenderContext {
         if (a == null && b == null) return undefined;
 
         return (a ?? 0) + (b ?? 0);
-    }
-
-    /**
-     * @internal
-     */
-    renderChildren(children: Iterable<IDisplayChild>, parent: Object, views?: IView[]): IView[] {
-        views ??= [];
-
-        for (let child of children) {
-            if (child.object == null) {
-                continue;
-            }
-
-            const obj = typeof child.object === "function" ? child.object() : child.object;
-
-            if (obj == null) {
-                continue;
-            }
-
-            const childView = this.renderChild(obj, parent, child.childId, child.options);
-
-            if (childView != null) {
-                views.push(childView);
-            }
-        }
-
-        return views;
     }
 
     /**
