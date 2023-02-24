@@ -11,6 +11,7 @@ export type IView =
     | TokenView;
 
 export interface GameView {
+    basis: Basis;
     table: TableView;
     messages: MessageView[];
     hasPrompts: boolean;
@@ -18,7 +19,7 @@ export interface GameView {
 }
 
 export interface TableView extends IContainerView {
-    type: ViewType.Table;
+    type: ViewType.TABLE;
     childId?: number;
     containerId?: number;
     allowAnimations?: boolean;
@@ -28,7 +29,7 @@ export interface TableView extends IContainerView {
 }
 
 export interface ZoneView extends IRectangularView, IOutlinedView, ILabelView, IColorView, ITransformView, IContainerView {
-    type: ViewType.Zone;
+    type: ViewType.ZONE;
     childId?: number;
     containerId?: number;
     allowAnimations?: boolean;
@@ -38,7 +39,7 @@ export interface ZoneView extends IRectangularView, IOutlinedView, ILabelView, I
 }
 
 export interface CardView extends IRectangularView, IThicknessView, IColorView, ITransformView, IContainerView {
-    type: ViewType.Card;
+    type: ViewType.CARD;
     childId?: number;
     containerId?: number;
     allowAnimations?: boolean;
@@ -51,7 +52,7 @@ export interface CardView extends IRectangularView, IThicknessView, IColorView, 
 }
 
 export interface DeckView extends IRectangularView, IOutlinedView, ILabelView, ITransformView {
-    type: ViewType.Deck;
+    type: ViewType.DECK;
     childId?: number;
     containerId?: number;
     allowAnimations?: boolean;
@@ -64,7 +65,7 @@ export interface DeckView extends IRectangularView, IOutlinedView, ILabelView, I
 }
 
 export interface HandView extends IRectangularView, IOutlinedView, ILabelView, ITransformView {
-    type: ViewType.Hand;
+    type: ViewType.HAND;
     childId?: number;
     containerId?: number;
     allowAnimations?: boolean;
@@ -75,7 +76,7 @@ export interface HandView extends IRectangularView, IOutlinedView, ILabelView, I
 }
 
 export interface TextView extends ILabelView, IColorView, ITransformView {
-    type: ViewType.Text;
+    type: ViewType.TEXT;
     childId?: number;
     containerId?: number;
     allowAnimations?: boolean;
@@ -87,13 +88,18 @@ export interface TextView extends ILabelView, IColorView, ITransformView {
 }
 
 export interface TokenView extends IScaledView, IColorView, ITransformView {
-    type: ViewType.Token;
+    type: ViewType.TOKEN;
     childId?: number;
     containerId?: number;
     allowAnimations?: boolean;
     origin?: Origin;
     prompt?: Prompt;
     tempChildren?: IView[];
+}
+
+export enum Basis {
+    Y_UP_Z_FORWARD = 0,
+    Y_FORWARD_Z_UP = 1,
 }
 
 export interface MessageView {
@@ -103,7 +109,7 @@ export interface MessageView {
 }
 
 export interface CameraView {
-    target?: Vector3;
+    target?: Vector3View;
     pitch?: number;
     yaw?: number;
     zoom?: number;
@@ -114,20 +120,20 @@ export interface IContainerView {
 }
 
 export enum ViewType {
-    Table = 0,
-    Zone = 1,
-    Card = 2,
-    Deck = 3,
-    Hand = 4,
-    Text = 5,
-    Token = 6,
+    TABLE = 0,
+    ZONE = 1,
+    CARD = 2,
+    DECK = 3,
+    HAND = 4,
+    TEXT = 5,
+    TOKEN = 6,
 }
 
 export interface Origin {
     containerId: number;
     childId?: number;
-    localPosition?: Vector3;
-    localRotation?: Vector3;
+    localPosition?: Vector3View;
+    localRotation?: Vector3View;
     delay?: number;
     duration?: number;
 }
@@ -144,7 +150,7 @@ export interface IRectangularView {
 
 export interface IOutlinedView {
     outlineStyle: OutlineStyle;
-    outlineColor?: Color;
+    outlineColor?: ColorView;
 }
 
 export interface ILabelView {
@@ -152,12 +158,12 @@ export interface ILabelView {
 }
 
 export interface IColorView {
-    color?: Color;
+    color?: ColorView;
 }
 
 export interface ITransformView {
-    localPosition?: Vector3;
-    localRotation?: Vector3;
+    localPosition?: Vector3View;
+    localRotation?: Vector3View;
 }
 
 export interface IThicknessView {
@@ -171,7 +177,7 @@ export interface ImageView {
     row?: number;
     col?: number;
     aspectRatio?: number;
-    color?: Color;
+    color?: ColorView;
 }
 
 export interface TextEmbedView {
@@ -179,31 +185,31 @@ export interface TextEmbedView {
     label?: string;
     prompt?: Prompt;
     items?: TextEmbedView[];
-    color?: Color;
+    color?: ColorView;
 }
 
 export interface IScaledView {
     scale?: number;
 }
 
-export interface Vector3 {
+export interface Vector3View {
     x?: number;
     y?: number;
     z?: number;
 }
 
 export enum PromptKind {
-    Click = 0,
+    CLICK = 0,
 }
 
 export enum OutlineStyle {
-    None = 0,
-    Solid = 1,
-    SolidFilled = 2,
-    Dashed = 3,
+    NONE = 0,
+    SOLID = 1,
+    SOLID_FILLED = 2,
+    DASHED = 3,
 }
 
-export interface Color {
+export interface ColorView {
     r?: number;
     g?: number;
     b?: number;

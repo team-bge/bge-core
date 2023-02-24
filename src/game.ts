@@ -1,38 +1,20 @@
 import { Delay } from "./delay.js";
-import { Arrangement, IDisplayOptions, RenderContext } from "./display.js";
-import { IGame, IGameResult, IRunConfig } from "./interfaces.js";
+import { RenderContext } from "./display.js";
+import { IGame, IGameResult, IPlayerConfig, IRunConfig } from "./interfaces.js";
 import { AllGroup, AnyGroup, PromiseGroup } from "./internal.js";
 import { Player } from "./player.js";
 import { Random } from "./random.js";
 import { MessageBar } from "./messagebar.js";
-import { CameraView, GameView, TableView, ViewType } from "./views.js";
-import { Zone } from "./zone.js";
+import { Basis, GameView, TableView, ViewType } from "./views.js";
 import { DisplayContainer } from "./displaycontainer.js";
 import { IReplayData, Replay } from "./replay.js";
-import { Bounds } from "./math.js";
-
-export interface IZoneCameraOptions {
-    zoom?: number;
-    pitch?: number;
-    yaw?: number;
-}
-
-export interface IPlayerZoneOptions {
-    avoid?: Bounds;
-    arrangement?: Arrangement;
-    isHidden?: boolean;
-
-    globalCameras?: IZoneCameraOptions[];
-    playerCamera?: IZoneCameraOptions;
-}
 
 /**
  * Base class for a custom game, using a custom Player type.
  */
 export abstract class Game<TPlayer extends Player = Player> implements IGame {
-    private readonly _PlayerType: { new(): TPlayer };
+    private readonly _PlayerType: { new(game: IGame, index: number, config: IPlayerConfig): TPlayer };
     private _players: TPlayer[];
-    private _actionIndex: number;
 
     private _onUpdateViews?: { (gameViews: GameView[]): void };
     private _scheduledUpdateView = false;
@@ -78,9 +60,8 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
      * 
      * @param PlayerType Constructor for your custom player type.
      */
-    protected constructor(PlayerType: { new(): TPlayer }) {
+    protected constructor(PlayerType: { new(game: IGame, index: number, config: IPlayerConfig): TPlayer }) {
         this._PlayerType = PlayerType;
-        this._actionIndex = 0;
         this.delay = new Delay(this);
         this.random = new Random(this);
         this.message = new MessageBar(this);
@@ -123,8 +104,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
         this._onUpdateViews = config.onUpdateViews;
 
         for (let i = 0; i < config.players.length; ++i) {
-            const player = new this._PlayerType();
-            player._init(this, i, config.players[i]);
+            const player = new this._PlayerType(this, i, config.players[i]);
             this._players.push(player);
         }
 
@@ -153,52 +133,6 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
      * Override this to implement your game, moving objects around as players respond to prompts.
      */
     protected abstract onRun(): Promise<IGameResult>;
-    
-    addPlayerZones<TZone extends Zone>(
-        zoneMap: { (player: TPlayer): TZone },
-        options?: IPlayerZoneOptions): { child: TZone, display: IDisplayOptions }[] {
-        
-        const zones = this.children.addRange(
-            this.players.map(zoneMap),
-            {
-                avoid: options?.avoid,
-                arrangement: options?.arrangement,
-                childOptions: this.players.map(x => ({
-                    revealedFor: options?.isHidden ?? false ? [x] : undefined,
-                    label: x.name
-                } as IDisplayOptions))
-            });
-
-        // Set up cameras
-
-        const playerCameras = options?.playerCamera === null ? []
-            : zones.map(info => {
-                return {
-                    zoom: options?.playerCamera?.zoom ?? 0.3,
-                    pitch: options?.playerCamera?.pitch ?? 75,
-                    target: info.display.localPosition,
-                    yaw: (options?.playerCamera?.yaw ?? 0) + info.display.localRotation?.y
-                } as CameraView;
-            });
-
-        const globalCameras = options?.globalCameras ?? [{}];
-
-        for (let player of this.players) {
-            for (let globalCamera of globalCameras) {
-                player.cameras.push({
-                    zoom: globalCamera?.zoom ?? 0.4,
-                    pitch: globalCamera?.pitch ?? 85,
-                    yaw: globalCamera?.yaw ?? 0
-                });
-            }
-
-            for (let i = 0; i < playerCameras.length; ++i) {
-                player.cameras.push(playerCameras[(i + player.index) % playerCameras.length]);
-            }
-        }
-
-        return zones;
-    }
 
     /**
      * Called by the host when a player has responded to a prompt for input.
@@ -246,7 +180,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
         ctx.childIndexMap.forgetUnused();
 
         const table: TableView = {
-            type: ViewType.Table,
+            type: ViewType.TABLE,
             children: []
         };
 
@@ -256,6 +190,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
         ctx.processAnimations();
 
         return {
+            basis: Basis.Y_FORWARD_Z_UP,
             hasPrompts: player.prompt.count > 0,
             messages: this.message.render(new RenderContext(player)),
             table: table,

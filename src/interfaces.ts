@@ -1,11 +1,9 @@
 import { Button } from "./button.js";
 import { RenderContext } from "./display.js";
 import { PromiseGroup } from "./internal.js";
-import { GameObject } from "./object.js";
+import { GameObject } from "./objects/object.js";
 import { IReplayData, Replay } from "./replay.js";
-import { Color, GameView, TextEmbedView } from "./views.js";
-
-export const API_VERSION = 2;
+import { ColorView, GameView, TextEmbedView } from "./views.js";
 
 /**
  * Information configuring a player, including their name.
@@ -15,11 +13,6 @@ export interface IPlayerConfig {
      * Player nickname that can be shown to other players.
      */
     name: string;
-
-    /**
-     * Color associated with this player.
-     */
-    color?: Color;
 }
 
 /**

@@ -1,13 +1,15 @@
-import { RenderContext } from "./display.js";
-import { ITextEmbeddable } from "./interfaces.js";
-import { Footprint, GameObject } from "./object.js";
-import { Color, TextEmbedView, TokenView, ViewType } from "./views.js";
+import { RenderContext } from "../display.js";
+import { ITextEmbeddable } from "../interfaces.js";
+import { Bounds, Vector3 } from "../math/index.js";
+import { GameObject } from "./object.js";
+import { TextEmbedView, TokenView, ViewType } from "../views.js";
+import { Color } from "../color.js";
 
 /**
  * Model shape for a {@link Token}.
  */
 export enum TokenShape {
-    Cube
+    CUBE
 }
 
 /**
@@ -31,7 +33,7 @@ export interface ITokenOptions {
     scale?: number;
 
     /**
-     * Model tint color, defaults to `{r: 255, g: 255, b: 255}`.
+     * Model tint color, defaults to white.
      */
     color?: Color;
 }
@@ -66,32 +68,23 @@ export class Token extends GameObject implements ITextEmbeddable {
 
         this.name = options.name ?? "Token";
 
-        this.shape = options.shape ?? TokenShape.Cube;
+        this.shape = options.shape ?? TokenShape.CUBE;
         this.scale = options.scale ?? 1;
-        this.color = options.color == null
-            ? { r: 255, g: 255, b: 255 }
-            : {
-                r: options.color?.r ?? 0,
-                g: options.color?.g ?? 0,
-                b: options.color?.b ?? 0
-            };
+        this.color = options.color ?? Color.WHITE;
     }
 
-    get footprint(): Footprint {
-        return {
-            width: this.scale,
-            height: this.scale
-        };
+    override get localBounds(): Bounds {
+        return new Bounds(new Vector3(this.scale, this.scale, this.scale));
     }
     
     render(ctx: RenderContext): TokenView {
         return {
-            type: ViewType.Token,
+            type: ViewType.TOKEN,
 
             prompt: ctx.player?.prompt.get(this),
 
             scale: this.scale,
-            color: this.color,
+            color: this.color.encoded,
         };
     }
 

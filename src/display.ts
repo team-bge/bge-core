@@ -1,46 +1,11 @@
 import "reflect-metadata";
+import { Arrangement, LinearArrangement } from "./arrangement.js";
 
-import { ITextEmbeddable } from "./interfaces.js";
-import { Bounds, Vector3 } from "./math.js";
-import { GameObject } from "./object.js";
+import { IGame, ITextEmbeddable } from "./interfaces.js";
+import { Rotation, Vector3 } from "./math/index.js";
+import { GameObject } from "./objects/object.js";
 import { Player } from "./player.js";
 import { ILabelView, ITransformView, IView, Origin, TextEmbedView, ViewType } from "./views.js";
-
-/**
- * Ways to arrange a set of child objects.
- */
-export enum Arrangement {
-    /**
-     * Guess the best arrangement based on object count and dimensions.
-     * Respects the {@link IDisplayOptions#avoid} setting.
-     */
-    Auto,
-
-    /**
-     * Put all the objects in a line on the x-axis.
-     */
-    LinearX,
-    
-    /**
-     * Put all the objects in a line on the y-axis.
-     */
-    LinearY,
-    
-    /**
-     * Put all the objects in a line on the z-axis.
-     */
-    LinearZ,
-
-    /**
-     * Put the objects around the edges of a rectangle. Respects the {@link IDisplayOptions#avoid} setting.
-     */
-    Rectangular,
-
-    /**
-     * Put the N objects around the edges of an N-sided polygon. Respects the {@link IDisplayOptions#avoid} setting.
-     */
-    Radial
-}
 
 /**
  * Options for positioning and styling an object or array of objects.
@@ -55,44 +20,39 @@ export interface IDisplayOptions {
      * Set of players for which the identity of this object should be hidden. Opposite of {@link revealedFor}.
      * This mainly affects cards, making them display their "hidden" face rather than "front" face.
      */
-    hiddenFor?: Player[];
+    hiddenFor?: readonly Player[];
 
     /**
      * Set of players for which the identity of this object is revealed. Opposite of {@link hiddenFor}.
      * Defaults to everyone, unless {@link hiddenFor} is given.
      */
-    revealedFor?: Player[];
+    revealedFor?: readonly Player[];
 
     /**
      * Set of players for which this object is fully invisible. Opposite of {@link visibleFor}.
      */
-    invisibleFor?: Player[]
+    invisibleFor?: readonly Player[]
     
     /**
      * Set of players for which this object is visible. Opposite of {@link invisibleFor}.
      * Defaults to everyone, unless {@link invisibleFor} is given.
      */
-    visibleFor?: Player[]
+    visibleFor?: readonly Player[]
 
     /**
      * Offset in centimeters, relative to the parent transform.
      */
-    localPosition?: Vector3;
+    position?: Vector3 | { x?: number, y?: number, z?: number };
 
     /**
      * Euler angles in degrees, relative to the parent rotation.
      */
-    localRotation?: Vector3;
+    rotation?: Rotation | number;
 
     /**
      * For displaying an array of objects, strategy to use when arranging. Defaults to {@link Arrangement.Auto}.
      */
     arrangement?: Arrangement;
-
-    /**
-     * For displaying an array of objects, optional area to avoid when arranging.
-     */
-    avoid?: Bounds;
 
     /**
      * For displaying an array of objects, either a single {@link IDisplayOptions} that will 
@@ -101,27 +61,31 @@ export interface IDisplayOptions {
     childOptions?: IDisplayOptions | IDisplayOptions[];
 }
 
+export type DisplayParent = GameObject | IGame;
+export type DisplayChild = GameObject | { (): string | number };
+
 interface IParentInfo {
-    parent: Object;
+    parent: DisplayParent;
+    childId?: number;
     localPosition?: Vector3;
-    localRotation?: Vector3;
+    localRotation?: Rotation;
 };
 
 /**
  * @internal
  */
-export type ParentMap = Map<GameObject, IParentInfo>;
+export type ParentMap = Map<DisplayChild, IParentInfo>;
 
 interface IParentChildIndices {
     nextChildIndex: number;
-    prev?: Map<GameObject, number>;
-    next: Map<GameObject, number>;
+    prev?: Map<DisplayChild, number>;
+    next: Map<DisplayChild, number>;
 }
 
 export class ChildIndexMap {
-    private readonly _map = new Map<(GameObject | GameObject[]), IParentChildIndices>();
+    private readonly _map = new Map<DisplayParent, IParentChildIndices>();
 
-    get(parent: GameObject | GameObject[], child: GameObject): number {
+    get(parent: DisplayParent, child: DisplayChild): number {
         let parentChildIndices = this._map.get(parent);
 
         if (parentChildIndices == null) {
@@ -155,9 +119,13 @@ export class ChildIndexMap {
  * Context used when rendering objects, containing information about visibility and ownership.
  */
 export class RenderContext {
-    private static readonly _animatingViewTypes = new Set<ViewType>([
-        ViewType.Card,
-        ViewType.Token
+    private static readonly DEFAULT_ARRANGEMENT = new LinearArrangement({
+        axis: "x"
+    });
+
+    private static readonly ANIMATING_VIEW_TYPES = new Set<ViewType>([
+        ViewType.CARD,
+        ViewType.TOKEN
     ]);
 
     /**
@@ -182,8 +150,8 @@ export class RenderContext {
 
     private readonly _oldParentMap: ParentMap;
 
-    private readonly _parentViews: Map<Object, IView>;
-    private readonly _parentIds: Map<Object, number>;
+    private readonly _parentViews: Map<DisplayParent, IView>;
+    private readonly _parentIds: Map<DisplayParent, number>;
 
     private readonly _origins: [actionIndex: number, origin: Origin][];
 
@@ -220,7 +188,7 @@ export class RenderContext {
     /**
      * @internal
      */
-    getParentId(parent: Object): number {
+    getParentId(parent: DisplayParent): number {
         let parentId = this._parentIds.get(parent);
 
         if (parentId == null) {
@@ -234,27 +202,30 @@ export class RenderContext {
     /**
      * @internal
      */
-    setParentView(parent: Object, view: IView): void {
+    setParentView(parent: DisplayParent, view: IView): void {
         this._parentViews.set(parent, view);
     }
 
-    private _renderChild(object: GameObject | string | number, parent: Object, parentView: null, options?: IDisplayOptions): IView;
-    private _renderChild(object: GameObject | string | number, parent: Object, parentView: IView, options?: IDisplayOptions): void;
-    private _renderChild(object: GameObject | string | number, parent: Object, parentView?: IView, options?: IDisplayOptions): IView | void {
-        const isInternal = parentView == null;
-
+    private _renderChild(child: DisplayChild, value: GameObject | number | string, parent: DisplayParent, isInternal: boolean, options?: IDisplayOptions): IView {
         let view: IView;
         let oldParentInfo: IParentInfo;
 
-        let localPosition = options?.localPosition;
+        let localPosition = options?.position == null ? Vector3.ZERO : new Vector3(options.position);
 
-        if (localPosition?.y == null && object instanceof GameObject && object.localBounds != null) {
-            localPosition = (localPosition ?? Vector3.ZERO).withZ(-object.localBounds.min.z);
+        if (value instanceof GameObject && value.localBounds != null) {
+            localPosition = localPosition.sub(new Vector3(0, 0, value.localBounds.min.z));
         }
+        
+        const childId = isInternal ? undefined : this.childIndexMap.get(parent, child);
 
-        if (object instanceof GameObject) {
-            oldParentInfo = this._oldParentMap.get(object);
-            this.newParentMap.set(object, { parent: parent, childId: childId, localPosition: localPosition, localRotation: options?.localRotation });
+        if (value instanceof GameObject) {
+            oldParentInfo = this._oldParentMap.get(value);
+            this.newParentMap.set(value, {
+                parent: parent,
+                childId: childId,
+                localPosition: localPosition,
+                localRotation: RenderContext.asRotation(options?.rotation)
+            });
             
             if (isInternal && (this.noAnimations || oldParentInfo?.parent === parent)) {
                 return;
@@ -281,7 +252,7 @@ export class RenderContext {
             }
 
             try {
-                view = object.render(this);
+                view = value.render(this);
             } catch (e) {
                 console.error(e);
             } finally {
@@ -289,8 +260,8 @@ export class RenderContext {
             }
         } else {
             view = {
-                type: ViewType.Text,
-                format: object.toString()
+                type: ViewType.TEXT,
+                format: value.toString()
             };
         }
 
@@ -298,59 +269,155 @@ export class RenderContext {
             return null;
         }
 
-        // TODO: we're assuming the view won't render with a transform
-        if (options?.localPosition != null) {
+        if (localPosition != null) {
             (view as ITransformView).localPosition = localPosition;
         }
 
-        if (options?.localRotation != null) {
-            (view as ITransformView).localRotation = options.localRotation;
+        if (options?.rotation != null) {
+            (view as ITransformView).localRotation = RenderContext.asRotation(options.rotation).euler;
         }
 
         if (options?.label != null) {
             (view as ILabelView).label = options.label;
         }
 
-        if (object instanceof GameObject && !this.noAnimations) {
-            if (oldParentInfo?.parent !== parent && RenderContext._animatingViewTypes.has(view.type)) {
+        if (value instanceof GameObject && !this.noAnimations) {
+            if (oldParentInfo?.parent !== parent && RenderContext.ANIMATING_VIEW_TYPES.has(view.type)) {
                 view.origin = {
                     containerId: oldParentInfo == null ? undefined : this.getParentId(oldParentInfo.parent),
                     childId: oldParentInfo?.childId,
                     localPosition: oldParentInfo == null ? { y: 100 } : oldParentInfo?.localPosition,
-                    localRotation: oldParentInfo == null ? { x: Math.random() * 360, y: Math.random() * 360, z: Math.random() * 360 } : oldParentInfo?.localRotation
+                    localRotation: oldParentInfo == null ? { x: Math.random() * 360, y: Math.random() * 360, z: Math.random() * 360 } : oldParentInfo?.localRotation?.euler
                 };
 
-                this._origins.push([object._lastActionIndex, view.origin]);
+                this._origins.push([value._lastActionIndex, view.origin]);
             }
         }
 
-        if (isInternal) {
+        view.childId = childId;
+        return view;
+    }
+    
+    /**
+     * @internal
+     */
+    renderChild(child: DisplayChild, parent: DisplayParent, options?: IDisplayOptions): IView;
+    renderChild(child: { (): string | number | GameObject | Iterable<GameObject> }, parent: DisplayParent, options?: IDisplayOptions): IView[];
+
+    renderChild(child: DisplayChild | { (): string | number | GameObject | Iterable<GameObject> }, parent: DisplayParent, options?: IDisplayOptions): IView | IView[] {
+        const value = typeof child === "function"
+            ? child()
+            : child;
+
+        if (value == null) {
+            return;
+        }
+
+        if (typeof value === "string" || typeof value === "number" || value instanceof GameObject) {
+            return this._renderChild(child as DisplayChild, value, parent, false, options);
+        } else {
+            const arrangement = options?.arrangement ?? RenderContext.DEFAULT_ARRANGEMENT;
+            const objects = [...value];
+            const transforms = arrangement.generate(objects.map(x => x.localBounds));
+
+            const views: IView[] = [];
+
+            for (let i = 0; i < objects.length; ++i) {
+                const childOptions = Array.isArray(options?.childOptions)
+                    ? options.childOptions[i]
+                    : options?.childOptions;
+
+                const transform = transforms[i];
+                const localOptions = RenderContext.transformOptions(transform.position, transform.rotation, childOptions);
+
+                views.push(this.renderChild(objects[i], parent, RenderContext.combineOptions(options, localOptions)))
+            }
+
+            return views;
+        }
+    }
+
+    /**
+     * @internal
+     */
+    renderInternalChild(object: GameObject, parent: DisplayParent, parentView: IView, options?: IDisplayOptions): void {
+        const view = this._renderChild(object, object, parent, true, options);
+
+        if (view != null) {
             parentView.tempChildren ??= [];
             parentView.tempChildren.push(view);
-        } else {
-            view.childId = childId;
-            return view;
         }
     }
     
-    /**
-     * @internal
-     */
-    renderChild(object: GameObject, parent: Object, childId: number, options?: IDisplayOptions): IView {
-        return this._renderChild(object, parent, childId, options);
+    static asRotation(value?: Rotation | number): Rotation | null {
+        if (value == null) {
+            return null;
+        } else if (value instanceof Rotation) {
+            return value;
+        } else {
+            return Rotation.z(value);
+        }
     }
 
-    /**
-     * @internal
-     */
-    renderInternalChild(object: GameObject, parent: Object, parentView: IView, options?: IDisplayOptions): void {
-        this._renderChild(object, parent, parentView, options);
+    static asVector(value?: Vector3 | { x?: number, y?: number, z?: number }): Vector3 | null {
+        if (value == null) {
+            return null;
+        } else if (value instanceof Vector3) {
+            return value;
+        } else {
+            return new Vector3(value);
+        }
     }
     
-    static addVectorComponent(a?: number, b?: number): number | undefined {
-        if (a == null && b == null) return undefined;
+    static combineOptions(a?: IDisplayOptions, b?: IDisplayOptions): IDisplayOptions {
+        if (a == null) {
+            return b ?? {};
+        }
 
-        return (a ?? 0) + (b ?? 0);
+        if (b == null) {
+            return a ?? {};
+        }
+
+        const result = RenderContext.transformOptions(
+            RenderContext.asVector(a.position),
+            RenderContext.asRotation(a.rotation), b);
+
+        // TODO: merge hiddenFor / revealedFor / invisibleFor / visibleFor
+
+        return result;
+    }
+
+    static transformOptions(position?: Vector3, rotation?: Rotation, options?: IDisplayOptions): IDisplayOptions {
+        if (options == null) {
+            return {
+                position: position,
+                rotation: rotation
+            };
+        }
+
+        const result = { ...options };
+
+        if (rotation != null) {
+            if (result.position != null) {
+                result.position = rotation.rotate(RenderContext.asVector(result.position));
+            }
+
+            if (result.rotation != null) {
+                result.rotation = rotation.mul(RenderContext.asRotation(result.rotation));
+            } else {
+                result.rotation = rotation;
+            }
+        }
+
+        if (position != null) {
+            if (result.position != null) {
+                result.position = position.add(RenderContext.asVector(result.position));
+            } else {
+                result.position = position;
+            }
+        }
+
+        return result;
     }
 
     /**

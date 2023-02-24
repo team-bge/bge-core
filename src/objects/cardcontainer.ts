@@ -1,7 +1,8 @@
 import { Card, CardComparer, CardOrientation, ICardDimensions } from "./card.js";
-import { Internal } from "./internal.js";
-import { GameObject, Footprint } from "./object.js";
-import { Random } from "./random.js";
+import { Internal } from "../internal.js";
+import { GameObject } from "./object.js";
+import { Random } from "../random.js";
+import { Bounds, Vector3 } from "../math/index.js";
 
 /**
  * Interface for anything that can receive dealt cards.
@@ -147,12 +148,12 @@ export enum LinearContainerKind {
     /**
      * Like a queue.
      */
-    FirstInFirstOut,
+    FIRST_IN_FIRST_OUT,
 
     /**
      * Lile a stack.
      */
-    FirstInLastOut
+    FIRST_IN_LAST_OUT
 }
 
 /**
@@ -162,7 +163,6 @@ interface ILinearContainerCard<TCard extends Card> {
     card: TCard;
     orientation: CardOrientation;
     selected: boolean;
-    childId: number;
 }
 
 /**
@@ -171,8 +171,6 @@ interface ILinearContainerCard<TCard extends Card> {
 export abstract class LinearCardContainer<TCard extends Card> extends CardContainer<TCard> implements Iterable<TCard> {
     private readonly _cards: ILinearContainerCard<TCard>[] = [];
     private readonly _kind: LinearContainerKind;
-
-    private _nextChildId: number = 0;
 
     /**
      * Default orientation of cards added to this container.
@@ -191,7 +189,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      * @param orientation Are newly added cards face up or face down.
      * @param autoSort Optional comparison function to auto-sort newly added cards.
      */
-    constructor(CardType: { new(...args: any[]): TCard }, kind: LinearContainerKind, orientation: CardOrientation = CardOrientation.FaceUp, autoSort?: CardComparer<TCard>) {
+    constructor(CardType: { new(...args: any[]): TCard }, kind: LinearContainerKind, orientation: CardOrientation = CardOrientation.FACE_UP, autoSort?: CardComparer<TCard>) {
         super(CardType);
 
         this._kind = kind;
@@ -202,14 +200,6 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
 
     [Symbol.iterator](): Iterator<TCard> {
         return this._cards.map(x => x.card)[Symbol.iterator]();
-    }
-
-    override get footprint(): Footprint {
-        const cardDims = this.cardDimensions;
-        return {
-            width: cardDims.width + 2,
-            height: cardDims.height + 2
-        };
     }
 
     override get count(): number {
@@ -249,10 +239,6 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      */
     getCard(index: number): TCard {
         return this._cards[index].card;
-    }
-
-    protected getChildId(index: number): number {
-        return this._cards[index].childId;
     }
 
     protected getProperties(indexOrCard: number | TCard): ILinearContainerCard<TCard> {
@@ -383,7 +369,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
     }
 
     private createCardWrapper(card: TCard): ILinearContainerCard<TCard> {
-        return {card: card, orientation: this.defaultOrientation, selected: false, childId: this._nextChildId++};
+        return {card: card, orientation: this.defaultOrientation, selected: false};
     }
 
     private assertNoAutoSort(): void {
@@ -451,10 +437,10 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
         }
 
         switch (this._kind) {
-            case LinearContainerKind.FirstInLastOut:
+            case LinearContainerKind.FIRST_IN_LAST_OUT:
                 return removed;
 
-            case LinearContainerKind.FirstInFirstOut:
+            case LinearContainerKind.FIRST_IN_FIRST_OUT:
                 return removed.reverse();
 
             default:
@@ -479,10 +465,10 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
         count = Math.min(this.count, count);
 
         switch (this._kind) {
-            case LinearContainerKind.FirstInLastOut:
+            case LinearContainerKind.FIRST_IN_LAST_OUT:
                 return this._cards.splice(this._cards.length - count, count).reverse().map(x => x.card);
 
-            case LinearContainerKind.FirstInFirstOut:
+            case LinearContainerKind.FIRST_IN_FIRST_OUT:
                 return this._cards.splice(0, count).map(x => x.card);
 
             default:

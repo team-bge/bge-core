@@ -1,6 +1,6 @@
-import { RenderContext } from "./display.js";
-import { Bounds } from "./math.js";
-import { IView } from "./views.js";
+import { RenderContext } from "../display.js";
+import { Bounds } from "../math/index.js";
+import { IView } from "../views.js";
 
 /**
  * Base class for all gameplay related objects and containers.

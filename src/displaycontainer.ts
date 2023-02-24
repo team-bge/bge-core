@@ -1,14 +1,7 @@
-import { IDisplayOptions, RenderContext } from "./display.js";
-import { Bounds } from "./math.js";
-import { GameObject } from "./object.js";
-import { Vector3, ITransformView, IView } from "./views.js";
-
-/**
- * Options to use with `DisplayContainer.addRange(objects)`.
- */
-export interface IRangeDisplayOptions {
-   
-}
+import { DisplayChild, DisplayParent, IDisplayOptions, RenderContext } from "./display.js";
+import { ITransform } from "./math/index.js";
+import { GameObject } from "./objects/object.js";
+import { IView } from "./views.js";
 
 const displayOptionsKey = Symbol("display:options");
 const displayListKey = Symbol("display:list");
@@ -28,7 +21,7 @@ export function display(options?: IDisplayOptions) : PropertyDecorator {
 }
 
 interface IChildProperty {
-    getter: { (): GameObject | Iterable<GameObject> };
+    getter: { (): GameObject | Iterable<GameObject> | string | number };
     options: IDisplayOptions;
 }
 
@@ -36,7 +29,7 @@ interface IChildProperty {
  * Container for dynamically adding, removing, and repositioning objects for display.
  */
 export class DisplayContainer {
-    private readonly _dynamicChildren = new Map<GameObject, IDisplayOptions>();
+    private readonly _dynamicChildren = new Map<DisplayChild, IDisplayOptions>();
     private readonly _childProperties = new Map<string, IChildProperty>;
 
     /**
@@ -48,9 +41,9 @@ export class DisplayContainer {
     }
 
     getOptions(key: string): IDisplayOptions;
-    getOptions(child: GameObject): IDisplayOptions;
+    getOptions(child: DisplayChild): IDisplayOptions;
     
-    getOptions(arg: string | GameObject): IDisplayOptions {
+    getOptions(arg: string | DisplayChild): IDisplayOptions {
         if (typeof arg === "string") {
             return this._childProperties.get(arg)?.options;
         } else {
@@ -58,27 +51,24 @@ export class DisplayContainer {
         }
     }
 
-    add(object: GameObject, options?: IDisplayOptions): IDisplayOptions {
-        if (this._children.get(object)) {
+    add(object: DisplayChild, options?: IDisplayOptions): IDisplayOptions {
+        if (this._dynamicChildren.get(object)) {
             throw new Error("Object is already a child of this container.");
         }
         
-        const info = {
-            childId: this._nextChildId++,
-            options: options ?? { }
-        } as IDisplayChild;
+        options ??= {};
 
-        this._children.set(object, info);
+        this._dynamicChildren.set(object, options);
 
-        return info.options;
+        return options;
     }
     
     /**
      * Remove the given child object. Returns true if the child was in this container.
      * @param object Child object to remove.
      */
-    remove(object: GameObject | { (): GameObject }): boolean {
-        return this._children.delete(object);
+    remove(object: DisplayChild): boolean {
+        return this._dynamicChildren.delete(object);
     }
 
     /**
@@ -90,11 +80,11 @@ export class DisplayContainer {
      * Removes all of the given child objects.
      * @param objects Iterable of objects to remove.
      */
-    removeAll(objects: Iterable<GameObject>): void;
+    removeAll(objects: Iterable<DisplayChild>): void;
     
-    removeAll(objects?: Iterable<GameObject>): void {
+    removeAll(objects?: Iterable<DisplayChild>): void {
         if (objects === undefined) {
-            this._children.clear();
+            this._dynamicChildren.clear();
         } else {
             for (let child of objects) {
                 this.remove(child);
@@ -129,140 +119,11 @@ export class DisplayContainer {
                 value = null;
             }
 
-            if (typeof value !== "function") {
-                value = () => (parent as any)[key];
-            }
-
-            this.add(value, options);
-        }
-    }
-
-    private static generateLinearArrangement(footprints: Footprint[], center: Vector3, pivot: number, angle: number): ITransformView[] {
-        if (footprints.length === 0) {
-            return [];
-        }
-
-        const totalWidth = footprints.reduce((s, x) => s + x.width, 0);
-
-        let offsetX = totalWidth * -0.5;
-        
-        const arrangement: ITransformView[] = [];
-
-        const xx = Math.cos(angle);
-        const xy = Math.sin(angle);
-        
-        const yx = -Math.sin(angle);
-        const yy = Math.cos(angle);
-
-        for (let i = 0; i < footprints.length; i++) {
-            const footprint = footprints[i];
-            const offsetZ = (pivot - 0.5) * footprint.height;
-
-            offsetX += footprint.width * 0.5;
-
-            arrangement.push({
-                localPosition: { x: (center.x ?? 0) + xx * offsetX + xy * offsetZ, y: center.y, z: (center.z ?? 0) + yx * offsetX + yy * offsetZ },
-                localRotation: { y: angle * 180 / Math.PI }
+            this._childProperties.set(key, {
+                getter: typeof value === "function" ? value : () => (parent as any)[key],
+                options: { ...options }
             });
-
-            offsetX += footprint.width * 0.5;
         }
-
-        return arrangement;
-    }
-
-    private static generateArrangement(footprints: Footprint[], avoid?: Footprint, type: Arrangement = Arrangement.Auto): ITransformView[] {
-        if (type === Arrangement.Auto) {
-            const aspect = (avoid?.width ?? 1) / (avoid?.height ?? 1);
-            type = footprints.length <= 4 || Math.max(aspect, 1 / aspect) > 2 ? Arrangement.Rectangular : Arrangement.Radial;
-        }
-
-        const maxFootprint: Footprint = {
-            width: Math.max(...footprints.map(x => x.width)),
-            height: Math.max(...footprints.map(x => x.height))
-        };
-        
-        const arrangement: ITransformView[] = [];
-
-        switch (type) {
-            case Arrangement.Linear: {
-                if (avoid == null) {
-                    return DisplayContainer.generateLinearArrangement(footprints, { }, 0.5, 0);
-                } else {
-                    return DisplayContainer.generateLinearArrangement(footprints, { z: avoid.height * -0.5 }, 0, 0);
-                }
-            }
-
-            case Arrangement.Rectangular: {
-                // TODO: handle different-sized footprints
-                const aspectRatio = avoid?.width / avoid?.height ?? 1;
-
-                const totalWeight = 2 + aspectRatio * 2;
-                const horzWeight = 1 / totalWeight;
-                const vertWeight = aspectRatio / totalWeight;
-
-                const sides = [
-                    { weight: horzWeight, count: 0 },
-                    { weight: horzWeight * (footprints.length == 3 ? 1.5 : 1), count: 0 },
-                    { weight: vertWeight, count: 0 },
-                    { weight: vertWeight, count: 0 }
-                ];
-
-                for (let i = 0; i < footprints.length; ++i) {
-                    let bestScore = Number.MAX_VALUE;
-                    let bestIndex = 0;
-                    for (let j = 0; j < sides.length; ++j) {
-                        const score = sides[j].weight * (sides[j].count + 1);
-                        if (score < bestScore) {
-                            bestScore = score;
-                            bestIndex = j;
-                        }
-                    }
-
-                    sides[bestIndex].count += 1;
-                }
-
-                const width = Math.max(avoid?.width ?? 0, sides[0].count * maxFootprint.width, sides[1].count * maxFootprint.width);
-                const height = Math.max(avoid?.height ?? 0, sides[2].count * maxFootprint.width, sides[3].count * maxFootprint.width);
-
-                let addedCount = 0;
-
-                arrangement.push(...DisplayContainer.generateLinearArrangement(footprints.slice(addedCount, addedCount += sides[0].count), { z: -height * 0.5 }, 0, 0).reverse());
-                arrangement.push(...DisplayContainer.generateLinearArrangement(footprints.slice(addedCount, addedCount += sides[2].count), { x: -width * 0.5 }, 0, Math.PI * 0.5).reverse());
-                arrangement.push(...DisplayContainer.generateLinearArrangement(footprints.slice(addedCount, addedCount += sides[1].count), { z: height * 0.5 }, 0, Math.PI).reverse());
-                arrangement.push(...DisplayContainer.generateLinearArrangement(footprints.slice(addedCount, addedCount += sides[3].count), { x: width * 0.5 }, 0, Math.PI * -0.5).reverse());
-
-                break;
-            }
-
-            case Arrangement.Radial: {
-                const deltaTheta = 2 * Math.PI / footprints.length;
-                let dist = footprints.length < 2 ? 0 : maxFootprint.width / (2 * Math.tan(deltaTheta * 0.5));
-        
-                if (avoid != null) {
-                    dist = Math.max(dist, Math.sqrt(avoid.width * avoid.width + avoid.height * avoid.height) * 0.5);
-                }
-                
-                for (let i = 0; i < footprints.length; i++) {
-                    const footprint = footprints[i];
-                    
-                    const r = dist + footprint.height * 0.5;
-                    const theta = Math.PI + deltaTheta * i;
-        
-                    arrangement.push({
-                        localPosition: { x: Math.sin(theta) * r, z: Math.cos(theta) * r },
-                        localRotation: { y: theta * 180 / Math.PI + 180 }
-                    });
-                }
-        
-                break;
-            }
-
-            default:
-                throw new Error("Unknown arrangement type");
-        }
-        
-        return arrangement;
     }
 
     /**
@@ -271,7 +132,7 @@ export class DisplayContainer {
      * @param b Inner transformation.
      * @returns The combined transformation.
      */
-    static applyTransform(a: ITransformView, b: ITransformView): ITransformView;
+    static applyTransform(a: ITransform, b: ITransform): ITransform;
     
     /**
      * Applies transform `a` to transform `b`, storing the result in `out`. Neither `a` nor `b` are modified.
@@ -280,44 +141,45 @@ export class DisplayContainer {
      * @param out Target for the combined transformation.
      * @returns `out`
      */
-    static applyTransform(a: ITransformView, b: ITransformView, out: ITransformView): ITransformView;
+    static applyTransform(a: ITransform, b: ITransform, out: ITransform): ITransform;
 
-    static applyTransform(a: ITransformView, b: ITransformView, out?: ITransformView): ITransformView {
+    static applyTransform(a: ITransform, b: ITransform, out?: ITransform): ITransform {
 
         out ??= { };
 
-        out.localPosition = {
-            x: (a.localPosition?.x ?? 0) + (b.localPosition?.x ?? 0),
-            y: (a.localPosition?.y ?? 0) + (b.localPosition?.y ?? 0),
-            z: (a.localPosition?.z ?? 0) + (b.localPosition?.z ?? 0)
-        };
+        if (b.position == null) {
+            out.position = a.position;
+        } else {
+            const rotatedPosition = a.rotation?.rotate(b.position) ?? b.position;
+            out.position = a.position?.add(rotatedPosition) ?? rotatedPosition;
+        }
 
-        // TODO: this is wrong!
-        // convert rotations to quaternions or something first
-        // also apply rotation to b's position
-
-        out.localRotation = {
-            x: (a.localRotation?.x ?? 0) + (b.localRotation?.x ?? 0),
-            y: (a.localRotation?.y ?? 0) + (b.localRotation?.y ?? 0),
-            z: (a.localRotation?.z ?? 0) + (b.localRotation?.z ?? 0)
-        };
+        if (b.rotation == null) {
+            out.rotation = a.rotation;
+        } else {
+            out.rotation = a.rotation?.mul(b.rotation) ?? b.rotation;
+        }
 
         return out;
     }
 
-    render(ctx: RenderContext, parent: Object, views?: IView[]): IView[] {
+    render(ctx: RenderContext, parent: DisplayParent, views?: IView[]): IView[] {
         views ??= [];
 
-        for (let [child, info] of this._children) {
-            const obj = typeof child === "function" ? child() : child;
-
-            if (obj == null) {
-                continue;
-            }
-
-            const childView = ctx.renderChild(obj, parent, info.childId, info.options);
+        for (let [child, options] of this._dynamicChildren) {
+            const childView = ctx.renderChild(child, parent, options);
 
             if (childView != null) {
+                views.push(childView);
+            }
+        }
+
+        for (let [key, property] of this._childProperties) {
+            const childView = ctx.renderChild(property.getter, parent, property.options);
+            
+            if (Array.isArray(childView)) {
+                views.push(...childView);
+            } else if (childView != null) {
                 views.push(childView);
             }
         }

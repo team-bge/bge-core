@@ -1,7 +1,9 @@
-import { RenderContext } from "./display.js";
-import { DisplayContainer } from "./displaycontainer.js";
-import { Footprint, GameObject } from "./object.js";
-import { Color, IView, OutlineStyle, ViewType, ZoneView } from "./views.js";
+import { RenderContext } from "../display.js";
+import { DisplayContainer } from "../displaycontainer.js";
+import { Bounds, Vector3 } from "../math/index.js";
+import { GameObject } from "./object.js";
+import { IView, OutlineStyle, ViewType, ZoneView } from "../views.js";
+import { Color } from "../color.js";
 
 /**
  * @summary Represents a rectangular region on the table, with an outline and optional label.
@@ -22,12 +24,12 @@ export class Zone extends GameObject {
     /**
      * Appearance of the outline around this zone.
      */
-    outlineStyle: OutlineStyle = OutlineStyle.Solid;
+    outlineStyle: OutlineStyle = OutlineStyle.SOLID;
 
     /**
      * Appearance of the outline around this zone when it is the target of a prompt.
      */
-    promptOutlineStyle: OutlineStyle = OutlineStyle.SolidFilled;
+    promptOutlineStyle: OutlineStyle = OutlineStyle.SOLID_FILLED;
 
     /**
      * Optional color of the outline around this zone. Defaults to white.
@@ -52,11 +54,8 @@ export class Zone extends GameObject {
      */
     readonly children = new DisplayContainer();
 
-    override get footprint(): Footprint {
-        return {
-            width: this.width + 3,
-            height: this.height + 3
-        };
+    override get localBounds(): Bounds {
+        return new Bounds(new Vector3(this.width + 3, this.height + 3, 0));
     }
     
     /**
@@ -77,7 +76,7 @@ export class Zone extends GameObject {
         const prompt = ctx.player?.prompt.get(this);
 
         const view: ZoneView = {
-            type: ViewType.Zone,
+            type: ViewType.ZONE,
             
             prompt: prompt,
 
@@ -85,7 +84,7 @@ export class Zone extends GameObject {
             height: this.height,
 
             outlineStyle: prompt != null ? this.promptOutlineStyle : this.outlineStyle,
-            outlineColor: this.outlineColor,
+            outlineColor: this.outlineColor?.encoded,
             
             label: this.label,
 

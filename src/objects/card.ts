@@ -1,8 +1,9 @@
-import { RenderContext } from "./display.js";
-import { DisplayContainer } from "./displaycontainer.js";
-import { ITextEmbeddable } from "./interfaces.js";
-import { Footprint, GameObject } from "./object.js";
-import { CardView, ImageView, TextEmbedView, ViewType } from "./views.js";
+import { RenderContext } from "../display.js";
+import { DisplayContainer } from "../displaycontainer.js";
+import { ITextEmbeddable } from "../interfaces.js";
+import { GameObject } from "./object.js";
+import { CardView, ImageView, TextEmbedView, ViewType } from "../views.js";
+import { Bounds, Vector3 } from "../math/index.js";
 
 export class CardFace {
     image?: ImageView;
@@ -20,12 +21,12 @@ export enum CardOrientation {
     /**
      * The front face of the card is visible.
      */
-    FaceUp,
+    FACE_UP,
 
     /**
      * The back of the card is visible, and the front face is hidden.
      */
-    FaceDown
+    FACE_DOWN
 }
 
 export type CardComparer<TCard extends Card> = { (a: TCard, b: TCard): number };
@@ -107,6 +108,8 @@ export class Card extends GameObject implements ITextEmbeddable {
         };
     }
 
+    private readonly _localBounds: Bounds;
+
     /**
      * Width of the card in centimeters.
      */
@@ -157,21 +160,21 @@ export class Card extends GameObject implements ITextEmbeddable {
         this.width = dims.width;
         this.height = dims.height;
         this.thickness = dims.thickness;
+
+        this._localBounds = new Bounds(new Vector3(dims.width, dims.height, dims.thickness));
+
         this.cornerRadius = dims.cornerRadius;
 
         this.children.addProperties(this);
     }
 
-    override get footprint(): Footprint {
-        return {
-            width: this.width,
-            height: this.height
-        };
+    override get localBounds(): Bounds {
+        return this._localBounds;
     }
     
     override render(ctx: RenderContext): CardView {
         let view = {
-            type: ViewType.Card,
+            type: ViewType.CARD,
 
             prompt: ctx.player?.prompt.get(this),
 

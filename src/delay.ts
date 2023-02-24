@@ -47,7 +47,7 @@ export class Delay {
         
         const group = this._game.promiseGroup;
 
-        if (!await this._game.replay.pendingEvent(ReplayEventType.DelayComplete, index)) {
+        if (!await this._game.replay.pendingEvent(ReplayEventType.DELAY_COMPLETE, index)) {
             if (this._game.replay.isRecording) {
                 this._game.dispatchUpdateView();
             }
@@ -57,7 +57,7 @@ export class Delay {
                 setTimeout(resolve, value * 1000);
             });
     
-            this._game.replay.writeEvent(ReplayEventType.DelayComplete, index);
+            this._game.replay.writeEvent(ReplayEventType.DELAY_COMPLETE, index);
         }
         
         group?.itemResolved();

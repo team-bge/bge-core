@@ -1,7 +1,6 @@
 import { RenderContext } from "./display.js";
 import { ITextEmbeddable } from "./interfaces.js";
-import { Footprint, GameObject } from "./object.js";
-import { IView, PromptKind, TextEmbedView } from "./views.js";
+import { PromptKind, TextEmbedView } from "./views.js";
 
 /**
  * @summary A clickable button that can appear in a message.
@@ -24,7 +23,7 @@ export class Button implements ITextEmbeddable {
     
     renderTextEmbed(ctx: RenderContext): TextEmbedView {
         return {
-            prompt: ctx.player?.prompt.get(this) ?? { kind: PromptKind.Click, index: -1 },
+            prompt: ctx.player?.prompt.get(this) ?? { kind: PromptKind.CLICK, index: -1 },
             label: this.label
         };
     }

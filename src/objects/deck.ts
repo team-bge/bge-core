@@ -1,7 +1,8 @@
 import { Card, CardOrientation } from "./card.js";
 import { LinearCardContainer, LinearContainerKind } from "./cardcontainer.js";
-import { RenderContext } from "./display.js";
-import { CardView, DeckView, OutlineStyle, ViewType } from "./views.js";
+import { RenderContext } from "../display.js";
+import { CardView, DeckView, OutlineStyle, ViewType } from "../views.js";
+import { Bounds, Rotation, Vector3 } from "../math/index.js";
 
 /**
  * Configuration for a deck.
@@ -30,7 +31,7 @@ export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
      * @param options Optional configuration for the deck.
      */
     constructor(CardType: { new(...args: any[]): TCard }, options?: IDeckOptions) {
-        super(CardType, LinearContainerKind.FirstInLastOut, options?.orientation);
+        super(CardType, LinearContainerKind.FIRST_IN_LAST_OUT, options?.orientation);
     
         this.alwaysShowCount = options?.alwaysShowCount ?? false;
     }
@@ -41,12 +42,19 @@ export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
     get top(): TCard | null {
         return this.count == 0 ? null : this.getCard(this.count - 1);
     }
+    
+    override get localBounds(): Bounds {
+        const cardDims = this.cardDimensions;
+        return new Bounds(
+            new Vector3(0, 0, cardDims.thickness * this.count * 0.5),
+            new Vector3(cardDims.width + 2, cardDims.height + 2, cardDims.thickness * this.count));
+    }
 
     override render(ctx: RenderContext): DeckView {
         const dims = this.cardDimensions;
 
         const view: DeckView = {
-            type: ViewType.Deck,
+            type: ViewType.DECK,
             
             prompt: ctx.player?.prompt.get(this),
 
@@ -56,7 +64,7 @@ export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
             count: this.count,
             showCount: this.alwaysShowCount,
 
-            outlineStyle: OutlineStyle.Dashed
+            outlineStyle: OutlineStyle.DASHED
         };
 
         ctx.setParentView(this, view);
@@ -65,17 +73,17 @@ export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
             for (let i = 0; i < this.count - 1; ++i) {
                 const orientation = this.getOrientation(i);
                 ctx.renderInternalChild(this.getCard(i), this, view, {
-                    localPosition: { y: dims.thickness * (i + 0.5) },
-                    localRotation: orientation == CardOrientation.FaceUp ? undefined : { z: 180 },
-                    revealedFor: orientation == CardOrientation.FaceDown ? [] : undefined
+                    position: new Vector3(0, 0, dims.thickness * (i + 0.5)),
+                    rotation: orientation == CardOrientation.FACE_UP ? undefined : Rotation.y(180),
+                    revealedFor: orientation == CardOrientation.FACE_DOWN ? [] : undefined
                 });
             }
 
             const topOrientation = this.getOrientation(this.count - 1);
-            view.topCard = ctx.renderChild(this.getCard(this.count - 1), this, this.getChildId(this.count - 1), {
-                localPosition: { y: dims.thickness * (this.count - 0.5) },
-                localRotation: topOrientation == CardOrientation.FaceUp ? undefined : { z: 180 },
-                revealedFor: topOrientation == CardOrientation.FaceDown ? [] : undefined
+            view.topCard = ctx.renderChild(this.getCard(this.count - 1), this, {
+                position: new Vector3(0, 0, dims.thickness * (this.count - 0.5)),
+                rotation: topOrientation == CardOrientation.FACE_UP ? undefined : Rotation.y(180),
+                revealedFor: topOrientation == CardOrientation.FACE_DOWN ? [] : undefined
             }) as CardView;
         }
 

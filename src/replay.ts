@@ -1,8 +1,8 @@
 import { Game } from "./game";
 
 export enum ReplayEventType {
-    PromptResponse,
-    DelayComplete
+    PROMPT_RESPONSE,
+    DELAY_COMPLETE
 }
 
 export interface IReplayData {

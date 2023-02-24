@@ -1,19 +1,17 @@
-export class Vector2 {
-    readonly x: number;
-    readonly y: number;
-
-    constructor(x?: number, y?: number) {
-        this.x = x ?? 0;
-        this.y = y ?? 0;
-    }
-}
-
 export class Vector3 {
     static readonly ZERO = new Vector3(0, 0, 0);
     static readonly UNIT_X = new Vector3(1, 0, 0);
     static readonly UNIT_Y = new Vector3(0, 1, 0);
     static readonly UNIT_Z = new Vector3(0, 0, 1);
     static readonly ONE = new Vector3(1, 1, 1);
+
+    static min(a: Vector3, b: Vector3): Vector3 {
+        return new Vector3(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.min(a.z, b.z));
+    }
+    
+    static max(a: Vector3, b: Vector3): Vector3 {
+        return new Vector3(Math.max(a.x, b.x), Math.max(a.y, b.y), Math.max(a.z, b.z));
+    }
 
     readonly x: number;
     readonly y: number;
@@ -29,6 +27,10 @@ export class Vector3 {
         return this.div(this.length);
     }
 
+    get isZero(): boolean {
+        return this.x === 0 && this.y === 0 && this.z === 0;
+    }
+
     get length(): number {
         return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
     }
@@ -37,18 +39,22 @@ export class Vector3 {
         return this.x * this.x + this.y * this.y + this.z * this.z;
     }
 
-    constructor(xy: Vector2, z?: number);
-    constructor(x?: number, y?: number, z?: number);
+    get abs(): Vector3 {
+        return new Vector3(Math.abs(this.x), Math.abs(this.y), Math.abs(this.z));
+    }
 
-    constructor(arg0: Vector2 | number, arg1?: number, arg2?: number) {
-        if (arg0 instanceof Vector2) {
-            this.x = arg0.x;
-            this.y = arg0.y;
-            this.z = arg1 ?? 0;
-        } else {
+    constructor(x?: number, y?: number, z?: number);
+    constructor(value: { x?: number, y?: number, z?: number });
+
+    constructor(arg0?: { x?: number, y?: number, z?: number } | number, arg1?: number, arg2?: number) {
+        if (typeof arg0 === "number") {
             this.x = arg0 ?? 0;
             this.y = arg1 ?? 0;
             this.z = arg2 ?? 0;
+        } else {
+            this.x = arg0?.x ?? 0;
+            this.y = arg0?.y ?? 0;
+            this.z = arg0?.z ?? 0;
         }
     }
 
@@ -98,6 +104,14 @@ export class Vector3 {
         return this.x * vector.x + this.y * vector.y + this.z * vector.z;
     }
 
+    cross(vector: Vector3): Vector3 {
+        return new Vector3(
+            this.y * vector.z - this.z * vector.y,
+            this.z * vector.x - this.x * vector.z,
+            this.x * vector.y - this.y * vector.x
+        );
+    }
+
     div(scalar: number): Vector3;
     div(vector: Vector3): Vector3;
     div(other: Vector3 | number): Vector3 {
@@ -112,49 +126,5 @@ export class Vector3 {
         return Math.abs(this.x - vector.x) <= epsilon
             && Math.abs(this.y - vector.y) <= epsilon
             && Math.abs(this.z - vector.z) <= epsilon;
-    }
-}
-
-export class Bounds {
-    readonly min: Vector3;
-    readonly max: Vector3;
-
-    get center() {
-        return this.min.add(this.max).mul(0.5);
-    }
-
-    get size() {
-        return this.max.sub(this.min);
-    }
-
-    constructor(size: Vector3);
-    constructor(center: Vector3, size: Vector3);
-    constructor(arg0: Vector3, arg1?: Vector3) {
-        let center: Vector3, size: Vector3;
-        
-        if (arg1 === undefined) {
-            center = Vector3.ZERO;
-            size = arg0;
-        } else {
-            center = arg0;
-            size = arg1;
-        }
-
-        this.min = center.sub(size.mul(0.5));
-        this.max = this.min.add(size);
-    }
-
-    expand(margin: number): Bounds;
-    expand(margin: Vector3): Bounds;
-    expand(margin: number | Vector3): Bounds {
-        if (typeof margin === "number") {
-            return new Bounds(this.center, this.size.add(margin * 2));
-        } else {
-            return new Bounds(this.center, this.size.add(margin.mul(2)));
-        }
-    }
-
-    offset(value: Vector3): Bounds {
-        return new Bounds(this.center.add(value), this.size);
     }
 }

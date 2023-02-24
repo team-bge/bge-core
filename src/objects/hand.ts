@@ -1,28 +1,10 @@
+import { Bounds, Rotation, Vector3 } from "../math/index.js";
+
 import { Card, CardComparer, CardOrientation } from "./card.js";
 import { LinearCardContainer, LinearContainerKind } from "./cardcontainer.js";
-import { RenderContext } from "./display.js";
-import { Footprint } from "./object.js";
-import { CardView, HandView, OutlineStyle, ViewType } from "./views.js";
-
-/**
- * How cards in a hand are positioned when there is free space.
- */
-export enum HandAlignment {
-    /**
-     * Align to the left edge of the hand.
-     */
-    Left,
-
-    /**
-     * Center the cards in the hand.
-     */
-    Center,
-
-    /**
-     * Align to the right edge of the hand.
-     */
-    Right
-}
+import { RenderContext } from "../display.js";
+import { CardView, HandView, OutlineStyle, ViewType } from "../views.js";
+import { Alignment } from "../arrangement.js";
 
 /**
  * Options for creating a `Hand<TCard>`.
@@ -36,7 +18,7 @@ export interface IHandOptions<TCard extends Card> {
     /**
      * How cards in a hand are positioned when there is free space.
      */
-    alignment?: HandAlignment;
+    alignment?: Alignment;
 
     /**
      * Optional comparison function to auto-sort newly added cards.
@@ -58,16 +40,17 @@ export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
      */
     readonly height: number;
 
+    private readonly _cardThickness: number;
+
     /**
      * How cards in a hand are positioned when there is free space.
      */
-    readonly alignment: HandAlignment;
+    readonly alignment: Alignment;
 
-    override get footprint(): Footprint {
-        return {
-            width: this.width + 2,
-            height: this.height + 2
-        };
+    override get localBounds(): Bounds {
+        return new Bounds(
+            new Vector3(0, 0, this.count * this._cardThickness * 0.5),
+            new Vector3(this.width + 2, this.height + 2, this.count * this._cardThickness));
     }
 
     /**
@@ -91,21 +74,22 @@ export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
      * @param options Optional configuration options.
      */
     constructor(CardType: { new(...args: any[]): TCard }, width: number, options?: IHandOptions<TCard>) {
-        super(CardType, LinearContainerKind.FirstInLastOut, options?.orientation, options?.autoSort);
+        super(CardType, LinearContainerKind.FIRST_IN_LAST_OUT, options?.orientation, options?.autoSort);
     
         const dims = Card.getDimensions(CardType);
 
         this.width = width;
         this.height = dims.height;
+        this._cardThickness = dims.thickness;
 
-        this.alignment = options?.alignment ?? HandAlignment.Center;
+        this.alignment = options?.alignment ?? Alignment.CENTER;
     }
 
     override render(ctx: RenderContext): HandView {
         const dims = this.cardDimensions;
 
         const view: HandView = {
-            type: ViewType.Hand,
+            type: ViewType.HAND,
             
             prompt: ctx.player?.prompt.get(this),
 
@@ -114,7 +98,7 @@ export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
 
             cards: [],
 
-            outlineStyle: OutlineStyle.Dashed
+            outlineStyle: OutlineStyle.DASHED
         };
         
         ctx.setParentView(this, view);
@@ -127,11 +111,11 @@ export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
             let pivot: number;
 
             switch (this.alignment) {
-                case HandAlignment.Left:
+                case Alignment.START:
                     pivot = 0;
                     break;
 
-                case HandAlignment.Right:
+                case Alignment.END:
                     pivot = 1;
                     break;
 
@@ -143,10 +127,10 @@ export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
             for (let i = 0; i < this.count; ++i) {
                 const orientation = this.getOrientation(i);
                 const isSelected = !ctx.isHidden && this.getSelected(i);
-                const cardView = ctx.renderChild(this.getCard(i), this, this.getChildId(i), {
-                    localPosition: { x: dims.width * 0.5 - this.width * 0.5 + (this.width - innerWidth) * pivot + i * dx, y: dims.thickness * (i + 0.5), z: isSelected ? 1.0 : undefined },
-                    localRotation: orientation == CardOrientation.FaceUp ? undefined : { z: 180 },
-                    revealedFor: orientation == CardOrientation.FaceDown ? [] : undefined
+                const cardView = ctx.renderChild(this.getCard(i), this, {
+                    position: new Vector3(dims.width * 0.5 - this.width * 0.5 + (this.width - innerWidth) * pivot + i * dx, isSelected ? 1.0 : undefined, dims.thickness * (i + 0.5)),
+                    rotation: orientation == CardOrientation.FACE_UP ? undefined : Rotation.y(180),
+                    revealedFor: orientation == CardOrientation.FACE_DOWN ? [] : undefined
                 }) as CardView;
 
                 view.cards.push(cardView);

@@ -1,7 +1,7 @@
 import { Button } from "./button.js";
 import { Game } from "./game.js";
 import { Clickable, Message } from "./interfaces.js";
-import { GameObject } from "./object.js";
+import { GameObject } from "./objects/object.js";
 import { Player } from "./player.js";
 import { ReplayEventType } from "./replay.js";
 import { Prompt, PromptKind } from "./views.js";
@@ -129,7 +129,7 @@ export class PromptHelper {
 
         return {
             index: prompt.index,
-            kind: PromptKind.Click
+            kind: PromptKind.CLICK
         };
     }
 
@@ -233,7 +233,7 @@ export class PromptHelper {
         this._promptsByObject.set(object, promptInfo);
         this._promptsByIndex.set(index, promptInfo);
 
-        if (!await this.game.replay.pendingEvent(ReplayEventType.PromptResponse, this._player.index, index)) {
+        if (!await this.game.replay.pendingEvent(ReplayEventType.PROMPT_RESPONSE, this._player.index, index)) {
             const promise = new Promise<void>((resolve, reject) => {
                 promptInfo.resolve = () => {
                     if (this.remove(object, index)) {
@@ -256,7 +256,7 @@ export class PromptHelper {
     
             try {
                 await promise;
-                this.game.replay.writeEvent(ReplayEventType.PromptResponse, this._player.index, index);
+                this.game.replay.writeEvent(ReplayEventType.PROMPT_RESPONSE, this._player.index, index);
             } catch (e) {
                 group?.itemRejected(e);
                 throw e;
