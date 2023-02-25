@@ -98,7 +98,8 @@ export class Zone extends GameObject {
         if (this.hideIfEmpty
             && view.children.length === 0
             && (view.tempChildren?.length ?? 0) === 0
-            && view.prompt == null) {
+            && view.prompt == null
+            && !ctx.oldParents.has(this)) {
             return null;
         }
 

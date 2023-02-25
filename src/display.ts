@@ -148,7 +148,9 @@ export class RenderContext {
      */
     readonly noAnimations: boolean;
 
-    private readonly _oldParentMap: ParentMap;
+    readonly oldParentMap: ParentMap;
+
+    readonly oldParents: Set<DisplayParent>;
 
     private readonly _parentViews: Map<DisplayParent, IView>;
     private readonly _parentIds: Map<DisplayParent, number>;
@@ -174,7 +176,8 @@ export class RenderContext {
 
         this.childIndexMap = oldChildIndexMap ?? new ChildIndexMap();
 
-        this._oldParentMap = oldParentMap ?? new Map();
+        this.oldParentMap = oldParentMap ?? new Map();
+        this.oldParents = new Set([...this.oldParentMap.values()].map(x => x.parent));
         this.newParentMap = new Map();
 
         this._parentViews = new Map();
@@ -219,7 +222,7 @@ export class RenderContext {
         const childId = isInternal ? undefined : this.childIndexMap.get(parent, child);
 
         if (value instanceof GameObject) {
-            oldParentInfo = this._oldParentMap.get(value);
+            oldParentInfo = this.oldParentMap.get(value);
             this.newParentMap.set(value, {
                 parent: parent,
                 childId: childId,
