@@ -186,10 +186,10 @@ export class Card extends GameObject implements ITextEmbeddable {
             thickness: this.thickness,
             cornerRadius: this.cornerRadius,
 
-            children: this.children.count === 0 ? undefined : []
+            children: this.children.isEmpty ? undefined : []
         } as CardView;
         
-        if (this.children.count > 0) {
+        if (!this.children.isEmpty) {
             ctx.setParentView(this, view);
             this.children.render(ctx, this, view.children);
         }

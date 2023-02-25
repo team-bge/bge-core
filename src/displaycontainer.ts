@@ -32,12 +32,8 @@ export class DisplayContainer {
     private readonly _dynamicChildren = new Map<DisplayChild, IDisplayOptions>();
     private readonly _childProperties = new Map<string, IChildProperty>;
 
-    /**
-     * Total number of child objects added to this container.
-     * This doesn't include children retrieved through {@link addProperties} / {@link display}.
-     */
-    get count(): number {
-        return this._dynamicChildren.size;
+    get isEmpty(): boolean {
+        return this._dynamicChildren.size === 0 && this._childProperties.size === 0;
     }
 
     getOptions(key: string): IDisplayOptions;
