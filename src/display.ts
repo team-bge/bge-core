@@ -289,7 +289,7 @@ export class RenderContext {
                 view.origin = {
                     containerId: oldParentInfo == null ? undefined : this.getParentId(oldParentInfo.parent),
                     childId: oldParentInfo?.childId,
-                    localPosition: oldParentInfo == null ? { y: 100 } : oldParentInfo?.localPosition,
+                    localPosition: oldParentInfo == null ? { z: 100 } : oldParentInfo?.localPosition,
                     localRotation: oldParentInfo == null ? { x: Math.random() * 360, y: Math.random() * 360, z: Math.random() * 360 } : oldParentInfo?.localRotation?.euler
                 };
 
