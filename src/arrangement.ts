@@ -4,11 +4,11 @@ export abstract class Arrangement {
     protected static getPivot(alignment: Alignment): number {
         switch (alignment) {
             case Alignment.START:
-                return -0.5;
+                return 0.5;
             case Alignment.CENTER:
                 return 0;
             case Alignment.END:
-                return 0.5;
+                return -0.5;
             default:
                 throw new Error("Unexpected alignment");
         }
@@ -58,12 +58,15 @@ export interface ILinearArrangementOptions extends IArrangementOptions {
     xAlign?: Alignment;
     yAlign?: Alignment;
     zAlign?: Alignment;
+
+    offset?: Vector3;
 }
 
 export class LinearArrangement extends Arrangement {
     readonly axis: Vector3;
     readonly offAxis: Vector3;
     readonly pivot: Vector3;
+    readonly offset: Vector3;
 
     constructor(options?: ILinearArrangementOptions) {
         super(options);
@@ -92,33 +95,34 @@ export class LinearArrangement extends Arrangement {
             Arrangement.getPivot(options?.yAlign ?? Alignment.CENTER),
             Arrangement.getPivot(options?.zAlign ?? Alignment.START)
         );
+
+        this.offset = options?.offset ?? Vector3.ZERO;
     }
     
     protected override generateLocal(boundsArray: Bounds[]): ITransform[] {
         const offAxisMaxSize = boundsArray.reduce((s, x) => Vector3.max(s, x.size), Vector3.ZERO).mul(this.offAxis);
         const alongAxisTotalSize = boundsArray.reduce((s, x) => s + x.size.dot(this.axis), 0);
 
-        let alongAxisOffset = alongAxisTotalSize * (this.pivot.dot(this.axis) - 0.5);
-
         const output: ITransform[] = [];
-        const center = offAxisMaxSize.mul(this.pivot);
+        let pos = offAxisMaxSize.mul(this.pivot).add(
+            this.axis.mul(alongAxisTotalSize * (this.pivot.dot(this.axis) - 0.5)));
 
         for (let bounds of boundsArray) {
             const alongAxisSize = bounds.size.dot(this.axis);
             const offAxisSize = bounds.size.mul(this.offAxis);
 
-            alongAxisOffset += alongAxisSize * 0.5;
+            pos = pos.add(this.axis.mul(alongAxisSize * 0.5));
 
             output.push({
-                position: this.axis.mul(alongAxisOffset)
+                position: pos
                     .sub(bounds.center)
                     .add(offAxisMaxSize
                         .sub(offAxisSize)
                         .mul(this.pivot))
-                    .add(center)
+                    .add(new Vector3(0, 0, bounds.min.z))
             });
 
-            alongAxisOffset += alongAxisSize * 0.5;
+            pos = pos.add(this.axis.mul(alongAxisSize * 0.5)).add(this.offset);
         }
 
         return output;
@@ -142,7 +146,7 @@ export class RectangularArrangement extends Arrangement {
         const arrangement = new LinearArrangement({
             axis: "x",
             margin: this.margin,
-            yAlign: Alignment.START
+            yAlign: Alignment.END
         });
 
         const transforms = arrangement.generate(boundsArray);
