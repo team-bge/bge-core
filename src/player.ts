@@ -7,9 +7,9 @@ import { CameraView, TextEmbedView } from "./views.js";
 /**
  * @summary Represents a player in a game.
  * @description Use a deriving class to store any per-player properties, like scores or owned objects.
- * Use `Player.prompt` to request inputs from a player.
+ * Use {@link Player.prompt} to request inputs from a player.
  */
-export class Player implements ITextEmbeddable {
+export class Player<TGame extends IGame = IGame> implements ITextEmbeddable {
     static readonly DEFAULT_COLORS: readonly Color[] = [
         Color.parse("0000ff"),
         Color.parse("ff0000"),
@@ -18,7 +18,7 @@ export class Player implements ITextEmbeddable {
     ];
 
     readonly index: number;
-    readonly game: IGame;
+    readonly game: TGame;
     readonly name: string;
 
     /**
@@ -31,7 +31,7 @@ export class Player implements ITextEmbeddable {
      */
     _oldParentMap?: ParentMap;
 
-    readonly prompt = new PromptHelper(this);
+    readonly prompt: PromptHelper = new PromptHelper(this);
 
     // TODO: wrap this
     cameras: CameraView[] = [];
@@ -40,7 +40,7 @@ export class Player implements ITextEmbeddable {
         return Player.DEFAULT_COLORS[this.index % Player.DEFAULT_COLORS.length];
     }
 
-    constructor(game: IGame, index: number, config: IPlayerConfig) {
+    constructor(game: TGame, index: number, config: IPlayerConfig) {
         this.game = game;
         this.index = index;
         this.name = config.name;

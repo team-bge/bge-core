@@ -46,6 +46,9 @@ export type Message = string | { format: string, args?: MessageEmbed[] };
 export interface IRunConfig {
     players: IPlayerConfig[];
     replay?: IReplayData;
+    breakPoints?: IBreakPointData[];
+
+    onLog?: { (entry: ILogEntry): void };
     onUpdateViews?: { (gameViews: GameView[]): void };
 }
 
@@ -114,4 +117,24 @@ export interface ITextEmbeddable {
      * @param ctx Information about the visibility of the object, and who's viewing it.
      */
     renderTextEmbed(ctx: RenderContext): TextEmbedView;
+}
+
+
+export enum LogLevel {
+    INIT = -1,
+    TRACE = 0,
+    INFO = 1,
+    LOG = 2,
+    WARNING = 3,
+    ERROR = 4
+}
+
+export interface IBreakPointData {
+    category: string;
+    index: number;
+}
+
+export interface ILogEntry extends IBreakPointData {
+    level: LogLevel;
+    data: any[];
 }

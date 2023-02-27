@@ -11,6 +11,7 @@ export * from "./player.js";
 export * from "./prompt.js";
 export * from "./random.js";
 export * from "./messagebar.js";
+export * from "./logging.js";
 
 export * as views from "./views.js";
 export { OutlineStyle } from "./views.js";
