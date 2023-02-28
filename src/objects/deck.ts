@@ -81,7 +81,7 @@ export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
 
             const topOrientation = this.getOrientation(this.count - 1);
             view.topCard = ctx.renderChild(this.getCard(this.count - 1), this, {
-                position: new Vector3(0, 0, dims.thickness * (this.count - 0.5)),
+                position: new Vector3(0, 0, dims.thickness * (this.count - 1)),
                 rotation: topOrientation == CardOrientation.FACE_UP ? undefined : Rotation.y(180),
                 revealedFor: topOrientation == CardOrientation.FACE_DOWN ? [] : undefined
             }) as CardView;
