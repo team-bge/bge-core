@@ -28,7 +28,7 @@ export interface TableView extends IContainerView {
     tempChildren?: IView[];
 }
 
-export interface ZoneView extends IRectangularView, IOutlinedView, ILabelView, IColorView, ITransformView, IContainerView {
+export interface ZoneView extends IColorView, ITransformView, IContainerView, IRectangularView, IOutlinedView, ILabelView {
     type: ViewType.ZONE;
     childId?: number;
     containerId?: number;
@@ -38,7 +38,7 @@ export interface ZoneView extends IRectangularView, IOutlinedView, ILabelView, I
     tempChildren?: IView[];
 }
 
-export interface CardView extends IRectangularView, IThicknessView, IColorView, ITransformView, IContainerView {
+export interface CardView extends IColorView, ITransformView, IContainerView, IRectangularView, IThicknessView {
     type: ViewType.CARD;
     childId?: number;
     containerId?: number;
@@ -51,7 +51,7 @@ export interface CardView extends IRectangularView, IThicknessView, IColorView, 
     back?: ImageView;
 }
 
-export interface DeckView extends IRectangularView, IOutlinedView, ILabelView, ITransformView {
+export interface DeckView extends ITransformView, IRectangularView, IOutlinedView, ILabelView {
     type: ViewType.DECK;
     childId?: number;
     containerId?: number;
@@ -64,7 +64,7 @@ export interface DeckView extends IRectangularView, IOutlinedView, ILabelView, I
     showCount: boolean;
 }
 
-export interface HandView extends IRectangularView, IOutlinedView, ILabelView, ITransformView {
+export interface HandView extends ITransformView, IRectangularView, IOutlinedView, ILabelView {
     type: ViewType.HAND;
     childId?: number;
     containerId?: number;
@@ -75,7 +75,7 @@ export interface HandView extends IRectangularView, IOutlinedView, ILabelView, I
     cards: CardView[];
 }
 
-export interface TextView extends ILabelView, IColorView, ITransformView {
+export interface TextView extends IColorView, ITransformView, ILabelView {
     type: ViewType.TEXT;
     childId?: number;
     containerId?: number;
@@ -87,7 +87,7 @@ export interface TextView extends ILabelView, IColorView, ITransformView {
     embeds?: TextEmbedView[];
 }
 
-export interface TokenView extends IScaledView, IColorView, ITransformView {
+export interface TokenView extends IColorView, ITransformView, IScaledView {
     type: ViewType.TOKEN;
     childId?: number;
     containerId?: number;
@@ -95,6 +95,7 @@ export interface TokenView extends IScaledView, IColorView, ITransformView {
     origin?: Origin;
     prompt?: Prompt;
     tempChildren?: IView[];
+    shape?: ShapeView;
 }
 
 export enum Basis {
@@ -143,6 +144,15 @@ export interface Prompt {
     index: number;
 }
 
+export interface IColorView {
+    color?: ColorView;
+}
+
+export interface ITransformView {
+    localPosition?: Vector3View;
+    localRotation?: Vector3View;
+}
+
 export interface IRectangularView {
     width: number;
     height: number;
@@ -155,15 +165,6 @@ export interface IOutlinedView {
 
 export interface ILabelView {
     label?: string;
-}
-
-export interface IColorView {
-    color?: ColorView;
-}
-
-export interface ITransformView {
-    localPosition?: Vector3View;
-    localRotation?: Vector3View;
 }
 
 export interface IThicknessView {
@@ -192,6 +193,13 @@ export interface IScaledView {
     scale?: number;
 }
 
+export interface ShapeView {
+    url?: string;
+    sides?: number;
+    thickness: number;
+    standing: boolean;
+}
+
 export interface Vector3View {
     x?: number;
     y?: number;
@@ -202,16 +210,16 @@ export enum PromptKind {
     CLICK = 0,
 }
 
+export interface ColorView {
+    r?: number;
+    g?: number;
+    b?: number;
+}
+
 export enum OutlineStyle {
     NONE = 0,
     SOLID = 1,
     SOLID_FILLED = 2,
     DASHED = 3,
-}
-
-export interface ColorView {
-    r?: number;
-    g?: number;
-    b?: number;
 }
 

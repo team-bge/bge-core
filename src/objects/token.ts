@@ -2,15 +2,8 @@ import { RenderContext } from "../display.js";
 import { ITextEmbeddable } from "../interfaces.js";
 import { Bounds, Vector3 } from "../math/index.js";
 import { GameObject } from "./object.js";
-import { TextEmbedView, TokenView, ViewType } from "../views.js";
+import { ShapeView, TextEmbedView, TokenView, ViewType } from "../views.js";
 import { Color } from "../color.js";
-
-/**
- * Model shape for a {@link Token}.
- */
-export enum TokenShape {
-    CUBE
-}
 
 /**
  * Optional configuration for a {@link Token}.
@@ -22,9 +15,14 @@ export interface ITokenOptions {
     name?: string;
     
     /**
-     * Model shape, defaults to {@link TokenShape.Cube}.
+     * If true, the token is oriented upright.
      */
-    shape?: TokenShape;
+    standing?: boolean;
+
+    /**
+     * Thickness of the extruded shape in centimeters, before {@link scale} is applied.
+     */
+    thickness?: number;
 
     /**
      * Model scale, defaults to 1.
@@ -38,15 +36,26 @@ export interface ITokenOptions {
     color?: Color;
 }
 
+export interface ISvgTokenOptions extends ITokenOptions {
+    /**
+     * Url of the SVG file to use for this token's shape.
+     */
+    url: string;
+}
+
+export interface IPolygonTokenOptions extends ITokenOptions {
+    /**
+     * Number of sides of the regular polygon that will be extruded for this token's shape.
+     */
+    sides: number;
+}
+
 /**
  * A playing piece with a 3D model, tint color, and scale.
  */
 export class Token extends GameObject implements ITextEmbeddable {
 
-    /**
-     * Model shape.
-     */
-    readonly shape: TokenShape;
+    private readonly _shapeView: ShapeView;
     
     /**
      * Model scale.
@@ -63,23 +72,38 @@ export class Token extends GameObject implements ITextEmbeddable {
      * A playing piece with a 3D model, tint color, and scale.
      * @param options Optional configuration for a {@link Token}.
      */
-    constructor(options: ITokenOptions) {
+    constructor(options: ISvgTokenOptions | IPolygonTokenOptions) {
         super();
 
         this.name = options.name ?? "Token";
 
-        this.shape = options.shape ?? TokenShape.CUBE;
+        if ((options as ISvgTokenOptions).url !== undefined) {
+            this._shapeView = {
+                url: (options as ISvgTokenOptions).url,
+                thickness: options.thickness ?? 1.0,
+                standing: options.standing ?? false
+            };
+        } else {
+            this._shapeView = {
+                sides: (options as IPolygonTokenOptions).sides ?? 4,
+                thickness: options.thickness ?? 1.0,
+                standing: options.standing ?? false
+            };
+        }
+
         this.scale = options.scale ?? 1;
         this.color = options.color ?? Color.WHITE;
     }
 
     override get localBounds(): Bounds {
-        return new Bounds(new Vector3(this.scale, this.scale, this.scale));
+        return new Bounds(new Vector3(this.scale, this.scale, this.scale * this._shapeView.thickness));
     }
     
     render(ctx: RenderContext): TokenView {
         return {
             type: ViewType.TOKEN,
+
+            shape: this._shapeView,
 
             prompt: ctx.player?.prompt.get(this),
 
