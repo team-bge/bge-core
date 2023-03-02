@@ -41,6 +41,10 @@ export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
     readonly height: number;
 
     private readonly _cardThickness: number;
+    
+    promptOutlineStyle = OutlineStyle.SOLID_FILLED;
+    emptyOutlineStyle = OutlineStyle.DASHED;
+    outlineStyle = OutlineStyle.NONE;
 
     /**
      * How cards in a hand are positioned when there is free space.
@@ -88,17 +92,23 @@ export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
     override render(ctx: RenderContext): HandView {
         const dims = this.cardDimensions;
 
+        const prompt = ctx.player?.prompt.get(this);
+        
         const view: HandView = {
             type: ViewType.HAND,
             
-            prompt: ctx.player?.prompt.get(this),
+            prompt: prompt,
 
             width: this.width,
             height: this.height,
 
             cards: [],
 
-            outlineStyle: OutlineStyle.DASHED
+            outlineStyle: prompt != null
+                ? this.promptOutlineStyle
+                : this.isEmpty
+                    ? this.emptyOutlineStyle
+                    : this.outlineStyle
         };
         
         ctx.setParentView(this, view);

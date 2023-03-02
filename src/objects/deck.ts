@@ -25,6 +25,10 @@ export interface IDeckOptions {
 export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
     readonly alwaysShowCount: boolean;
 
+    promptOutlineStyle = OutlineStyle.SOLID_FILLED;
+    emptyOutlineStyle = OutlineStyle.DASHED;
+    outlineStyle = OutlineStyle.NONE;
+
     /**
      * Stores a first-in-last-out stack of cards.
      * @param CardType Constructor for the type of card stored in this container. Used to find the card dimensions.
@@ -53,10 +57,12 @@ export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
     override render(ctx: RenderContext): DeckView {
         const dims = this.cardDimensions;
 
+        const prompt = ctx.player?.prompt.get(this);
+
         const view: DeckView = {
             type: ViewType.DECK,
             
-            prompt: ctx.player?.prompt.get(this),
+            prompt: prompt,
 
             width: dims.width,
             height: dims.height,
@@ -64,7 +70,11 @@ export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
             count: this.count,
             showCount: this.alwaysShowCount,
 
-            outlineStyle: OutlineStyle.DASHED
+            outlineStyle: prompt != null
+                ? this.promptOutlineStyle
+                : this.isEmpty
+                    ? this.emptyOutlineStyle
+                    : this.outlineStyle
         };
 
         ctx.setParentView(this, view);
