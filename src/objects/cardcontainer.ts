@@ -540,17 +540,6 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
     shuffle(random: Random, from: number, to: number): void;
     
     shuffle(random: Random, from?: number, to?: number): void {
-        from ??= 0;
-        to ??= this._cards.length;
-
-        for (let i = from; i < to - 1; ++i) {
-            const swapIndex = random.int(i, to);
-
-            const a = this._cards[i];
-            const b = this._cards[swapIndex];
-            
-            this._cards[i] = b;
-            this._cards[swapIndex] = a;
-        }
+        random.shuffle(this._cards, from, to);
     }
 }

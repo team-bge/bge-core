@@ -178,4 +178,33 @@ export class Random {
 
         return items[this.int(items.length)];
     }
+
+    /**
+     * Shuffles all items of the given array in-place.
+     * @param array Array of items to shuffle
+     */
+    shuffle<TItem>(array: TItem[]): void;
+    
+    /**
+     * Shuffles a range of items of the given array in-place.
+     * @param array Array of items to shuffle.
+     * @param from Start of the range to shuffle, from 0.
+     * @param to Exclusive end of the range to shuffle.
+     */
+    shuffle<TItem>(array: TItem[], from: number, to: number): void;
+
+    shuffle<TItem>(array: TItem[], from?: number, to?: number): void {
+        from ??= 0;
+        to ??= array.length;
+
+        for (let i = from; i < to - 1; ++i) {
+            const swapIndex = this.int(i, to);
+
+            const a = array[i];
+            const b = array[swapIndex];
+            
+            array[i] = b;
+            array[swapIndex] = a;
+        }
+    }
 }
