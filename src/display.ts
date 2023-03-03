@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { Arrangement, LinearArrangement } from "./arrangement.js";
+import { Color } from "./color.js";
 
 import { IGame, ITextEmbeddable } from "./interfaces.js";
 import { Rotation, Vector3 } from "./math/index.js";
@@ -59,6 +60,16 @@ export interface IDisplayOptions {
      * be used with every child object, or an array containing separate options for each child.
      */
     childOptions?: IDisplayOptions | IDisplayOptions[];
+
+    /**
+     * For displayed text, specifies a color to use. Defaults to white.
+     */
+    fontColor?: Color;
+
+    /**
+     * For displayed text, specifies a font scale to apply. Defaults to 1.
+     */
+    fontScale?: number
 }
 
 export type DisplayParent = GameObject | IGame;
@@ -264,7 +275,9 @@ export class RenderContext {
         } else {
             view = {
                 type: ViewType.TEXT,
-                format: value.toString()
+                format: value.toString(),
+                color: options.fontColor?.encoded,
+                scale: options.fontScale
             };
         }
 

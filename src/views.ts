@@ -85,6 +85,7 @@ export interface TextView extends IColorView, ITransformView, ILabelView {
     tempChildren?: IView[];
     format?: string;
     embeds?: TextEmbedView[];
+    scale?: number;
 }
 
 export interface TokenView extends IColorView, ITransformView, IScaledView {
