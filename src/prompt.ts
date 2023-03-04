@@ -56,6 +56,13 @@ export interface IObjectClickOptions extends IClickOptions {
     message: Message;
 }
 
+export interface IClickAnyOptions extends IObjectClickOptions {
+    /**
+     * If true, automatically resolve this prompt if there is exactly one object to click on.
+     */
+    autoResolveIfSingle?: boolean;
+}
+
 /**
  * @summary Helper to create input prompts for a player.
  * @description The prompts will be created as promises that:
@@ -217,7 +224,7 @@ export class PromptHelper {
             return Promise.reject("No object provided to click on");
         }
 
-        const value = "return" in options ? options.return : object;
+        const value = options != null && "return" in options ? options.return : object;
         const index = this._nextPromptIndex++;
 
         const promptInfo: IPromptInfo = {
@@ -279,15 +286,19 @@ export class PromptHelper {
      * @returns A promise that resolves to the clicked object.
      */
     clickAny<TObject extends GameObject>(objects: ArrayLike<TObject> | Iterable<TObject>,
-        options: IObjectClickOptions): Promise<TObject> {
+        options: IClickAnyOptions): Promise<TObject> {
 
         if (options?.if === false) {
             return Promise.reject("Prompt condition is false");
         }
 
-        const objectArray = Array.from(objects);
+        const objectSet = new Set(Array.from(objects).filter(x => x != null));
 
-        return this.game.anyExclusive(() => objectArray.map(x => this.click(x, {
+        if ((options.autoResolveIfSingle ?? false) && objectSet.size === 1) {
+            return Promise.resolve(objectSet.values().next().value);
+        }
+
+        return this.game.anyExclusive(() => [...objectSet].map(x => this.click(x, {
             return: x,
             message: options.message
         })));
