@@ -121,6 +121,8 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
             this._players.push(player);
         }
 
+        this.onInitialize();
+
         let runPromise: Promise<IGameResult>;
 
         if (config.replay != null) {
@@ -140,6 +142,13 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
         this.dispatchUpdateView();
 
         return result;
+    }
+
+    /**
+     * Called after the game and player list have been configured.
+     */
+    protected onInitialize(): void {
+
     }
 
     /**
