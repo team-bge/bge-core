@@ -1,12 +1,20 @@
 import { Game } from "./game.js";
 import { ReplayEventType } from "./replay.js";
 
+interface IDelay {
+    index: number;
+    duration: number;
+    reject: { (reason?: any): void };
+}
+
 /**
  * Helper with methods to suspend the game for various amounts of time.
  */
 export class Delay {
     private readonly _game: Game<any>;
     private _nextIndex: number;
+
+    private readonly _active = new Map<number, IDelay>();
 
     constructor(game: Game<any>) {
         this._game = game;
@@ -33,8 +41,15 @@ export class Delay {
      * Long delay of 2 seconds.
      * @returns A promise that fulfils after 3 seconds.
      */
-    long(): Promise<void>{
+    long(): Promise<void> {
         return this.seconds(3);
+    }
+
+    /**
+     * True if any delays are currently running.
+     */
+    get anyActive(): boolean {
+        return this._active.size > 0;
     }
 
     /**
@@ -47,19 +62,48 @@ export class Delay {
         
         const group = this._game.promiseGroup;
 
-        if (!await this._game.replay.pendingEvent(ReplayEventType.DELAY_COMPLETE, index)) {
-            if (this._game.replay.isRecording) {
-                this._game.dispatchUpdateView();
+        if (await this._game.replay.pendingEvent(ReplayEventType.DELAY_COMPLETE, index)) {
+            group?.itemResolved();
+            return;
+        }
+
+        if (this._game.replay.isRecording) {
+            this._game.dispatchUpdateView();
+        }
+
+        const promise = new Promise<void>((resolve, reject) => {
+            const info = {
+                index: index,
+                duration: value,
+                reject: reject
+            } as IDelay;
+
+            this._active.set(index, info);
+
+            group?.catch(reject);
+
+            setTimeout(resolve, value * 1000);
+        });
+
+        try {
+            await promise;
+
+            if (this._active.delete(index)) {
+                this._game.replay.writeEvent(ReplayEventType.DELAY_COMPLETE, index);
+                group?.itemResolved();
+            }
+        } catch (e) {
+            if (this._active.delete(index)) {
+                group?.itemRejected(e);
             }
 
-            await new Promise((resolve, reject) => {
-                group?.catch(reject);
-                setTimeout(resolve, value * 1000);
-            });
-    
-            this._game.replay.writeEvent(ReplayEventType.DELAY_COMPLETE, index);
+            throw e;
         }
-        
-        group?.itemResolved();
+    }
+
+    cancelAll(reason?: any): void {
+        for (let info of [...this._active.values()]) {
+            info.reject(reason ?? "All delays cancelled");
+        }
     }
 }

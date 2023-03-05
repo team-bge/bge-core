@@ -1,7 +1,7 @@
 import { Delay } from "./delay.js";
 import { RenderContext } from "./display.js";
 import { IGame, IGameResult, IPlayerConfig, IRunConfig } from "./interfaces.js";
-import { AllGroup, AnyGroup, PromiseGroup } from "./internal.js";
+import { AllGroup, AnyGroup, PromiseGroup } from "./promisegroup.js";
 import { Player } from "./player.js";
 import { Random } from "./random.js";
 import { MessageBar } from "./messagebar.js";
@@ -188,6 +188,19 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
 
             this._onUpdateViews(views);
         }, 10);
+    }
+    
+    /**
+     * Cancel all player input prompts and delays with the given reason.
+     * @param reason A message or error describing why the promises were cancelled.
+     */
+    cancelAllPromises(reason?: any) {
+
+        for (let player of this.players) {
+            player.prompt.cancelAll(reason);
+        }
+
+        this.delay.cancelAll(reason);
     }
 
     private render(playerIndex?: number): GameView {

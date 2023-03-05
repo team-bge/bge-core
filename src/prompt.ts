@@ -10,6 +10,8 @@ interface IPromptInfo {
     parent: PromptHelper;
     index: number;
     message: Message;
+    showDuringDelays: boolean;
+    order: number;
     resolve: { (): void };
     reject: { (reason?: any): void };
 }
@@ -22,6 +24,17 @@ export interface IClickOptions {
      * Only create the prompt if true. Defaults to true.
      */
     if?: boolean;
+
+    /**
+     * Show this prompt when delays are active. Defaults to false.
+     */
+    showDuringDelays?: boolean;
+
+    /**
+     * Sorting order for displaying a message about this prompt in the message bar.
+     * Defaults to 0. Messages with the same order value are sorted by newest first.
+     */
+    order?: number;
 }
 
 /**
@@ -107,10 +120,16 @@ export class PromptHelper {
         }
 
         const set = new Set<Message>();
-        const sorted: Message[] = [];
+        const sorted: { message: Message, order: number }[] = [];
+
+        const anyDelays = this.game.delay.anyActive;
 
         for (let [_, prompt] of this._promptsByIndex) {
             if (prompt.message == null) {
+                continue;
+            }
+
+            if (anyDelays && !prompt.showDuringDelays) {
                 continue;
             }
 
@@ -119,10 +138,10 @@ export class PromptHelper {
             }
 
             set.add(prompt.message);
-            sorted.push(prompt.message);
+            sorted.push({ message: prompt.message, order: prompt.order });
         }
 
-        return sorted;
+        return sorted.sort((a, b) => a.order - b.order).map(x => x.message);
     }
 
     /**
@@ -131,6 +150,10 @@ export class PromptHelper {
     get(object: Clickable): Prompt | undefined {
         const prompt = this._promptsByObject.get(object);
         if (prompt == null) {
+            return undefined;
+        }
+
+        if (!prompt.showDuringDelays && this.game.delay.anyActive) {
             return undefined;
         }
 
@@ -146,7 +169,7 @@ export class PromptHelper {
     respond(index: number): void {
         const prompt = this._promptsByIndex.get(index);
 
-        if (prompt == null) {
+        if (prompt == null || !prompt.showDuringDelays && this.game.delay.anyActive) {
             console.log(`Unable to find prompt ${index} for player ${this._player.index}.`);
             return;
         }
@@ -156,18 +179,6 @@ export class PromptHelper {
 
     private remove(object: Clickable, index: number): boolean {
         return this._promptsByObject.delete(object) && this._promptsByIndex.delete(index);
-    }
-
-    private static messageToString(message: Message): string {
-        if (typeof message === "string") {
-            return message;
-        }
-
-        if (message.format === "{0}" && message.args?.length === 1 && message.args[0] instanceof Button) {
-            return message.args[0].label;
-        }
-
-        return `{ format: ${message.format}, ${message.args?.map((x, i) => `${i}: ${x}`).join(", ")} }`;
     }
 
     /**
@@ -230,7 +241,9 @@ export class PromptHelper {
         const promptInfo: IPromptInfo = {
             parent: this,
             index: index,
+            showDuringDelays: options?.showDuringDelays ?? false,
             message: options?.message ?? { format: "{0}", args: [ object as Button ] },
+            order: options?.order ?? 0,
             resolve: null,
             reject: null
         };
@@ -302,5 +315,17 @@ export class PromptHelper {
             return: x,
             message: options.message
         })));
+    }
+
+    /**
+     * Cancels all active prompts for this player.
+     */
+    cancelAll(reason?: any): void {
+        for (let info of [...this._promptsByObject.values()]) {
+            info.reject(reason ?? "All prompts cancelled");
+        }
+
+        this._promptsByObject.clear();
+        this._promptsByIndex.clear();
     }
 }

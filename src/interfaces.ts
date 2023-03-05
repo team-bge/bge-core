@@ -1,9 +1,9 @@
 import { Button } from "./button.js";
 import { RenderContext } from "./display.js";
-import { PromiseGroup } from "./internal.js";
+import { PromiseGroup } from "./promisegroup.js";
 import { GameObject } from "./objects/object.js";
-import { IReplayData, Replay } from "./replay.js";
-import { ColorView, GameView, TextEmbedView } from "./views.js";
+import { IReplayData } from "./replay.js";
+import { GameView, TextEmbedView } from "./views.js";
 
 /**
  * Information configuring a player, including their name.
