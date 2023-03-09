@@ -542,4 +542,21 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
     shuffle(random: Random, from?: number, to?: number): void {
         random.shuffle(this._cards, from, to);
     }
+
+    /**
+     * Adds or removes cards from this container until there are
+     * exactly the given number. Uses the given {@link factory}
+     * function to create new cards.
+     * @param count Desired number of cards in this container.
+     * @param factory Function to create new cards if we need them.
+     */
+    setCount(count: number, factory: { (): TCard }): void {
+        if (this.count > count) {
+            this.drawRange(this.count - count);
+        }
+
+        while (this.count < count) {
+            this.add(factory());
+        }
+    }
 }
