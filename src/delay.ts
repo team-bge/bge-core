@@ -95,9 +95,8 @@ export class Delay {
         } catch (e) {
             if (this._active.delete(index)) {
                 group?.itemRejected(e);
+                throw e;
             }
-
-            throw e;
         }
     }
 
