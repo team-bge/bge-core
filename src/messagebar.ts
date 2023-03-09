@@ -7,16 +7,30 @@ import { MessageView } from "./views.js";
  * A single row of the `MessageBar`. Use `MessageBar.remove(row)` to remove it.
  */
 export class MessageRow {
+    private _message: Message;
+
     /**
      * Displayed message in the row.
      */
-    readonly message: Message;
+    get message(): Message {
+        return this._message;
+    }
 
     /**
      * @internal
      */
     constructor(message: Message) {
-        this.message = message;
+        this._message = message;
+    }
+
+    /**
+     * Replaces the displayed message in the row.
+     * @param format A string containing embed points, for example `"Hello {0}"` will insert `args[0]` after the word "Hello ".
+     * @param args Optional array of values to embed in the message.
+     */
+    update(format: string, ...args: any[]): void {
+        MessageBar.validate(format, args);
+        this._message = { format: format, args: args };
     }
 }
 
