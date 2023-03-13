@@ -314,43 +314,37 @@ export class RenderContext {
         return view;
     }
     
-    /**
-     * @internal
-     */
-    renderChild(child: DisplayChild, parent: DisplayParent, options?: IDisplayOptions): IView;
-    renderChild(child: { (): string | number | GameObject | Iterable<GameObject> }, parent: DisplayParent, options?: IDisplayOptions): IView[];
+    renderText(source: { (): string | number }, value: string | number, parent: DisplayParent, options?: IDisplayOptions): IView {
+        return this._renderChild(source, value, parent, false, options);
+    }
 
-    renderChild(child: DisplayChild | { (): string | number | GameObject | Iterable<GameObject> }, parent: DisplayParent, options?: IDisplayOptions): IView | IView[] {
-        const value = typeof child === "function"
-            ? child()
-            : child;
+    renderChildren(children: Iterable<GameObject>, parent: DisplayParent, options?: IDisplayOptions): IView[] {
+        if (children == null) {
+            return [];
+        }
+        
+        const arrangement = options?.arrangement ?? RenderContext.DEFAULT_ARRANGEMENT;
+        const objects = [...children].filter(x => x != null);
+        const transforms = arrangement.generate(objects.map(x => x.localBounds));
 
-        if (value == null) {
-            return;
+        const views: IView[] = [];
+
+        for (let i = 0; i < objects.length; ++i) {
+            const childOptions = Array.isArray(options?.childOptions)
+                ? options.childOptions[i]
+                : options?.childOptions;
+
+            const transform = transforms[i];
+            const localOptions = RenderContext.transformOptions(transform.position, transform.rotation, childOptions);
+
+            views.push(this.renderChild(objects[i], parent, RenderContext.combineOptions(options, localOptions)))
         }
 
-        if (typeof value === "string" || typeof value === "number" || value instanceof GameObject) {
-            return this._renderChild(child as DisplayChild, value, parent, false, options);
-        } else {
-            const arrangement = options?.arrangement ?? RenderContext.DEFAULT_ARRANGEMENT;
-            const objects = [...value];
-            const transforms = arrangement.generate(objects.map(x => x.localBounds));
+        return views;
+    }
 
-            const views: IView[] = [];
-
-            for (let i = 0; i < objects.length; ++i) {
-                const childOptions = Array.isArray(options?.childOptions)
-                    ? options.childOptions[i]
-                    : options?.childOptions;
-
-                const transform = transforms[i];
-                const localOptions = RenderContext.transformOptions(transform.position, transform.rotation, childOptions);
-
-                views.push(this.renderChild(objects[i], parent, RenderContext.combineOptions(options, localOptions)))
-            }
-
-            return views;
-        }
+    renderChild(child: GameObject, parent: DisplayParent, options?: IDisplayOptions): IView {
+        return this._renderChild(child, child, parent, false, options);
     }
 
     /**

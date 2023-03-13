@@ -4,25 +4,42 @@ import { GameObject } from "./objects/object.js";
 import { IView } from "./views.js";
 
 const displayOptionsKey = Symbol("display:options");
-const displayListKey = Symbol("display:list");
+const displayKeysKey = Symbol("display:keys");
+
+export type DisplayOptionsFunc<TParent = any, TValue = any> = { (ctx: RenderContext, parent: TParent, value: TValue): IDisplayOptions };
 
 /**
  * Decorates a property to be displayed as a child of the containing object.
  * Supported for `GameObject` values, or `string` / `number` values to display them as text.
  * @param options Optional positioning and styling options.
  */
-export function display(options?: IDisplayOptions) : PropertyDecorator {
+export function display(options?: IDisplayOptions): PropertyDecorator;
+
+/**
+ * Decorates a property to be displayed as a child of the containing object.
+ * Supported for `GameObject` values, or `string` / `number` values to display them as text.
+ * @param optionsFn Function invoked whenever this property is rendered, to dynamically control how it is displayed.
+ */
+export function display<TParent = any, TValue = any>(optionsFn: DisplayOptionsFunc<TParent, TValue>): PropertyDecorator;
+
+export function display(options?: IDisplayOptions | DisplayOptionsFunc): PropertyDecorator {
     return (target, propertyKey) => {
-        Reflect.defineMetadata(displayOptionsKey, options ?? { }, target, propertyKey);
-        const displayList = Reflect.getOwnMetadata(displayListKey, target.constructor) ?? [];
-        displayList.push(propertyKey);
-        Reflect.defineMetadata(displayListKey, displayList, target.constructor);
+        const list = Reflect.getOwnMetadata(displayOptionsKey, target, propertyKey) as (IDisplayOptions | DisplayOptionsFunc)[] ?? [];
+        if (options != null) {
+            list.push(options);
+        }
+        Reflect.defineMetadata(displayOptionsKey, list, target, propertyKey);
+
+        const displayKeys = Reflect.getOwnMetadata(displayKeysKey, target.constructor) ?? new Set<string>();
+        displayKeys.add(propertyKey);
+        Reflect.defineMetadata(displayKeysKey, displayKeys, target.constructor);
     };
 }
 
 interface IChildProperty {
-    getter: { (): GameObject | Iterable<GameObject> | string | number };
-    options: IDisplayOptions;
+    parent: Object;
+    getValue: { (): GameObject | Iterable<GameObject> | string | number };
+    options: (IDisplayOptions | DisplayOptionsFunc)[];
 }
 
 /**
@@ -41,7 +58,16 @@ export class DisplayContainer {
     
     getOptions(arg: string | DisplayChild): IDisplayOptions {
         if (typeof arg === "string") {
-            return this._childProperties.get(arg)?.options;
+            const prop = this._childProperties.get(arg);
+            if (prop == null) {
+                return null;
+            }
+
+            if (prop.options.length === 0 || typeof prop.options[prop.options.length - 1] === "function") {
+                prop.options.push({});
+            }
+
+            return prop.options[prop.options.length - 1] as IDisplayOptions;
         } else {
             return this._dynamicChildren.get(arg);
         }
@@ -95,13 +121,13 @@ export class DisplayContainer {
      * @param parent Object to search through the properties of.
      */
     addProperties(parent: Object): void {
-        const displayList = Reflect.getOwnMetadata(displayListKey, Object.getPrototypeOf(parent).constructor);
-        if (displayList == null || displayList.length === 0) {
+        const displayList = Reflect.getOwnMetadata(displayKeysKey, Object.getPrototypeOf(parent).constructor) as Set<string>;
+        if (displayList == null || displayList.size === 0) {
             return;
         }
 
         for (let key of displayList) {
-            const options: IDisplayOptions = Reflect.getMetadata(displayOptionsKey, parent, key);
+            const options: (IDisplayOptions | DisplayOptionsFunc)[] = Reflect.getMetadata(displayOptionsKey, parent, key);
 
             if (options == null) {
                 continue;
@@ -116,8 +142,9 @@ export class DisplayContainer {
             }
 
             this._childProperties.set(key, {
-                getter: typeof value === "function" ? value : () => (parent as any)[key],
-                options: { ...options }
+                parent,
+                getValue: typeof value === "function" ? value : () => (parent as any)[key],
+                options: options
             });
         }
     }
@@ -163,7 +190,9 @@ export class DisplayContainer {
         views ??= [];
 
         for (let [child, options] of this._dynamicChildren) {
-            const childView = ctx.renderChild(child, parent, options);
+            const childView = typeof child === "function"
+                ? ctx.renderText(child, child(), parent, options)
+                : ctx.renderChild(child, parent, options);
 
             if (childView != null) {
                 views.push(childView);
@@ -171,7 +200,22 @@ export class DisplayContainer {
         }
 
         for (let [key, property] of this._childProperties) {
-            const childView = ctx.renderChild(property.getter, parent, property.options);
+            const options: IDisplayOptions = {};
+            const value = property.getValue();
+
+            for (let option of property.options) {
+                if (typeof option === "function") {
+                    Object.assign(options, option(ctx, property.parent, value));
+                } else {
+                    Object.assign(options, option);
+                }
+            }
+
+            const childView = typeof value === "string" || typeof value === "number"
+                ? ctx.renderText(property.getValue as any, value, parent, options)
+                : value instanceof GameObject
+                    ? ctx.renderChild(value, parent, options)
+                    : ctx.renderChildren(value, parent, options);
             
             if (Array.isArray(childView)) {
                 views.push(...childView);
