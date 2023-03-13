@@ -6,7 +6,7 @@ import { IView } from "./views.js";
 const displayOptionsKey = Symbol("display:options");
 const displayKeysKey = Symbol("display:keys");
 
-export type DisplayOptionsFunc<TParent = any, TValue = any> = { (ctx: RenderContext, parent: TParent, value: TValue): IDisplayOptions };
+export type DisplayOptionsFunc<TParent = any, TValue = any> = { (this: TParent, ctx: RenderContext, value: TValue): IDisplayOptions };
 
 /**
  * Decorates a property to be displayed as a child of the containing object.
@@ -205,7 +205,7 @@ export class DisplayContainer {
 
             for (let option of property.options) {
                 if (typeof option === "function") {
-                    Object.assign(options, option(ctx, property.parent, value));
+                    Object.assign(options, option.apply(property.parent, [ctx, value]));
                 } else {
                     Object.assign(options, option);
                 }
