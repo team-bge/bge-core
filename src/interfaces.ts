@@ -46,7 +46,6 @@ export type Message = string | { format: string, args?: MessageEmbed[] };
 export interface IRunConfig {
     players: IPlayerConfig[];
     replay?: IReplayData;
-    breakPoints?: IBreakPointData[];
 
     onLog?: { (entry: ILogEntry): void };
     onUpdateViews?: { (gameViews: GameView[]): void };
@@ -132,6 +131,9 @@ export enum LogLevel {
 export interface IBreakPointData {
     category: string;
     index: number;
+    file: string;
+    line: number;
+    stack: string;
 }
 
 export interface ILogEntry extends IBreakPointData {

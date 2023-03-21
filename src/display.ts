@@ -69,7 +69,7 @@ export interface IDisplayOptions {
     /**
      * For displayed text, specifies a font scale to apply. Defaults to 1.
      */
-    fontScale?: number
+    fontScale?: number;
 }
 
 export type DisplayParent = GameObject | IGame;

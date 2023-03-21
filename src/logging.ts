@@ -2,9 +2,7 @@ import { ILogEntry, LogLevel } from "./interfaces.js";
 
 export interface ILogger {
     readonly category: string;
-
-    addBreakPoint(index: number): void;
-
+    
     write(level: LogLevel, ...data: any[]): void;
 
     trace(...data: any[]): void;
@@ -48,54 +46,67 @@ export class Logger implements ILogger {
     readonly category: string;
 
     private _nextEventIndex = 0;
-    private readonly _breakPoints: Set<number> = new Set();
 
     private constructor(category: string) {
         this.category = category;
     }
 
-    addBreakPoint(index: number | string): void {
-        if (typeof index === "string") {
-            index = parseInt(index, 16);
+    private static readonly SKIP_STACK_PATTERN = /^(Error$|\s*at Logger\.[a-zA-Z0-9]+)/;
+    private static readonly STACK_FRAME_PATTERN = /^\s*at\s(?:[^(]+\()?file:\/\/\/(?<path>.+\.(?:js|ts))(?:\?v=[0-9]+)?:(?<line>[0-9]+):(?<column>[0-9]+)\)?\s*$/;
+
+    static parseSourceLocation(stackFrame: string): { file: string, line: number } {
+        const match = stackFrame.match(Logger.STACK_FRAME_PATTERN);
+
+        if (!match) {
+            return { file: "", line: -1 }
         }
 
-        this._breakPoints.add(index);
+        return {
+            file: match[1],
+            line: parseInt(match[2])
+        };
     }
 
-    write(level: LogLevel, data?: any[]) {
+    write(level: LogLevel, data?: any[]): number {
+        const stackLines = new Error().stack.split("\n");
+
+        while (stackLines.length > 0 && stackLines[0].match(Logger.SKIP_STACK_PATTERN)) {
+            stackLines.shift();
+        }
+
         const entry: ILogEntry = {
             category: this.category,
             index: this._nextEventIndex++,
             level: level,
-            data: data ?? []
+            data: data ?? [],
+            stack: stackLines.join("\n"),
+            ...Logger.parseSourceLocation(stackLines[0])
         };
 
         for (let callback of Logger._callbacks) {
             callback(entry);
         }
 
-        if (this._breakPoints.has(entry.index)) {
-            debugger;
-        }
+        return entry.index;
     }
 
-    trace(...data: any[]): void {        
-        this.write(LogLevel.TRACE, data);
+    trace(...data: any[]): number {        
+        return this.write(LogLevel.TRACE, data);
     }
 
-    info(...data: any[]): void {
-        this.write(LogLevel.INFO, data);
+    info(...data: any[]): number {
+        return this.write(LogLevel.INFO, data);
     }
 
-    log(...data: any[]): void {
-        this.write(LogLevel.LOG, data);
+    log(...data: any[]): number {
+        return this.write(LogLevel.LOG, data);
     }
 
-    warn(...data: any[]): void {
-        this.write(LogLevel.WARNING, data);
+    warn(...data: any[]): number {
+        return this.write(LogLevel.WARNING, data);
     }
 
-    error(...data: any[]): void {
-        this.write(LogLevel.ERROR, data);
+    error(...data: any[]): number {
+        return this.write(LogLevel.ERROR, data);
     }
 }

@@ -105,12 +105,6 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
             Logger.addCallback(config.onLog);
         }
 
-        if (config.breakPoints != null) {
-            for (let bp of config.breakPoints) {
-                Logger.get(bp.category).addBreakPoint(bp.index);
-            }
-        }
-
         Logger.reset();
 
         this._players = [];
