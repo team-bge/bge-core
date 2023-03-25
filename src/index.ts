@@ -8,7 +8,7 @@ export * from "./game.js";
 export * from "./helpers.js";
 export * from "./image.js";
 export * from "./interfaces.js";
-export * from "./logging.js";
+export * from "./debugging.js";
 export * from "./player.js";
 export * from "./promisegroup.js";
 export * from "./prompt.js";

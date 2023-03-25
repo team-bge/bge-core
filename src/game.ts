@@ -8,7 +8,7 @@ import { MessageBar } from "./messagebar.js";
 import { Basis, GameView, TableView, ViewType } from "./views.js";
 import { DisplayContainer } from "./displaycontainer.js";
 import { IReplayData, Replay } from "./replay.js";
-import { Logger } from "./logging.js";
+import { Debugging } from "./debugging.js";
 
 /**
  * Base class for a custom game, using a custom Player type.
@@ -100,12 +100,15 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
             : `EqCaDdMmVfLDjzGH ${new Date().toISOString()} ${(Math.floor(Math.random() * 4294967296)).toString(16)}`;
 
         this.random.initialize(seed);
+        
+        Debugging.baseBreakUrl = config.breakUrl;
 
-        if (config.onLog != null) {
-            Logger.addCallback(config.onLog);
+        if (config.breakPoints != null) {
+            Debugging.breakPoints = config.breakPoints;
+            Debugging.onBreak = () => {
+                this.dispatchUpdateViews();
+            };
         }
-
-        Logger.reset();
 
         this._players = [];
         this._onUpdateViews = config.onUpdateViews;
@@ -170,18 +173,22 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
         this._scheduledUpdateView = true;
 
         setTimeout(() => {
-            this._scheduledUpdateView = false;
-
-            if (this._onUpdateViews == null) return;
-
-            const views: GameView[] = [];
-
-            for (let i = 0; i < this.players.length; ++i) {
-                views[i] = this.render(i);
-            }
-
-            this._onUpdateViews(views);
+            this.dispatchUpdateViews();
         }, 10);
+    }
+
+    private dispatchUpdateViews() {
+        this._scheduledUpdateView = false;
+
+        if (this._onUpdateViews == null) return;
+
+        const views: GameView[] = [];
+
+        for (let i = 0; i < this.players.length; ++i) {
+            views[i] = this.render(i);
+        }
+
+        this._onUpdateViews(views);
     }
     
     /**
