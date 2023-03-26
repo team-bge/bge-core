@@ -7,7 +7,7 @@ import { Bounds, Vector3 } from "../math/index.js";
 /**
  * Interface for anything that can receive dealt cards.
  */
-export interface ICardReceiver<TCard> {
+export interface ICardReceiver<TCard extends Card> {
     /**
      * The total number of cards in this container.
      */
@@ -18,12 +18,22 @@ export interface ICardReceiver<TCard> {
      * @param card Card to add.
      */
     add(card: TCard): void;
+}
 
-    /**
-     * Add a whole wad of cards to the default place in this container.
-     * @param cards Cards to add.
-     */
-    addRange(cards: TCard[] | Iterable<TCard>): void;
+class ArrayCardReceiver<TCard extends Card> implements ICardReceiver<TCard> {
+    private readonly _array: TCard[];
+
+    constructor(array: TCard[]) {
+        this._array = array;
+    }
+
+    get count(): number {
+        return this._array.length;
+    }
+
+    add(card: TCard): void {
+        this._array.push(card);
+    }
 }
 
 /**
@@ -497,7 +507,10 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      * @param count Maximum number of cards to deal to each recipient.
      * @param firstTargetIndex Index of the first recipient in `targets`.
      */
-    deal(targets: ICardReceiver<TCard>[], count: number = 1, firstTargetIndex: number = 0): void {
+    deal(targets: ICardReceiver<TCard>[] | TCard[][], count: number = 1, firstTargetIndex: number = 0): void {
+        
+        targets = targets.map(x => Array.isArray(x) ? new ArrayCardReceiver(x) : x);
+
         for (let i = 0; i < count; ++i) {
             for (let j = 0; j < targets.length; ++j) {
                 if (this.isEmpty) return;
@@ -512,7 +525,10 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      * @param totalCount Maximum number of cards to deal in total.
      * @param firstTargetIndex Index of the first recipient in `targets`.
      */
-    dealTotal(targets: ICardReceiver<TCard>[], totalCount: number, handLimit?: number, firstTargetIndex: number = 0): void {
+    dealTotal(targets: ICardReceiver<TCard>[] | TCard[][], totalCount: number, handLimit?: number, firstTargetIndex: number = 0): void {
+        
+        targets = targets.map(x => Array.isArray(x) ? new ArrayCardReceiver(x) : x);
+
         while (totalCount > 0 && this.count > 0 && (handLimit == null || targets.some(x => x.count < handLimit))) {
             for (let j = 0; j < targets.length; ++j) {
                 if (this.isEmpty || totalCount <= 0) return;
