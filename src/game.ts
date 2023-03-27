@@ -133,6 +133,8 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
         } else {
             runPromise = this.onRun();
         }
+        
+        this.dispatchUpdateView();
 
         const result = await runPromise;
 

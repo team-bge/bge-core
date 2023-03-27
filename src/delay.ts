@@ -91,6 +91,7 @@ export class Delay {
             if (this._active.delete(index)) {
                 this._game.replay.writeEvent(ReplayEventType.DELAY_COMPLETE, index);
                 group?.itemResolved();
+                this._game.dispatchUpdateView();
             }
         } catch (e) {
             if (this._active.delete(index)) {

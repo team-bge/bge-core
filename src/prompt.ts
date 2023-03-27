@@ -287,6 +287,10 @@ export class PromptHelper {
 
         group?.itemResolved();
 
+        if (this.game.replay.isRecording) {
+            this.game.dispatchUpdateView();
+        }
+
         return value;
     }
 
