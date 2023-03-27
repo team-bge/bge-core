@@ -47,7 +47,7 @@ interface IChildProperty {
  */
 export class DisplayContainer {
     private readonly _dynamicChildren = new Map<DisplayChild, IDisplayOptions>();
-    private readonly _childProperties = new Map<string, IChildProperty>;
+    private readonly _childProperties = new Map<string, IChildProperty>();
 
     get isEmpty(): boolean {
         return this._dynamicChildren.size === 0 && this._childProperties.size === 0;
