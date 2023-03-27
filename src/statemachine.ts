@@ -1,4 +1,5 @@
 import { Game } from "./game.js";
+import { Helpers } from "./helpers.js";
 import { IGameResult } from "./interfaces.js";
 import { Player } from "./player.js";
 
@@ -17,7 +18,7 @@ export abstract class StateMachineGame<TPlayer extends Player = Player> extends 
             try {
                 state = await (state.apply(this) as GameState);
             } catch (e) {
-                console.error(e);
+                Helpers.printError(e);
                 return { };
             }
         }

@@ -62,4 +62,14 @@ export class Helpers {
 
         return array;
     }
+
+    static printError(e: any): void {
+        console.error(e);
+
+        if (e instanceof AggregateError) {
+            for (let inner of e.errors) {
+                this.printError(inner);
+            }
+        }
+    }
 }
