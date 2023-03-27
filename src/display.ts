@@ -232,39 +232,39 @@ export class RenderContext {
         
         const childId = isInternal ? undefined : this.childIndexMap.get(parent, child);
 
+        oldParentInfo = this.oldParentMap.get(child);
+        this.newParentMap.set(child, {
+            parent: parent,
+            childId: childId,
+            localPosition: localPosition,
+            localRotation: RenderContext.asRotation(options?.rotation)
+        });
+            
+        if (isInternal && (this.noAnimations || oldParentInfo?.parent === parent)) {
+            return;
+        }
+        
+        const wasHidden = this._isHidden;
+
+        if (this.player != null) {
+            if (options?.invisibleFor != null && options.invisibleFor.includes(this.player)) {
+                return null;
+            }
+
+            if (options?.visibleFor != null && !options.visibleFor.includes(this.player)) {
+                return null;
+            }
+
+            if (options?.hiddenFor != null) {
+                this._isHidden = options.hiddenFor.includes(this.player);
+            }
+            
+            if (options?.revealedFor != null) {
+                this._isHidden = !options.revealedFor.includes(this.player);
+            }
+        }
+
         if (value instanceof GameObject) {
-            oldParentInfo = this.oldParentMap.get(value);
-            this.newParentMap.set(value, {
-                parent: parent,
-                childId: childId,
-                localPosition: localPosition,
-                localRotation: RenderContext.asRotation(options?.rotation)
-            });
-            
-            if (isInternal && (this.noAnimations || oldParentInfo?.parent === parent)) {
-                return;
-            }
-            
-            const wasHidden = this._isHidden;
-
-            if (this.player != null) {
-                if (options?.invisibleFor != null && options.invisibleFor.includes(this.player)) {
-                    return null;
-                }
-
-                if (options?.visibleFor != null && !options.visibleFor.includes(this.player)) {
-                    return null;
-                }
-
-                if (options?.hiddenFor != null) {
-                    this._isHidden = options.hiddenFor.includes(this.player);
-                }
-                
-                if (options?.revealedFor != null) {
-                    this._isHidden = !options.revealedFor.includes(this.player);
-                }
-            }
-
             try {
                 view = value.render(this);
             } catch (e) {
