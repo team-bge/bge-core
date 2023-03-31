@@ -82,6 +82,35 @@ export interface IGame {
     get replayData(): IReplayData;
 }
 
+export interface ISettings {
+    [key: string]: Setting;
+}
+
+export type Setting =
+    | ICheckBoxSetting
+    | ISelectSetting;
+
+export interface ISetting {
+    title?: string;
+    description?: string;
+}
+
+export interface ICheckBoxSetting extends ISetting {
+    type: "checkbox";
+    default?: boolean;
+}
+
+export interface ISelectSetting extends ISetting {
+    type: "select";
+    options: ISelectOption[];
+}
+
+export interface ISelectOption {
+    title?: string;
+    description?: string;
+    default?: boolean;
+}
+
 /**
  * Your game should default export this interface, describing how to configure and play your game.
  */
@@ -106,6 +135,8 @@ export interface IGameConfig {
      * Maximum number of players your game supports.
      */
     maxPlayers: number;
+
+    settings?: ISettings;
 }
 
 /**
