@@ -47,6 +47,8 @@ export interface CardView extends IColorView, ITransformView, IContainerView, IR
     prompt?: Prompt;
     tempChildren?: IView[];
     cornerRadius?: number;
+    sides?: number;
+    cutout?: boolean;
     front?: ImageView;
     back?: ImageView;
 }
@@ -88,7 +90,7 @@ export interface TextView extends IColorView, ITransformView, ILabelView {
     scale?: number;
 }
 
-export interface TokenView extends IColorView, ITransformView, IScaledView {
+export interface TokenView extends IColorView, ITransformView, IContainerView, IScaledView {
     type: ViewType.TOKEN;
     childId?: number;
     containerId?: number;
@@ -197,7 +199,10 @@ export interface IScaledView {
 export interface ShapeView {
     url?: string;
     sides?: number;
+    width: number;
+    height: number;
     thickness: number;
+    cornerRadius: number;
     standing: boolean;
 }
 

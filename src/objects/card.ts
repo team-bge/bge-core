@@ -9,10 +9,12 @@ export class CardFace {
     image?: ImageView;
 }
 
-const cardWidthKey = Symbol("width");
-const cardHeightKey = Symbol("height");
-const cardThicknessKey = Symbol("thickness");
-const cardCornerRadiusKey = Symbol("cornerRadius");
+export enum CardShape {
+    RECTANGLE,
+    HEXAGON
+}
+
+const cardDimensionsKey = Symbol("card:dimensions");
 
 /**
  * Describes whether a card is face up or down.
@@ -35,6 +37,8 @@ export type CardComparer<TCard extends Card> = { (a: TCard, b: TCard): number };
  * Describes the dimensions of a rectangular card in centimeters.
  */
 export interface ICardDimensions {
+    shape: CardShape;
+
     /**
      * Width of the card in centimeters.
      */
@@ -57,35 +61,26 @@ export interface ICardDimensions {
 }
 
 /**
- * Specify the width of a custom card class.
- * @param cm Width in centimeters.
+ * Specify the dimensions of a custom card class.
+ * @param width Width in centimeters.
  */
-export function width(cm: number): ClassDecorator {
-    return Reflect.metadata(cardWidthKey, cm);
+export function rectangleCard(width: number, height: number, thickness: number, cornerRadius: number = 0): ClassDecorator {
+    return Reflect.metadata(cardDimensionsKey, {
+        shape: CardShape.RECTANGLE,
+        width: width,
+        height: height,
+        thickness: thickness,
+        cornerRadius: cornerRadius
+    } as ICardDimensions);
 }
 
-/**
- * Specify the height of a custom card class.
- * @param cm Height in centimeters.
- */
-export function height(cm: number): ClassDecorator {
-    return Reflect.metadata(cardHeightKey, cm);
-}
-
-/**
- * Specify the thickness of a custom card class.
- * @param cm Thickness in centimeters.
- */
-export function thickness(cm: number): ClassDecorator {
-    return Reflect.metadata(cardThicknessKey, cm);
-}
-
-/**
- * Specify the corner radius of a custom card class.
- * @param cm Radius in centimeters.
- */
-export function cornerRadius(cm: number): ClassDecorator {
-    return Reflect.metadata(cardCornerRadiusKey, cm);
+export function hexagonCard(size: number, thickness: number): ClassDecorator {
+    return Reflect.metadata(cardDimensionsKey, {
+        shape: CardShape.HEXAGON,
+        width: size,
+        height: size,
+        thickness: thickness
+    } as ICardDimensions);
 }
 
 /**
@@ -100,15 +95,22 @@ export class Card extends GameObject implements ITextEmbeddable {
      * @returns Width, height, and thickness of the card in centimeters.
      */
     static getDimensions(CardType: { new(...args: any[]): Card }): ICardDimensions {
-        return {
-            width: Reflect.getMetadata(cardWidthKey, CardType) ?? 10,
-            height: Reflect.getMetadata(cardHeightKey, CardType) ?? 10,
-            thickness: Reflect.getMetadata(cardThicknessKey, CardType) ?? 0.02,
-            cornerRadius: Reflect.getMetadata(cardCornerRadiusKey, CardType) ?? 0.25
+        return Reflect.getMetadata(cardDimensionsKey, CardType)
+        ?? {
+            shape: CardShape.RECTANGLE,
+            width: 10,
+            height: 10,
+            thickness: 0.1,
+            cornerRadius: 0
         };
     }
 
     private readonly _localBounds: Bounds;
+
+    /**
+     * Shape of the card (rectangle, hexagon, ...).
+     */
+    readonly shape: CardShape;
 
     /**
      * Width of the card in centimeters.
@@ -157,6 +159,7 @@ export class Card extends GameObject implements ITextEmbeddable {
 
         const dims = Card.getDimensions(Object.getPrototypeOf(this).constructor);
 
+        this.shape = dims.shape;
         this.width = dims.width;
         this.height = dims.height;
         this.thickness = dims.thickness;
@@ -185,6 +188,8 @@ export class Card extends GameObject implements ITextEmbeddable {
             height: this.height,
             thickness: this.thickness,
             cornerRadius: this.cornerRadius,
+            sides: this.shape === CardShape.HEXAGON
+                ? 6 : 4,
 
             children: this.children.isEmpty ? undefined : []
         } as CardView;

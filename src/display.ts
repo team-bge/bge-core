@@ -3,7 +3,7 @@ import { Arrangement, LinearArrangement } from "./arrangement.js";
 import { Color } from "./color.js";
 
 import { IGame, ITextEmbeddable } from "./interfaces.js";
-import { Rotation, Vector3 } from "./math/index.js";
+import { Bounds, Rotation, Vector3 } from "./math/index.js";
 import { GameObject } from "./objects/object.js";
 import { Player } from "./player.js";
 import { ILabelView, ITransformView, IView, Origin, TextEmbedView, ViewType } from "./views.js";
@@ -44,6 +44,14 @@ export interface IDisplayOptions {
      * Offset in centimeters, relative to the parent transform.
      */
     position?: Vector3 | { x?: number, y?: number, z?: number };
+
+    /**
+     * Location of the origin in local space, relative to the parent's bounds. Each
+     * component is between 0 and 1, where 0 is the parent bounds minimum, and
+     * 1 is the maximum. Defaults to (0.5, 0.5, 1), representing the center of the
+     * top of the parent.
+     */
+    anchor?: Vector3 | { x?: number, y?: number, z?: number };
 
     /**
      * Euler angles in degrees, relative to the parent rotation.
@@ -329,15 +337,19 @@ export class RenderContext {
 
         const views: IView[] = [];
 
+        const parentLocalBounds = parent instanceof GameObject
+            ? parent.localBounds
+            : null;
+
         for (let i = 0; i < objects.length; ++i) {
             const childOptions = Array.isArray(options?.childOptions)
                 ? options.childOptions[i]
                 : options?.childOptions;
 
             const transform = transforms[i];
-            const localOptions = RenderContext.transformOptions(transform.position, transform.rotation, childOptions);
+            const localOptions = RenderContext.transformOptions(null, transform.position, transform.rotation, childOptions);
 
-            views.push(this.renderChild(objects[i], parent, RenderContext.combineOptions(options, localOptions)))
+            views.push(this.renderChild(objects[i], parent, RenderContext.combineOptions(parentLocalBounds, options, localOptions)))
         }
 
         return views;
@@ -379,7 +391,7 @@ export class RenderContext {
         }
     }
     
-    static combineOptions(a?: IDisplayOptions, b?: IDisplayOptions): IDisplayOptions {
+    static combineOptions(parentLocalBounds: Bounds, a?: IDisplayOptions, b?: IDisplayOptions): IDisplayOptions {
         if (a == null) {
             return b ?? {};
         }
@@ -389,6 +401,7 @@ export class RenderContext {
         }
 
         const result = RenderContext.transformOptions(
+            parentLocalBounds,
             RenderContext.asVector(a.position),
             RenderContext.asRotation(a.rotation), b);
 
@@ -397,7 +410,7 @@ export class RenderContext {
         return result;
     }
 
-    static transformOptions(position?: Vector3, rotation?: Rotation, options?: IDisplayOptions): IDisplayOptions {
+    static transformOptions(parentLocalBounds?: Bounds, position?: Vector3, rotation?: Rotation, options?: IDisplayOptions): IDisplayOptions {
         if (options == null) {
             return {
                 position: position,

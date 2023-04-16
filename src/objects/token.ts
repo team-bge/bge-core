@@ -81,13 +81,19 @@ export class Token extends GameObject implements ITextEmbeddable {
             this._shapeView = {
                 url: (options as ISvgTokenOptions).url,
                 thickness: options.thickness ?? 1.0,
-                standing: options.standing ?? false
+                standing: options.standing ?? false,
+                width: 1,
+                height: 1,
+                cornerRadius: 0
             };
         } else {
             this._shapeView = {
                 sides: (options as IPolygonTokenOptions).sides ?? 4,
                 thickness: options.thickness ?? 1.0,
-                standing: options.standing ?? false
+                standing: options.standing ?? false,
+                width: 1,
+                height: 1,
+                cornerRadius: 0
             };
         }
 

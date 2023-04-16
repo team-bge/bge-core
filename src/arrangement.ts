@@ -129,6 +129,42 @@ export class LinearArrangement extends Arrangement {
     }
 }
 
+export interface IRadialArrangementOptions extends IArrangementOptions {
+    innerRadius?: number;
+}
+
+export class RadialArrangement extends Arrangement {
+    readonly innerRadius: number;
+
+    constructor(options?: IRadialArrangementOptions) {
+        super(options);
+
+        this.innerRadius = options?.innerRadius ?? -1;
+    }
+    
+    protected override generateLocal(boundsArray: Bounds[]): ITransform[] {
+        const maxWidth = boundsArray.reduce((s, x) => Math.max(s, x.size.x), 0) + this.margin.x;
+        const deltaTheta = 2 * Math.PI / boundsArray.length;
+        const dist = Math.max(this.innerRadius, boundsArray.length < 2 ? 0 : maxWidth / (2 * Math.tan(deltaTheta * 0.5)));
+               
+        const output: ITransform[] = [];
+
+        for (let i = 0; i < boundsArray.length; i++) {
+            const bounds = boundsArray[i];
+            
+            const r = this.innerRadius === -1 && boundsArray.length === 0 ? 0 : dist + bounds.size.y * 0.5 + this.margin.y;
+            const theta = Math.PI + deltaTheta * i;
+
+            output.push({
+                position: new Vector3(Math.sin(theta) * r, Math.cos(theta) * r),
+                rotation: Rotation.z(-theta * 180 / Math.PI + 180)
+            });
+        }
+
+        return output;
+    }
+}
+
 export interface IRectangularArrangementOptions extends IArrangementOptions {
     size: Vector3;
 }
