@@ -48,6 +48,11 @@ export class Zone extends GameObject {
     hideIfEmpty = false;
 
     /**
+     * How much to expand the {@link localBounds} by.
+     */
+    margin = 1.5;
+
+    /**
      * @summary Contains child objects that are displayed inside this zone.
      * @description This will also contain objects from `@display()` annotated properties,
      * using the property keys as names.
@@ -55,7 +60,7 @@ export class Zone extends GameObject {
     readonly children = new DisplayContainer();
 
     override get localBounds(): Bounds {
-        return new Bounds(new Vector3(this.width + 3, this.height + 3, 0));
+        return new Bounds(new Vector3(this.width + this.margin * 2, this.height + this.margin * 2, 0));
     }
     
     /**
