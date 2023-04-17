@@ -60,6 +60,8 @@ export interface ILinearArrangementOptions extends IArrangementOptions {
     zAlign?: Alignment;
 
     offset?: Vector3;
+
+    reverse?: boolean;
 }
 
 export class LinearArrangement extends Arrangement {
@@ -67,6 +69,7 @@ export class LinearArrangement extends Arrangement {
     readonly offAxis: Vector3;
     readonly pivot: Vector3;
     readonly offset: Vector3;
+    readonly reverse: boolean;
 
     constructor(options?: ILinearArrangementOptions) {
         super(options);
@@ -97,6 +100,7 @@ export class LinearArrangement extends Arrangement {
         );
 
         this.offset = options?.offset ?? Vector3.ZERO;
+        this.reverse = options?.reverse ?? false;
     }
     
     protected override generateLocal(boundsArray: Bounds[]): ITransform[] {
@@ -123,6 +127,10 @@ export class LinearArrangement extends Arrangement {
             });
 
             pos = pos.add(this.axis.mul(alongAxisSize * 0.5)).add(this.offset);
+        }
+
+        if (this.reverse) {
+            output.reverse();
         }
 
         return output;
