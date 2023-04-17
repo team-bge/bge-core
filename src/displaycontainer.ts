@@ -39,7 +39,8 @@ export function display(options?: IDisplayOptions | DisplayOptionsFunc): Propert
 interface IChildProperty {
     parent: Object;
     getValue: { (): GameObject | Iterable<GameObject> | string | number };
-    options: (IDisplayOptions | DisplayOptionsFunc)[];
+    annotationOptions: (IDisplayOptions | DisplayOptionsFunc)[];
+    dynamicOptions?: IDisplayOptions;
 }
 
 /**
@@ -63,11 +64,7 @@ export class DisplayContainer {
                 return null;
             }
 
-            if (prop.options.length === 0 || typeof prop.options[prop.options.length - 1] === "function") {
-                prop.options.push({});
-            }
-
-            return prop.options[prop.options.length - 1] as IDisplayOptions;
+            return prop.dynamicOptions ??= {} as IDisplayOptions;
         } else {
             return this._dynamicChildren.get(arg);
         }
@@ -144,7 +141,7 @@ export class DisplayContainer {
             this._childProperties.set(key, {
                 parent,
                 getValue: typeof value === "function" ? value : () => (parent as any)[key],
-                options: options
+                annotationOptions: options
             });
         }
     }
@@ -203,12 +200,16 @@ export class DisplayContainer {
             const options: IDisplayOptions = {};
             const value = property.getValue();
 
-            for (let option of property.options) {
+            for (let option of property.annotationOptions) {
                 if (typeof option === "function") {
                     Object.assign(options, option.apply(property.parent, [ctx, value]));
                 } else {
                     Object.assign(options, option);
                 }
+            }
+
+            if (property.dynamicOptions != null) {
+                Object.assign(options, property.dynamicOptions);
             }
 
             const childView = typeof value === "string" || typeof value === "number"
