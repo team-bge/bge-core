@@ -1,40 +1,49 @@
-import { Button } from "./button.js";
+import { Button, TextInput } from "./button.js";
 import { Game } from "./game.js";
 import { Clickable, Message } from "./interfaces.js";
 import { GameObject } from "./objects/object.js";
 import { Player } from "./player.js";
-import { ReplayEventType } from "./replay.js";
+import { IPromptResponseEvent, ReplayEvent, ReplayEventType } from "./replay.js";
 import { Prompt, PromptKind } from "./views.js";
 
 interface IPromptInfo {
     parent: PromptHelper;
     index: number;
+    kind: PromptKind;
     message: Message;
     showDuringDelays: boolean;
     order: number;
-    resolve: { (): void };
+    resolve: { (payload?: any): void };
     reject: { (reason?: any): void };
 }
 
-/**
- * Base options for prompting a player to click on something.
- */
-export interface IClickOptions {
+export interface IPromptOptions {
+    /**
+     * Sorting order for displaying a message about this prompt in the message bar.
+     * Defaults to 0. Messages with the same order value are sorted by newest first.
+     */
+    order?: number;
+    
+    /**
+     * Show this prompt when delays are active. Defaults to false.
+     */
+    showDuringDelays?: boolean;
+    
     /**
      * Only create the prompt if true. Defaults to true.
      */
     if?: boolean;
 
     /**
-     * Show this prompt when delays are active. Defaults to false.
+     * Optional message to display to the prompted player.
      */
-    showDuringDelays?: boolean;
+    message?: Message;
+}
 
-    /**
-     * Sorting order for displaying a message about this prompt in the message bar.
-     * Defaults to 0. Messages with the same order value are sorted by newest first.
-     */
-    order?: number;
+/**
+ * Base options for prompting a player to click on something.
+ */
+export interface IClickOptions extends IPromptOptions {
 }
 
 /**
@@ -74,6 +83,10 @@ export interface IClickAnyOptions extends IObjectClickOptions {
      * If true, automatically resolve this prompt if there is exactly one object to click on.
      */
     autoResolveIfSingle?: boolean;
+}
+
+export interface ITextInputOptions extends IPromptOptions {
+    
 }
 
 /**
@@ -159,14 +172,14 @@ export class PromptHelper {
 
         return {
             index: prompt.index,
-            kind: PromptKind.CLICK
+            kind: prompt.kind
         };
     }
 
     /**
      * @internal
      */
-    respond(index: number): void {
+    respond(index: number, payload?: any): void {
         const prompt = this._promptsByIndex.get(index);
 
         if (prompt == null || !prompt.showDuringDelays && this.game.delay.anyActive) {
@@ -174,11 +187,11 @@ export class PromptHelper {
             return;
         }
 
-        prompt.resolve();
+        prompt.resolve(payload);
     }
 
-    private remove(object: Clickable, index: number): boolean {
-        return this._promptsByObject.delete(object) && this._promptsByIndex.delete(index);
+    private remove(index: number, object?: Clickable): boolean {
+        return this._promptsByIndex.delete(index) && (object == null || this._promptsByObject.delete(object));
     }
 
     /**
@@ -236,60 +249,8 @@ export class PromptHelper {
         }
 
         const value = options != null && "return" in options ? options.return : object;
-        const index = this._nextPromptIndex++;
-
-        const promptInfo: IPromptInfo = {
-            parent: this,
-            index: index,
-            showDuringDelays: options?.showDuringDelays ?? false,
-            message: options?.message ?? { format: "{0}", args: [ object as Button ] },
-            order: options?.order ?? 0,
-            resolve: null,
-            reject: null
-        };
-
-        const group = this.game.promiseGroup;
-    
-        this._promptsByObject.set(object, promptInfo);
-        this._promptsByIndex.set(index, promptInfo);
-
-        if (!await this.game.replay.pendingEvent(ReplayEventType.PROMPT_RESPONSE, this._player.index, index)) {
-            const promise = new Promise<void>((resolve, reject) => {
-                promptInfo.resolve = () => {
-                    if (this.remove(object, index)) {
-                        resolve();
-                    }
-                };
-    
-                promptInfo.reject = (reason?: any) => {
-                    if (this.remove(object, index)) {
-                        reject(reason);
-                    }
-                };
-            });
-            
-            group?.catch(promptInfo.reject);
-    
-            if (this.game.replay.isRecording && this._promptsByIndex.has(index)) {
-                this.game.dispatchUpdateView();
-            }
-    
-            try {
-                await promise;
-                this.game.replay.writeEvent(ReplayEventType.PROMPT_RESPONSE, this._player.index, index);
-            } catch (e) {
-                group?.itemRejected(e);
-                throw e;
-            }
-        } else if (!this.remove(object, index)) {
-            throw new Error("Resolved an invalid prompt");
-        }
-
-        group?.itemResolved();
-
-        if (this.game.replay.isRecording) {
-            this.game.dispatchUpdateView();
-        }
+        
+        await this.prompt(PromptKind.CLICK, options, object);
 
         return value;
     }
@@ -321,11 +282,93 @@ export class PromptHelper {
         })));
     }
 
+    async textInput(label: string, options?: ITextInputOptions): Promise<string> {
+        if (options?.if === false) {
+            return Promise.reject("Prompt condition is false");
+        }
+
+        const textInput = new TextInput(label);
+
+        return (await this.prompt<string>(PromptKind.TEXT_INPUT, options, textInput)) ?? "";
+    }
+
+    private async prompt<T = void>(kind: PromptKind, options?: IPromptOptions, object?: Clickable): Promise<T> {
+        const index = this._nextPromptIndex++;
+
+        const promptInfo: IPromptInfo = {
+            parent: this,
+            index: index,
+            kind: kind,
+            showDuringDelays: options?.showDuringDelays ?? false,
+            message: options?.message ?? { format: "{0}", args: [ object as Button ] },
+            order: options?.order ?? 0,
+            resolve: null,
+            reject: null
+        };
+
+        const group = this.game.promiseGroup;
+    
+        if (object != null) {
+            this._promptsByObject.set(object, promptInfo);
+        }
+
+        this._promptsByIndex.set(index, promptInfo);
+
+        const event: IPromptResponseEvent = {
+            type: ReplayEventType.PROMPT_RESPONSE,
+            playerIndex: this._player.index,
+            promptIndex: index
+        };
+
+        const pending = await this.game.replay.pendingEvent(event);
+        let result = pending?.payload as T;
+
+        if (pending == null) {
+            const promise = new Promise<T>((resolve, reject) => {
+                promptInfo.resolve = (payload?: any) => {
+                    if (this.remove(index, object)) {
+                        resolve(payload);
+                    }
+                };
+    
+                promptInfo.reject = (reason?: any) => {
+                    if (this.remove(index, object)) {
+                        reject(reason);
+                    }
+                };
+            });
+            
+            group?.catch(promptInfo.reject);
+    
+            if (this.game.replay.isRecording && this._promptsByIndex.has(index)) {
+                this.game.dispatchUpdateView();
+            }
+    
+            try {
+                result = await promise;
+                this.game.replay.writeEvent({ ...event, payload: result } );
+            } catch (e) {
+                group?.itemRejected(e);
+                throw e;
+            }
+        } else if (!this.remove(index, object)) {
+            throw new Error("Resolved an invalid prompt");
+        }
+
+        group?.itemResolved();
+
+        if (this.game.replay.isRecording) {
+            this.game.dispatchUpdateView();
+        }
+
+        return result;
+    }
+
     /**
      * Cancels all active prompts for this player.
      */
     cancelAll(reason?: any): void {
-        for (let info of [...this._promptsByObject.values()]) {
+        for (let info of [...this._promptsByIndex.values()]) {
             info.reject(reason ?? "All prompts cancelled");
         }
 

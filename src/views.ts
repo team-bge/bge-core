@@ -28,7 +28,7 @@ export interface TableView extends IContainerView {
     tempChildren?: IView[];
 }
 
-export interface ZoneView extends IColorView, ITransformView, IContainerView, IRectangularView, IOutlinedView, ILabelView {
+export interface ZoneView extends ILabelView, IColorView, ITransformView, IContainerView, IRectangularView, IOutlinedView {
     type: ViewType.ZONE;
     childId?: number;
     containerId?: number;
@@ -53,7 +53,7 @@ export interface CardView extends IColorView, ITransformView, IContainerView, IR
     back?: ImageView;
 }
 
-export interface DeckView extends ITransformView, IRectangularView, IOutlinedView, ILabelView {
+export interface DeckView extends ILabelView, ITransformView, IRectangularView, IOutlinedView {
     type: ViewType.DECK;
     childId?: number;
     containerId?: number;
@@ -66,7 +66,7 @@ export interface DeckView extends ITransformView, IRectangularView, IOutlinedVie
     showCount: boolean;
 }
 
-export interface HandView extends ITransformView, IRectangularView, IOutlinedView, ILabelView {
+export interface HandView extends ILabelView, ITransformView, IRectangularView, IOutlinedView {
     type: ViewType.HAND;
     childId?: number;
     containerId?: number;
@@ -77,7 +77,7 @@ export interface HandView extends ITransformView, IRectangularView, IOutlinedVie
     cards: CardView[];
 }
 
-export interface TextView extends IColorView, ITransformView, ILabelView {
+export interface TextView extends ILabelView, IColorView, ITransformView {
     type: ViewType.TEXT;
     childId?: number;
     containerId?: number;
@@ -147,6 +147,10 @@ export interface Prompt {
     index: number;
 }
 
+export interface ILabelView {
+    label?: string;
+}
+
 export interface IColorView {
     color?: ColorView;
 }
@@ -164,10 +168,6 @@ export interface IRectangularView {
 export interface IOutlinedView {
     outlineStyle: OutlineStyle;
     outlineColor?: ColorView;
-}
-
-export interface ILabelView {
-    label?: string;
 }
 
 export interface IThicknessView {
@@ -204,6 +204,7 @@ export interface ShapeView {
     thickness: number;
     cornerRadius: number;
     standing: boolean;
+    noSides: boolean;
 }
 
 export interface Vector3View {
@@ -214,6 +215,7 @@ export interface Vector3View {
 
 export enum PromptKind {
     CLICK = 0,
+    TEXT_INPUT = 1,
 }
 
 export interface ColorView {

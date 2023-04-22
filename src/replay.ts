@@ -1,4 +1,5 @@
 import { Game } from "./game.js";
+import { IPlayerConfig } from "./interfaces.js";
 
 export enum ReplayEventType {
     PROMPT_RESPONSE,
@@ -7,33 +8,45 @@ export enum ReplayEventType {
 
 export interface IReplayData {
     seed: string;
-    events: IReplayEvent[];
+    players: readonly IPlayerConfig[];
+    events: readonly ReplayEvent[];
 }
 
-export interface IReplayEvent {
-    type: ReplayEventType;
-    indices: number[];
+export type ReplayEvent =
+    | IPromptResponseEvent
+    | IDelayCompleteEvent;
+
+export interface IPromptResponseEvent {
+    type: ReplayEventType.PROMPT_RESPONSE;
+    playerIndex: number;
+    promptIndex: number;
+    payload?: any;
+}
+
+export interface IDelayCompleteEvent {
+    type: ReplayEventType.DELAY_COMPLETE;
+    delayIndex: number;
 }
 
 class ReplayPromise {
-    private _resolve: { (): void };
+    private _resolve: { (event: ReplayEvent): void };
 
-    readonly promise: Promise<void>;
+    readonly promise: Promise<ReplayEvent>;
 
     constructor() {
-        this.promise = new Promise<void>((resolve, reject) => {
+        this.promise = new Promise<ReplayEvent>((resolve, reject) => {
             this._resolve = resolve;
         });
     }
 
-    resolve(): void {
-        this._resolve();
+    resolve(event: ReplayEvent): void {
+        this._resolve(event);
     }
 }
 
 export class Replay {
     readonly game: Game;
-    readonly events: IReplayEvent[];
+    readonly events: ReplayEvent[];
 
     private readonly _promises: ReplayPromise[];
     private _playbackIndex: number;
@@ -54,15 +67,12 @@ export class Replay {
         this._playbackIndex = 0;
     }
 
-    writeEvent(type: ReplayEventType, ...indices: number[]): void {
+    writeEvent<T extends ReplayEvent>(event: T): void {
         if (!this.isRecording) {
             throw new Error("Tried to write in the middle of replay playback");
         }
 
-        this.events.push({
-            type: type,
-            indices: indices
-        });
+        this.events.push(event);
 
         this._playbackIndex++;
     }
@@ -97,7 +107,7 @@ export class Replay {
             ++this._playbackIndex;
 
             try {
-                nextPromise?.resolve();
+                nextPromise?.resolve(nextEvent);
             } catch (e) {
                 console.log(`Error during replay playback (event ${this._playbackIndex} of ${this.events.length}).\n${e}`);
                 this.events.splice(this._playbackIndex);
@@ -108,22 +118,24 @@ export class Replay {
         return true;
     }
 
-    async pendingEvent(type: ReplayEventType, ...indices: number[]): Promise<boolean> {
+    async pendingEvent<T extends ReplayEvent>(event: T): Promise<T | null> {
         if (this.isRecording) {
-            return false;
+            return null;
         }
+
+        let keys = Object.getOwnPropertyNames(event) as (keyof T)[];
         
         for (let index = this._playbackIndex; index < this.events.length; ++index) {
-            const event = this.events[index];
+            const pending = this.events[index];
 
-            if (event.type !== type || event.indices.length !== indices.length) {
+            if (pending.type !== event.type) {
                 continue;
             }
 
             let match = true;
             
-            for (let i = 0; i < indices.length; ++i) {
-                if (indices[i] !== event.indices[i]) {
+            for (let key of keys) {
+                if (event[key] !== (pending as T)[key]) {
                     match = false;
                     break;
                 }
@@ -134,11 +146,10 @@ export class Replay {
                     this._promises.push(null);
                 }
 
-                await (this._promises[index] ??= new ReplayPromise()).promise;
-                return true;
+                return await (this._promises[index] ??= new ReplayPromise()).promise as T;
             }
         }
 
-        return false;
+        return null;
     }
 }

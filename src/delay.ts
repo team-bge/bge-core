@@ -1,5 +1,5 @@
 import { Game } from "./game.js";
-import { ReplayEventType } from "./replay.js";
+import { ReplayEvent, ReplayEventType } from "./replay.js";
 
 interface IDelay {
     index: number;
@@ -61,8 +61,12 @@ export class Delay {
         const index = this._nextIndex++;
         
         const group = this._game.promiseGroup;
+        const event: ReplayEvent = {
+            type: ReplayEventType.DELAY_COMPLETE,
+            delayIndex: index
+        };
 
-        if (await this._game.replay.pendingEvent(ReplayEventType.DELAY_COMPLETE, index)) {
+        if (await this._game.replay.pendingEvent(event) != null) {
             group?.itemResolved();
             return;
         }
@@ -89,7 +93,7 @@ export class Delay {
             await promise;
 
             if (this._active.delete(index)) {
-                this._game.replay.writeEvent(ReplayEventType.DELAY_COMPLETE, index);
+                this._game.replay.writeEvent(event);
                 group?.itemResolved();
                 this._game.dispatchUpdateView();
             }

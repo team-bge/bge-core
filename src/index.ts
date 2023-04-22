@@ -13,6 +13,7 @@ export * from "./player.js";
 export * from "./promisegroup.js";
 export * from "./prompt.js";
 export * from "./random.js";
+export * from "./replay.js";
 export * from "./messagebar.js";
 export * from "./statemachine.js";
 

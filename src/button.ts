@@ -28,3 +28,18 @@ export class Button implements ITextEmbeddable {
         };
     }
 }
+
+export class TextInput implements ITextEmbeddable {
+    readonly label: string;
+
+    constructor(label: string) {
+        this.label = label;
+    }
+
+    renderTextEmbed(ctx: RenderContext): TextEmbedView {
+        return {
+            prompt: ctx.player?.prompt.get(this) ?? { kind: PromptKind.TEXT_INPUT, index: -1 },
+            label: this.label
+        };
+    }
+}

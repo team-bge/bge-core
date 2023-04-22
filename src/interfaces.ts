@@ -1,4 +1,4 @@
-import { Button } from "./button.js";
+import { Button, TextInput } from "./button.js";
 import { RenderContext } from "./display.js";
 import { PromiseGroup } from "./promisegroup.js";
 import { GameObject } from "./objects/object.js";
@@ -12,7 +12,7 @@ export interface IPlayerConfig {
     /**
      * Player nickname that can be shown to other players.
      */
-    name: string;
+    readonly name: string;
 }
 
 /**
@@ -28,7 +28,7 @@ export interface IGameResult {
 /**
  * Types of objects that can be used in a player click prompt.
  */
-export type Clickable = GameObject | Button;
+export type Clickable = GameObject | Button | TextInput;
 
 /**
  * Types of value that can be embedded in a message.
@@ -64,7 +64,7 @@ export interface IGame {
     /**
      * @internal
      */
-    respondToPrompt(playerIndex: number, promptIndex: number): void;
+    respondToPrompt(playerIndex: number, promptIndex: number, payload?: any): void;
     
     /**
      * @internal

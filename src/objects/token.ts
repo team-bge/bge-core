@@ -84,7 +84,8 @@ export class Token extends GameObject implements ITextEmbeddable {
                 standing: options.standing ?? false,
                 width: 1,
                 height: 1,
-                cornerRadius: 0
+                cornerRadius: 0,
+                noSides: false
             };
         } else {
             this._shapeView = {
@@ -93,7 +94,8 @@ export class Token extends GameObject implements ITextEmbeddable {
                 standing: options.standing ?? false,
                 width: 1,
                 height: 1,
-                cornerRadius: 0
+                cornerRadius: 0,
+                noSides: false
             };
         }
 

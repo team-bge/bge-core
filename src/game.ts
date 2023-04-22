@@ -16,6 +16,7 @@ import { Debugging } from "./debugging.js";
 export abstract class Game<TPlayer extends Player = Player> implements IGame {
     private readonly _PlayerType: { new(game: IGame, index: number, config: IPlayerConfig): TPlayer };
     private _players: TPlayer[];
+    private _playerConfigs: IPlayerConfig[];
 
     private _onUpdateViews?: { (gameViews: GameView[]): void };
     private _scheduledUpdateView = false;
@@ -86,6 +87,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
     get replayData(): IReplayData {
         return {
             seed: this.random.seed,
+            players: this._playerConfigs.map(x => ({ name: x.name })),
             events: [...this.replay.events]
         };
     }
@@ -97,7 +99,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
     async run(config: IRunConfig): Promise<IGameResult> {
         const seed = config.replay != null
             ? config.replay.seed
-            : `EqCaDdMmVfLDjzGH ${new Date().toISOString()} ${(Math.floor(Math.random() * 4294967296)).toString(16)}`;
+            : `${new Date().toISOString()} ${(Math.floor(Math.random() * 4294967296)).toString(16)}`;
 
         this.random.initialize(seed);
         
@@ -111,6 +113,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
         }
 
         this._players = [];
+        this._playerConfigs = config.players;
         this._onUpdateViews = config.onUpdateViews;
 
         for (let i = 0; i < config.players.length; ++i) {
@@ -160,9 +163,9 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
      * @param playerIndex Which player responded.
      * @param promptIndex Which prompt did they respond to.
      */
-    respondToPrompt(playerIndex: number, promptIndex: number): void {
+    respondToPrompt(playerIndex: number, promptIndex: number, payload?: any): void {
         const player = this._players[playerIndex];
-        player.prompt.respond(promptIndex);
+        player.prompt.respond(promptIndex, payload);
     }
 
     /**
