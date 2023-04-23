@@ -12,10 +12,12 @@ export type IView =
 
 export interface GameView {
     basis: Basis;
-    table: TableView;
-    messages: MessageView[];
     hasPrompts: boolean;
+    playerIndex: number;
+    players: PlayerView[];
+    messages: MessageView[];
     cameras: CameraView[];
+    table: TableView;
 }
 
 export interface TableView extends IContainerView {
@@ -28,7 +30,7 @@ export interface TableView extends IContainerView {
     tempChildren?: IView[];
 }
 
-export interface ZoneView extends ILabelView, IColorView, ITransformView, IContainerView, IRectangularView, IOutlinedView {
+export interface ZoneView extends IOutlinedView, ILabelView, IColorView, ITransformView, IContainerView, IRectangularView {
     type: ViewType.ZONE;
     childId?: number;
     containerId?: number;
@@ -53,7 +55,7 @@ export interface CardView extends IColorView, ITransformView, IContainerView, IR
     back?: ImageView;
 }
 
-export interface DeckView extends ILabelView, ITransformView, IRectangularView, IOutlinedView {
+export interface DeckView extends IOutlinedView, ILabelView, ITransformView, IRectangularView {
     type: ViewType.DECK;
     childId?: number;
     containerId?: number;
@@ -66,7 +68,7 @@ export interface DeckView extends ILabelView, ITransformView, IRectangularView, 
     showCount: boolean;
 }
 
-export interface HandView extends ILabelView, ITransformView, IRectangularView, IOutlinedView {
+export interface HandView extends IOutlinedView, ILabelView, ITransformView, IRectangularView {
     type: ViewType.HAND;
     childId?: number;
     containerId?: number;
@@ -104,6 +106,12 @@ export interface TokenView extends IColorView, ITransformView, IContainerView, I
 export enum Basis {
     Y_UP_Z_FORWARD = 0,
     Y_FORWARD_Z_UP = 1,
+}
+
+export interface PlayerView {
+    name: string;
+    color: ColorView;
+    hasPrompts: boolean;
 }
 
 export interface MessageView {
@@ -147,6 +155,11 @@ export interface Prompt {
     index: number;
 }
 
+export interface IOutlinedView {
+    outlineStyle: OutlineStyle;
+    outlineColor?: ColorView;
+}
+
 export interface ILabelView {
     label?: string;
 }
@@ -163,11 +176,6 @@ export interface ITransformView {
 export interface IRectangularView {
     width: number;
     height: number;
-}
-
-export interface IOutlinedView {
-    outlineStyle: OutlineStyle;
-    outlineColor?: ColorView;
 }
 
 export interface IThicknessView {
@@ -207,6 +215,12 @@ export interface ShapeView {
     noSides: boolean;
 }
 
+export interface ColorView {
+    r?: number;
+    g?: number;
+    b?: number;
+}
+
 export interface Vector3View {
     x?: number;
     y?: number;
@@ -216,12 +230,6 @@ export interface Vector3View {
 export enum PromptKind {
     CLICK = 0,
     TEXT_INPUT = 1,
-}
-
-export interface ColorView {
-    r?: number;
-    g?: number;
-    b?: number;
 }
 
 export enum OutlineStyle {
