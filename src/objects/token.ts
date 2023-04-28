@@ -66,7 +66,7 @@ export class Token extends GameObject implements ITextEmbeddable {
     /**
      * Model tint color.
      */
-    readonly color: Color;
+    readonly color?: Color;
     
     /**
      * A playing piece with a 3D model, tint color, and scale.
@@ -100,7 +100,7 @@ export class Token extends GameObject implements ITextEmbeddable {
         }
 
         this.scale = options.scale ?? 1;
-        this.color = options.color ?? Color.WHITE;
+        this.color = options.color;
     }
 
     override get localBounds(): Bounds {
@@ -116,7 +116,7 @@ export class Token extends GameObject implements ITextEmbeddable {
             prompt: ctx.player?.prompt.get(this),
 
             scale: this.scale,
-            color: this.color.encoded,
+            color: this.color?.encoded,
         };
     }
 
