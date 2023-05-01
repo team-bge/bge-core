@@ -349,7 +349,11 @@ export class RenderContext {
             const transform = transforms[i];
             const localOptions = RenderContext.transformOptions(null, transform.position, transform.rotation, childOptions);
 
-            views.push(this.renderChild(objects[i], parent, RenderContext.combineOptions(parentLocalBounds, options, localOptions)))
+            const childView = this.renderChild(objects[i], parent, RenderContext.combineOptions(parentLocalBounds, options, localOptions));
+
+            if (childView != null) {
+                views.push(childView);
+            }
         }
 
         return views;
