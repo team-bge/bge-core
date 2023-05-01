@@ -77,7 +77,7 @@ export class Replay {
         this._playbackIndex++;
     }
 
-    async run(data: IReplayData): Promise<boolean> {
+    async run(data: IReplayData): Promise<number> {
         this.events.splice(0);
         this._promises.splice(0);
         this._playbackIndex = 0;
@@ -100,8 +100,7 @@ export class Replay {
 
             if (nextPromise == null) {
                 console.log(`Error during replay playback (event ${this._playbackIndex} of ${this.events.length}).\nEvent was never awaited.`);
-                this.events.splice(this._playbackIndex);
-                return false;
+                return this._playbackIndex;
             }
             
             ++this._playbackIndex;
@@ -109,13 +108,12 @@ export class Replay {
             try {
                 nextPromise?.resolve(nextEvent);
             } catch (e) {
-                console.log(`Error during replay playback (event ${this._playbackIndex} of ${this.events.length}).\n${e}`);
-                this.events.splice(this._playbackIndex);
-                return false;
+                console.log(`Error during replay playback (event ${this._playbackIndex - 1} of ${this.events.length}).\n${e}`);
+                return this._playbackIndex - 1;
             }
         }
 
-        return true;
+        return this._playbackIndex;
     }
 
     async pendingEvent<T extends ReplayEvent>(event: T): Promise<T | null> {

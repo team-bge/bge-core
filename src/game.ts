@@ -130,7 +130,13 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
 
             const replayPromise = this.replay.run(config.replay);
             runPromise = this.onRun();
-            await replayPromise;
+            const lastEventIndex = await replayPromise;
+
+            if (lastEventIndex < this.replay.events.length) {
+                return {
+                    replayIndex: lastEventIndex
+                };
+            }
 
             console.log("Replay playback ended");
         } else {

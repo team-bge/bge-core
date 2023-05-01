@@ -23,6 +23,11 @@ export interface IGameResult {
      * Optional array of scores, indexed the same as @see Game<TPlayer>.players
      */
     scores?: number[];
+
+    /**
+     * @internal
+     */
+    replayIndex?: number;
 }
 
 /**
