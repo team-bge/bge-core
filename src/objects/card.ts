@@ -154,10 +154,10 @@ export class Card extends GameObject implements ITextEmbeddable {
      */
     readonly children = new DisplayContainer();
 
-    constructor() {
+    constructor(dimensions?: ICardDimensions) {
         super();
 
-        const dims = Card.getDimensions(Object.getPrototypeOf(this).constructor);
+        const dims = dimensions ?? Card.getDimensions(Object.getPrototypeOf(this).constructor);
 
         this.shape = dims.shape;
         this.width = dims.width;

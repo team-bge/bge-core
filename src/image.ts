@@ -14,6 +14,16 @@ export abstract class Image {
             url: url
         };
     }
+
+    static slice(url: string, minX: number, minY: number, maxX: number, maxY: number): ImageView {
+        return {
+            url: url,
+            minX: minX,
+            minY: minY,
+            maxX: maxX,
+            maxY: maxY
+        };
+    }
     
     /**
      * Describes an image as a tile within a larger image atlas file.

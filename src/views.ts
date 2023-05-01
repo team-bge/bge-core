@@ -30,7 +30,7 @@ export interface TableView extends IContainerView {
     tempChildren?: IView[];
 }
 
-export interface ZoneView extends IOutlinedView, ILabelView, IColorView, ITransformView, IContainerView, IRectangularView {
+export interface ZoneView extends IRectangularView, IOutlinedView, ILabelView, IColorView, ITransformView, IContainerView {
     type: ViewType.ZONE;
     childId?: number;
     containerId?: number;
@@ -40,7 +40,7 @@ export interface ZoneView extends IOutlinedView, ILabelView, IColorView, ITransf
     tempChildren?: IView[];
 }
 
-export interface CardView extends IColorView, ITransformView, IContainerView, IRectangularView, IThicknessView {
+export interface CardView extends IRectangularView, IThicknessView, IColorView, ITransformView, IContainerView {
     type: ViewType.CARD;
     childId?: number;
     containerId?: number;
@@ -55,7 +55,7 @@ export interface CardView extends IColorView, ITransformView, IContainerView, IR
     back?: ImageView;
 }
 
-export interface DeckView extends IOutlinedView, ILabelView, ITransformView, IRectangularView {
+export interface DeckView extends IRectangularView, IOutlinedView, ILabelView, ITransformView {
     type: ViewType.DECK;
     childId?: number;
     containerId?: number;
@@ -68,7 +68,7 @@ export interface DeckView extends IOutlinedView, ILabelView, ITransformView, IRe
     showCount: boolean;
 }
 
-export interface HandView extends IOutlinedView, ILabelView, ITransformView, IRectangularView {
+export interface HandView extends IRectangularView, IOutlinedView, ILabelView, ITransformView {
     type: ViewType.HAND;
     childId?: number;
     containerId?: number;
@@ -92,7 +92,7 @@ export interface TextView extends ILabelView, IColorView, ITransformView {
     scale?: number;
 }
 
-export interface TokenView extends IColorView, ITransformView, IContainerView, IScaledView {
+export interface TokenView extends IScaledView, IColorView, ITransformView, IContainerView {
     type: ViewType.TOKEN;
     childId?: number;
     containerId?: number;
@@ -155,6 +155,11 @@ export interface Prompt {
     index: number;
 }
 
+export interface IRectangularView {
+    width: number;
+    height: number;
+}
+
 export interface IOutlinedView {
     outlineStyle: OutlineStyle;
     outlineColor?: ColorView;
@@ -173,11 +178,6 @@ export interface ITransformView {
     localRotation?: Vector3View;
 }
 
-export interface IRectangularView {
-    width: number;
-    height: number;
-}
-
 export interface IThicknessView {
     thickness?: number;
 }
@@ -188,6 +188,10 @@ export interface ImageView {
     cols?: number;
     row?: number;
     col?: number;
+    minX?: number;
+    minY?: number;
+    maxX?: number;
+    maxY?: number;
     aspectRatio?: number;
     color?: ColorView;
 }
