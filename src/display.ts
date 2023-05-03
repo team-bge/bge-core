@@ -244,16 +244,17 @@ export class RenderContext {
         }
         
         const childId = isInternal ? undefined : this.childIndexMap.get(parent, child);
-
-        oldParentInfo = this.oldParentMap.get(child);
-        this.newParentMap.set(child, {
+        const newParentInfo: IParentInfo = {
             parent: parent,
             childId: childId,
             localPosition: localPosition,
             localRotation: RenderContext.asRotation(options?.rotation)
-        });
+        };
+
+        oldParentInfo = this.oldParentMap.get(child);
             
         if (isInternal && (this.noAnimations || oldParentInfo?.parent === parent)) {
+            this.newParentMap.set(child, newParentInfo);
             return;
         }
         
@@ -309,6 +310,8 @@ export class RenderContext {
         if (options?.label != null) {
             (view as ILabelView).label = options.label;
         }
+        
+        this.newParentMap.set(child, newParentInfo);
 
         if (value instanceof GameObject && !this.noAnimations) {
             if (oldParentInfo?.parent !== parent && RenderContext.ANIMATING_VIEW_TYPES.has(view.type)) {
