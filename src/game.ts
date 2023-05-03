@@ -65,7 +65,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
     protected constructor(PlayerType: { new(game: IGame, index: number, config: IPlayerConfig): TPlayer }) {
         this._PlayerType = PlayerType;
         this.delay = new Delay(this);
-        this.random = new Random(this);
+        this.random = new Random();
         this.message = new MessageBar(this);
         this.replay = new Replay(this);
         this.children = new DisplayContainer();

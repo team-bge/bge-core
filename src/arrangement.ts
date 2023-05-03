@@ -1,6 +1,10 @@
 import { Bounds, ITransform, Rotation, Vector3 } from "./math/index.js";
+import { Random } from "./random.js";
 
 export abstract class Arrangement {
+    static readonly DEFAULT_MAX_JITTER_OFFSET = new Vector3(0.25, 0.25, 0);
+    static readonly DEFAULT_MAX_JITTER_ROTATION = Rotation.z(5);
+
     protected static getPivot(alignment: Alignment): number {
         switch (alignment) {
             case Alignment.START:
@@ -16,11 +20,25 @@ export abstract class Arrangement {
 
     protected readonly margin: Vector3;
 
+    protected readonly jitter: boolean;
+    protected readonly minJitterOffset: Vector3;
+    protected readonly maxJitterOffset: Vector3;
+    protected readonly minJitterRotation: Rotation;
+    protected readonly maxJitterRotation: Rotation;
+
     constructor(options?: IArrangementOptions) {
         this.margin = options?.margin ?? Vector3.ZERO;
+
+        this.jitter = options?.jitter ?? false;
+
+        this.maxJitterOffset = options?.maxJitterOffset ?? Arrangement.DEFAULT_MAX_JITTER_OFFSET;
+        this.minJitterOffset = options?.minJitterOffset ?? this.maxJitterOffset.mul(-1);
+    
+        this.maxJitterRotation = options?.maxJitterRotation ?? Arrangement.DEFAULT_MAX_JITTER_ROTATION;
+        this.minJitterRotation = options?.minJitterRotation ?? this.maxJitterRotation.inverse;
     }
 
-    generate(boundsArray: Bounds[]): ITransform[] {
+    generate(boundsArray: Bounds[], jitterSeed?: string): ITransform[] {
         if (boundsArray.length === 0) { 
             return [];
         }
@@ -30,10 +48,20 @@ export abstract class Arrangement {
             boundsArray = boundsArray.map(x => x.expand(halfMargin));
         }
 
-        let localTransforms = this.generateLocal(boundsArray);
+        const localTransforms = this.generateLocal(boundsArray);
 
         if (localTransforms.length !== boundsArray.length) {
             throw new Error("Expected output transform array length to match input length");
+        }
+
+        if (this.jitter && jitterSeed != null) {
+            const random = new Random(jitterSeed);
+            localTransforms.forEach(x => {
+                const offset = Vector3.lerp(this.minJitterOffset, this.maxJitterOffset, random.float());
+                const rotation = Rotation.slerp(this.minJitterRotation, this.maxJitterRotation, random.float());
+                x.position = x.position?.add(offset) ?? offset;
+                x.rotation = rotation.mul(x.rotation ?? Rotation.IDENTITY);
+            });
         }
 
         return localTransforms;
@@ -50,6 +78,12 @@ export enum Alignment {
 
 export interface IArrangementOptions {
     margin?: Vector3;
+
+    jitter?: boolean;
+    minJitterOffset?: Vector3;
+    maxJitterOffset?: Vector3;
+    minJitterRotation?: Rotation;
+    maxJitterRotation?: Rotation;
 }
 
 export interface ILinearArrangementOptions extends IArrangementOptions {
@@ -116,6 +150,8 @@ export class LinearArrangement extends Arrangement {
             const offAxisSize = bounds.size.mul(this.offAxis);
 
             pos = pos.add(this.axis.mul(alongAxisSize * 0.5));
+
+
 
             output.push({
                 position: pos

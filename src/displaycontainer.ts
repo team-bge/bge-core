@@ -41,12 +41,15 @@ interface IChildProperty {
     getValue: { (): GameObject | Iterable<GameObject> | string | number };
     annotationOptions: (IDisplayOptions | DisplayOptionsFunc)[];
     dynamicOptions?: IDisplayOptions;
+    jitterSeed: string;
 }
 
 /**
  * Container for dynamically adding, removing, and repositioning objects for display.
  */
 export class DisplayContainer {
+    private static _nextIndex = 1;
+
     private readonly _dynamicChildren = new Map<DisplayChild, IDisplayOptions>();
     private readonly _childProperties = new Map<string, IChildProperty>();
 
@@ -76,6 +79,8 @@ export class DisplayContainer {
         }
         
         options ??= {};
+
+        options.jitterSeed ??= `${DisplayContainer._nextIndex++}`;
 
         this._dynamicChildren.set(object, options);
 
@@ -141,7 +146,8 @@ export class DisplayContainer {
             this._childProperties.set(key, {
                 parent,
                 getValue: typeof value === "function" ? value : () => (parent as any)[key],
-                annotationOptions: options
+                annotationOptions: options,
+                jitterSeed: `${DisplayContainer._nextIndex++}`
             });
         }
     }
@@ -197,7 +203,7 @@ export class DisplayContainer {
         }
 
         for (let [key, property] of this._childProperties) {
-            const options: IDisplayOptions = {};
+            const options: IDisplayOptions = { jitterSeed: property.jitterSeed };
             const value = property.getValue();
 
             for (let option of property.annotationOptions) {

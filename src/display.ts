@@ -78,6 +78,11 @@ export interface IDisplayOptions {
      * For displayed text, specifies a font scale to apply. Defaults to 1.
      */
     fontScale?: number;
+
+    /**
+     * @internal
+     */
+    jitterSeed?: string;
 }
 
 export type DisplayParent = GameObject | IGame;
@@ -333,7 +338,7 @@ export class RenderContext {
         
         const arrangement = options?.arrangement ?? RenderContext.DEFAULT_ARRANGEMENT;
         const objects = [...children].filter(x => x != null);
-        const transforms = arrangement.generate(objects.map(x => x.localBounds));
+        const transforms = arrangement.generate(objects.map(x => x.localBounds), options.jitterSeed);
 
         const views: IView[] = [];
 

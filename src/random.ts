@@ -37,8 +37,6 @@ export class Random {
         }
     }
 
-    private readonly _game: IGame;
-
     private _seed: string;
     private _source: { (): number };
 
@@ -50,8 +48,10 @@ export class Random {
         return this._source != null;
     }
 
-    constructor(game: IGame) {
-        this._game = game;
+    constructor(seed?: string) {
+        if (seed != null) {
+            this.initialize(seed);
+        }
     }
 
     /**
