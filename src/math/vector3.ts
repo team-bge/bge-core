@@ -13,6 +13,10 @@ export class Vector3 {
         return new Vector3(Math.max(a.x, b.x), Math.max(a.y, b.y), Math.max(a.z, b.z));
     }
 
+    static lerp(a: Vector3, b: Vector3, t: number): Vector3 {
+        return new Vector3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t);
+    }
+
     readonly x: number;
     readonly y: number;
     readonly z: number;

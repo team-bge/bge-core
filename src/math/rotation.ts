@@ -75,6 +75,42 @@ export class Rotation {
         );
     }
 
+    static slerp(a: Rotation, b: Rotation, t: number): Rotation {
+        // From https://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/index.htm
+
+        // Calculate angle between them.
+        const cosHalfTheta = a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z;
+
+        // if a=b or a=-b then theta = 0 and we can return a
+        if (Math.abs(cosHalfTheta) >= 1.0) {
+            return a;
+        }
+
+        // Calculate temporary values.
+        const halfTheta = Math.acos(cosHalfTheta);
+        const sinHalfTheta = Math.sqrt(1.0 - cosHalfTheta*cosHalfTheta);
+
+        // if theta = 180 degrees then result is not fully defined
+        // we could rotate around any axis normal to a or b
+        if (Math.abs(sinHalfTheta) < 0.001) {
+            return this.quaternion(
+                a.w * 0.5 + b.w * 0.5,
+                a.x * 0.5 + b.x * 0.5,
+                a.y * 0.5 + b.y * 0.5,
+                a.z * 0.5 + b.z * 0.5);
+        }
+
+        const ratioA = Math.sin((1 - t) * halfTheta) / sinHalfTheta;
+        const ratioB = Math.sin(t * halfTheta) / sinHalfTheta;
+
+        //calculate Quaternion.
+        return this.quaternion(
+            a.w * ratioA + b.w * ratioB,
+            a.x * ratioA + b.x * ratioB,
+            a.y * ratioA + b.y * ratioB,
+            a.z * ratioA + b.z * ratioB);
+    }
+
     private readonly w: number;
     private readonly x: number;
     private readonly y: number;
