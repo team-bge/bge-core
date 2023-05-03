@@ -196,7 +196,7 @@ export class RadialArrangement extends Arrangement {
         for (let i = 0; i < boundsArray.length; i++) {
             const bounds = boundsArray[i];
             
-            const r = this.innerRadius === -1 && boundsArray.length === 0 ? 0 : dist + bounds.size.y * 0.5 + this.margin.y;
+            const r = this.innerRadius === -1 && boundsArray.length === 1 ? 0 : dist + bounds.size.y * 0.5 + this.margin.y;
             const theta = Math.PI + deltaTheta * i;
 
             output.push({
