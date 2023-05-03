@@ -110,6 +110,8 @@ export abstract class CardContainer<TCard extends Card> extends GameObject imple
         return card;
     }
 
+    abstract has(card: TCard): boolean;
+
     /**
      * Called when a card is to be removed from this container.
      * @param card Card to remove.
@@ -257,6 +259,10 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
         }
 
         return this._cards[indexOrCard];
+    }
+
+    override has(card: TCard): boolean {
+        return this._cards.findIndex(x => x.card === card) !== -1;
     }
 
     /**
