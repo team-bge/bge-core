@@ -61,7 +61,7 @@ export class AnyGroup extends PromiseGroup {
 
     itemResolved(): void {
         if (this._anyResolved) {
-            throw new Error("Already resolved");
+            return;
         }
 
         this._anyResolved = true;
