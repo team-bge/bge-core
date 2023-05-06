@@ -233,6 +233,32 @@ export class RenderContext {
         this._parentViews.set(parent, view);
     }
 
+    private _isInvisible(options?: IDisplayOptions): boolean {
+        if (options?.invisibleFor != null && this.player != null && options.invisibleFor.includes(this.player)) {
+            return true;
+        }
+
+        if (options?.visibleFor != null && (this.player == null || !options.visibleFor.includes(this.player))) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private _updateHidden(options?: IDisplayOptions): boolean {
+        const wasHidden = this._isHidden;
+        
+        if (options?.hiddenFor != null) {
+            this._isHidden = this.player != null && options.hiddenFor.includes(this.player);
+        }
+        
+        if (options?.revealedFor != null) {
+            this._isHidden = this.player == null || !options.revealedFor.includes(this.player);
+        }
+
+        return wasHidden;
+    }
+
     private _renderChild(child: DisplayChild, value: GameObject | number | string, parent: DisplayParent, isInternal: boolean, options?: IDisplayOptions): IView {
         let view: IView;
         let oldParentInfo: IParentInfo;
@@ -252,31 +278,17 @@ export class RenderContext {
         };
 
         oldParentInfo = this.oldParentMap.get(child);
-            
+
+        if (this._isInvisible(options)) {
+            return null;
+        }
+        
         if (isInternal && (this.noAnimations || oldParentInfo?.parent === parent)) {
             this.newParentMap.set(child, newParentInfo);
             return;
         }
-        
-        const wasHidden = this._isHidden;
 
-        if (this.player != null) {
-            if (options?.invisibleFor != null && options.invisibleFor.includes(this.player)) {
-                return null;
-            }
-
-            if (options?.visibleFor != null && !options.visibleFor.includes(this.player)) {
-                return null;
-            }
-
-            if (options?.hiddenFor != null) {
-                this._isHidden = options.hiddenFor.includes(this.player);
-            }
-            
-            if (options?.revealedFor != null) {
-                this._isHidden = !options.revealedFor.includes(this.player);
-            }
-        }
+        const wasHidden = this._updateHidden(options);
 
         if (value instanceof GameObject) {
             try {
@@ -335,9 +347,11 @@ export class RenderContext {
     }
 
     renderChildren(children: Iterable<GameObject>, parent: DisplayParent, options?: IDisplayOptions): IView[] {
-        if (children == null) {
-            return [];
+        if (children == null || this._isInvisible(options)) {
+            return null;
         }
+
+        const wasHidden = this._updateHidden(options);
         
         const arrangement = options?.arrangement ?? RenderContext.DEFAULT_ARRANGEMENT;
         const objects = [...children].filter(x => x != null);
@@ -349,22 +363,26 @@ export class RenderContext {
             ? parent.localBounds
             : null;
 
-        for (let i = 0; i < objects.length; ++i) {
-            const childOptions = Array.isArray(options?.childOptions)
-                ? options.childOptions[i]
-                : options?.childOptions;
-
-            const transform = transforms[i];
-            const localOptions = RenderContext.transformOptions(null, transform.position, transform.rotation, childOptions);
-
-            const childView = this.renderChild(objects[i], parent, RenderContext.combineOptions(parentLocalBounds, options, localOptions));
-
-            if (childView != null) {
-                views.push(childView);
+        try {
+            for (let i = 0; i < objects.length; ++i) {
+                const childOptions = Array.isArray(options?.childOptions)
+                    ? options.childOptions[i]
+                    : options?.childOptions;
+    
+                const transform = transforms[i];
+                const localOptions = RenderContext.transformOptions(null, transform.position, transform.rotation, childOptions);
+    
+                const childView = this.renderChild(objects[i], parent, RenderContext.combineOptions(parentLocalBounds, options, localOptions));
+    
+                if (childView != null) {
+                    views.push(childView);
+                }
             }
+    
+            return views;
+        } finally {
+            this._isHidden = wasHidden;
         }
-
-        return views;
     }
 
     renderChild(child: GameObject, parent: DisplayParent, options?: IDisplayOptions): IView {
