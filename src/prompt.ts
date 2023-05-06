@@ -103,6 +103,8 @@ export class PromptHelper {
     private readonly _player: Player;
 
     private _nextPromptIndex = 0;
+    private _respondedCount = 0;
+
     private readonly _promptsByObject = new Map<Clickable, IPromptInfo>();
     private readonly _promptsByIndex = new Map<number, IPromptInfo>();
 
@@ -118,10 +120,24 @@ export class PromptHelper {
     }
 
     /**
-     * Total number of distinct active prompts for this player.
+     * Number of distinct active prompts for this player.
      */
-    get count(): number {
+    get activeCount(): number {
         return this._promptsByIndex.size;
+    }
+
+    /**
+     * Total number of distinct prompts for this player, both active and historical.
+     */
+    get totalCount(): number {
+        return this._nextPromptIndex;
+    }
+
+    /**
+     * Total number of valid prompts that this player has responded to.
+     */
+    get respondedCount(): number {
+        return this._respondedCount;
     }
 
     /**
@@ -206,13 +222,34 @@ export class PromptHelper {
     
     /**
      * Creates a prompt that resolves when the player clicks on the given button. The button will be
+     * displayed in a message seen only by the prompted player. When resolved, the clicked button
+     * will be returned.
+     * @param label Text to be displayed on the button.
+     * @param options Optional options to configure the prompt.
+     * @returns A promise that resolves to {@link label}.
+     */
+    click(label: string, options?: IButtonClickOptions): Promise<string>;
+    
+    /**
+     * Creates a prompt that resolves when the player clicks on the given button. The button will be
      * displayed in a message seen only by the prompted player. When resolved, the value specified in
      * `options.return` will be returned.
      * @param object `Button` to be clicked.
      * @param options Options to configure the prompt, including the `return` value.
-     * @returns A promise that resolves to `options.return`.
+     * @returns A promise that resolves to {@link IReturnClickOptions.return}.
      */
     click<TValue>(object: Button, options: IReturnClickOptions<TValue> & IButtonClickOptions): Promise<TValue>;
+    
+    
+    /**
+     * Creates a prompt that resolves when the player clicks on the given button. The button will be
+     * displayed in a message seen only by the prompted player. When resolved, the value specified in
+     * `options.return` will be returned.
+     * @param label Text to be displayed on the button.
+     * @param options Options to configure the prompt, including the {@link IReturnClickOptions.return} value.
+     * @returns A promise that resolves to {@link IReturnClickOptions.return}.
+     */
+    click<TValue>(label: string, options: IReturnClickOptions<TValue> & IButtonClickOptions): Promise<TValue>;
 
     /**
      * Creates a prompt that resolves when the player clicks on the given `GameObject`. An accompanying
@@ -234,10 +271,19 @@ export class PromptHelper {
      */
     click<TValue>(object: GameObject, options: IReturnClickOptions<TValue> & IObjectClickOptions): Promise<TValue>;
     
-    async click<TObject extends Clickable, TValue>(object: TObject,
+    async click<TObject extends Clickable | string, TValue>(target: TObject,
         options?: (IButtonClickOptions | IObjectClickOptions) & (IReturnClickOptions<TValue> | {})): Promise<TObject | TValue> {
         if (options?.if === false) {
             return Promise.reject("Prompt condition is false");
+        }
+
+        const value = options != null && "return" in options ? options.return : target;
+        let object: Clickable;
+
+        if (typeof target === "string") {
+            object = new Button(target);
+        } else {
+            object = target;
         }
         
         if (this._promptsByObject.get(object) != null) {
@@ -247,8 +293,6 @@ export class PromptHelper {
         if (object == null) {
             return Promise.reject("No object provided to click on");
         }
-
-        const value = options != null && "return" in options ? options.return : object;
         
         await this.prompt(PromptKind.CLICK, options, object);
 
@@ -354,6 +398,8 @@ export class PromptHelper {
         } else if (!this.remove(index, object)) {
             throw new Error("Resolved an invalid prompt");
         }
+        
+        this._respondedCount += 1;
 
         group?.itemResolved();
 
