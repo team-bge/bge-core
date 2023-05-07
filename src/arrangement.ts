@@ -38,7 +38,7 @@ export abstract class Arrangement {
         this.minJitterRotation = options?.minJitterRotation ?? this.maxJitterRotation.inverse;
     }
 
-    generate(boundsArray: Bounds[], jitterSeed?: string): ITransform[] {
+    generate(boundsArray: Bounds[], parentLocalBounds?: Bounds, jitterSeed?: string): ITransform[] {
         if (boundsArray.length === 0) { 
             return [];
         }
@@ -47,15 +47,17 @@ export abstract class Arrangement {
             const halfMargin = this.margin.mul(0.5);
             boundsArray = boundsArray.map(x => x.expand(halfMargin));
         }
+        
+        let random = new Random(jitterSeed ?? "jitter");
 
-        const localTransforms = this.generateLocal(boundsArray);
+        const localTransforms = this.generateLocal(boundsArray, random, parentLocalBounds);
 
         if (localTransforms.length !== boundsArray.length) {
             throw new Error("Expected output transform array length to match input length");
         }
 
         if (this.jitter && jitterSeed != null) {
-            const random = new Random(jitterSeed);
+            random = new Random(jitterSeed);
             localTransforms.forEach(x => {
                 const offset = Vector3.lerp(this.minJitterOffset, this.maxJitterOffset, random.float());
                 const rotation = Rotation.slerp(this.minJitterRotation, this.maxJitterRotation, random.float());
@@ -67,7 +69,7 @@ export abstract class Arrangement {
         return localTransforms;
     }
 
-    protected abstract generateLocal(boundsArray: Bounds[]): ITransform[];
+    protected abstract generateLocal(boundsArray: Bounds[], random: Random, parentLocalBounds?: Bounds): ITransform[];
 }
 
 export enum Alignment {
@@ -286,5 +288,88 @@ export class RectangularArrangement extends Arrangement {
             new Vector3(width * 0.5, 0, 0), Rotation.z(90)).reverse());
    
         return output;
+    }
+}
+
+export interface IPileArrangementOptions extends IArrangementOptions {
+    itemRadius?: number;
+}
+
+export class PileArrangement extends Arrangement {
+    static readonly FALLBACK = new LinearArrangement({
+        axis: "z"
+    });
+
+    readonly itemRadius?: number;
+
+    constructor(options?: IPileArrangementOptions) {
+        super({
+            ...(options ?? {}),
+            jitter: options?.jitter ?? true,
+            maxJitterOffset: options?.maxJitterOffset ?? Vector3.ZERO,
+            maxJitterRotation: options?.maxJitterRotation ?? Rotation.z(90)
+        });
+
+        this.itemRadius = options?.itemRadius;
+    }
+
+    protected override generateLocal(boundsArray: Bounds[], random: Random, parentLocalBounds?: Bounds): ITransform[] {
+        const maxSize = boundsArray.reduce((s, x) => Vector3.max(s, x.size), Vector3.ZERO);
+        const radius = this.itemRadius ?? (Math.sqrt(maxSize.x * maxSize.x + maxSize.y * maxSize.y) * 0.25);
+        
+        const minX = parentLocalBounds.min.x + radius;
+        const minY = parentLocalBounds.min.y + radius;
+        const maxX = parentLocalBounds.max.x - radius;
+        const maxY = parentLocalBounds.max.y - radius;
+
+        if (parentLocalBounds == null || minX >= maxX && minY >= maxY) {
+            return PileArrangement.FALLBACK.generate(boundsArray);
+        }
+
+        const height = maxSize.z;
+
+        const result: ITransform[] = [];
+        const attempts = 256;
+
+        const diameterSq = radius * radius * 4;
+
+        for (let bounds of boundsArray) {
+            let bestX: number;
+            let bestY: number;
+            let bestZ = Number.POSITIVE_INFINITY;
+
+            for (let i = 0; i < attempts; ++i) {
+                const x = minX >= maxX ? (minX + maxX) * 0.5 : random.float(minX, maxX);
+                const y = minY >= maxY ? (minY + maxY) * 0.5 : random.float(minY, maxY);
+
+                let z = 0;
+
+                for (let existing of result) {
+                    const dX = existing.position.x - x;
+                    const dY = existing.position.y - y;
+
+                    if (dX * dX + dY * dY < diameterSq) {
+                        z = Math.max(z, existing.position.z + height);
+                        continue;
+                    }
+                }
+
+                if (z < bestZ) {
+                    bestX = x;
+                    bestY = y;
+                    bestZ = z;
+                }
+
+                if (z === 0) {
+                    break;
+                }
+            }
+
+            result.push({
+                position: new Vector3(bestX, bestY, bestZ)
+            });
+        }
+
+        return result;
     }
 }

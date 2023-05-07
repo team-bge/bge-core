@@ -352,16 +352,16 @@ export class RenderContext {
         }
 
         const wasHidden = this._updateHidden(options);
-        
-        const arrangement = options?.arrangement ?? RenderContext.DEFAULT_ARRANGEMENT;
-        const objects = [...children].filter(x => x != null);
-        const transforms = arrangement.generate(objects.map(x => x.localBounds), options.jitterSeed);
-
-        const views: IView[] = [];
 
         const parentLocalBounds = parent instanceof GameObject
             ? parent.localBounds
             : null;
+        
+        const arrangement = options?.arrangement ?? RenderContext.DEFAULT_ARRANGEMENT;
+        const objects = [...children].filter(x => x != null);
+        const transforms = arrangement.generate(objects.map(x => x.localBounds), parentLocalBounds, options.jitterSeed);
+
+        const views: IView[] = [];
 
         try {
             for (let i = 0; i < objects.length; ++i) {
