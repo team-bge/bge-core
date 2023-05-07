@@ -143,6 +143,27 @@ export class MessageBar {
         return this.add(players, format, ...args);
     }
 
+    getRows(player: Player): readonly MessageRow[] {
+        const rows = this._playerMap.get(player);
+        return rows == null ? [] : [...rows];
+    }
+
+    get all(): ReadonlyMap<Player, readonly MessageRow[]> {
+        return new Map([...this._playerMap].map(x => x));
+    }
+
+    set all(map: ReadonlyMap<Player, readonly MessageRow[]>) {
+        this._playerMap.clear();
+
+        if (map == null) {
+            return;
+        }
+
+        for (let [player, rows] of map) {
+            this._playerMap.set(player, [...rows]);
+        }
+    }
+
     /**
      * Adds the given formatted message for every player, below any existing non-prompt messages.
      * @param format A string containing embed points, for example `"Hello {0}"` will insert `args[0]` after the word "Hello ".
