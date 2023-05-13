@@ -285,8 +285,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
      * 
      * @returns A new Promise.
      */
-    any<T extends readonly unknown[] | []>(createPromises: { (): T }): Promise<Awaited<T[number]>>;
-    any<T>(createPromises: { (): Iterable<T | PromiseLike<T>> }): Promise<Awaited<T>> {
+    any<T extends readonly unknown[] | []>(createPromises: { (): T }): Promise<Awaited<T[number]>> {
         return Promise.any(createPromises());
     }
 
