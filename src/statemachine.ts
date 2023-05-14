@@ -8,9 +8,34 @@ import { Random } from "./random.js";
 export type StateFunc = (this: StateMachine, ...args: any[]) => StatePromise;
 export type StatePromise = Promise<NextState | null>;
 
+const SKIP_UNDO_KEY = Symbol("state:skipundo");
+const NO_UNDO_KEY = Symbol("state:noundo");
+
+/**
+ * Used to decorate state machine functions that will be skipped when undoing.
+ */
+export const skipUndo: MethodDecorator = (target: any, propertyKey) => {
+    Reflect.defineMetadata(SKIP_UNDO_KEY, true, target[propertyKey]);
+};
+
+/**
+ * Used to decorate state machine functions that cannot be undone.
+ */
+export const noUndo: MethodDecorator = (target: any, propertyKey) => {
+    Reflect.defineMetadata(NO_UNDO_KEY, true, target[propertyKey]);
+};
+
 export class NextState {
     private readonly _func: StateFunc;
     private readonly _args: any[];
+
+    get canUndo(): boolean {
+        return Reflect.getMetadata(NO_UNDO_KEY, this._func) !== false;
+    }
+
+    get skipUndo(): boolean {
+        return Reflect.getMetadata(SKIP_UNDO_KEY, this._func) === true;
+    }
 
     constructor(func: StateFunc, args: any[]) {
         this._func = func;
@@ -25,14 +50,15 @@ export class NextState {
 interface IStateStackFrame {
     prev?: IStateStackFrame;
     state: NextState;
-    anyPrompts: boolean;
+    skipUndo: boolean;
     sequenceIndex: number;
     undoStack: (() => void)[];
 }
 
-interface IRunStateResult {
-    next: NextState | null;
-    anyPrompts: boolean;
+export interface IRunStateResult {
+    next?: NextState;
+    undone?: boolean;
+    skipUndo?: boolean;
 }
 
 export class StateMachine<TGame extends Game = Game> {
@@ -71,14 +97,19 @@ export class StateMachine<TGame extends Game = Game> {
         this._head = {
             state: sequence[0],
             sequenceIndex: 0,
-            anyPrompts: false,
+            skipUndo: true,
             undoStack: []
         };
 
         while (true) {
             const result = await this.onRunState(this._head.state);
 
-            this._head.anyPrompts = result.anyPrompts;
+            if (result.undone) {
+                this.undo();
+                continue;
+            }
+
+            this._head.skipUndo = result.skipUndo;
 
             let sequenceIndex = this._head.sequenceIndex;
             let next = result.next;
@@ -97,49 +128,54 @@ export class StateMachine<TGame extends Game = Game> {
                 prev: this._head,
                 state: next,
                 sequenceIndex: sequenceIndex,
-                anyPrompts: false,
+                skipUndo: true,
                 undoStack: []
             };
         }
     }
 
     protected get canUndo(): boolean {
-        return this._head.prev != null;
+        return this._head.prev != null && this._head.state.canUndo;
     }
 
     protected get canRestart(): boolean {
-        return this._head.prev != null;
+        return this.canUndo;
     }
 
-    protected undo(): NextState {
+    private undo(): boolean {
         if (!this.canUndo) {
             throw new Error("Can't undo");
         }
         
+        while (this._head.undoStack.length > 0) {
+            this._head.undoStack.pop()();
+        }
+        
         while (true) {
-            var top = this._head;
             this._head = this._head.prev;
 
-            while (top.undoStack.length > 0) {
-                top.undoStack.pop()();
+            while (this._head.undoStack.length > 0) {
+                this._head.undoStack.pop()();
             }
 
-            if (!top.anyPrompts && this.canUndo) {
+            if (this._head.skipUndo && this.canUndo) {
                 continue;
             }
 
-            return top.state;
+            return true;
         }
     }
 
-    protected restart(): NextState {
-        let next: NextState;
+    private restart(): boolean {
+        if (!this.canRestart) {
+            throw new Error("Can't restart");
+        }
 
         do {
-            next = this.undo();
+            this.undo();
         } while (this.canUndo);
 
-        return next;
+        return true;
     }
 
     protected async onRunState(state: NextState): Promise<IRunStateResult> {
@@ -149,7 +185,7 @@ export class StateMachine<TGame extends Game = Game> {
 
         return {
             next: next,
-            anyPrompts: newPromptCount !== oldPromptCount
+            skipUndo: newPromptCount === oldPromptCount || state.skipUndo
         };
     }
 
@@ -183,16 +219,19 @@ export abstract class PlayerStateMachine<TGame extends Game = Game, TPlayer exte
         return then;
     }
 
-    protected override onRunState(state: NextState): Promise<IRunStateResult> {
-        return this.anyExclusive(() => [
-            super.onRunState(state),
-            this.prompt.click("Undo", {
-                if: this.canUndo,
-                return: {
-                    next: this.undo(),
-                    anyPrompts: true
-                }
-            })
-        ]);
+    protected override async onRunState(state: NextState): Promise<IRunStateResult> {
+        try {
+            return await this.anyExclusive(() => [
+                super.onRunState(state),
+                this.prompt.click("Undo", {
+                    if: this.canUndo,
+                    return: {
+                        undone: true
+                    }
+                })
+            ]);
+        } finally {
+            this.prompt.cancelAll("Exited state");
+        }
     }
 }
