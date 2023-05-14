@@ -135,7 +135,7 @@ export class StateMachine<TGame extends Game = Game> {
     }
 
     protected get canUndo(): boolean {
-        return this._head.prev != null && this._head.state.canUndo;
+        return this._head.prev != null && this._head.state.canUndo && this._head.prev.state.canUndo;
     }
 
     protected get canRestart(): boolean {
