@@ -24,6 +24,7 @@ export interface TableView extends IContainerView {
     type: ViewType.TABLE;
     childId?: number;
     containerId?: number;
+    name?: string;
     allowAnimations?: boolean;
     origin?: Origin;
     prompt?: Prompt;
@@ -34,6 +35,7 @@ export interface ZoneView extends IRectangularView, IOutlinedView, ILabelView, I
     type: ViewType.ZONE;
     childId?: number;
     containerId?: number;
+    name?: string;
     allowAnimations?: boolean;
     origin?: Origin;
     prompt?: Prompt;
@@ -44,6 +46,7 @@ export interface CardView extends IRectangularView, IThicknessView, IColorView, 
     type: ViewType.CARD;
     childId?: number;
     containerId?: number;
+    name?: string;
     allowAnimations?: boolean;
     origin?: Origin;
     prompt?: Prompt;
@@ -59,6 +62,7 @@ export interface DeckView extends IRectangularView, IOutlinedView, ILabelView, I
     type: ViewType.DECK;
     childId?: number;
     containerId?: number;
+    name?: string;
     allowAnimations?: boolean;
     origin?: Origin;
     prompt?: Prompt;
@@ -72,6 +76,7 @@ export interface HandView extends IRectangularView, IOutlinedView, ILabelView, I
     type: ViewType.HAND;
     childId?: number;
     containerId?: number;
+    name?: string;
     allowAnimations?: boolean;
     origin?: Origin;
     prompt?: Prompt;
@@ -83,6 +88,7 @@ export interface TextView extends ILabelView, IColorView, ITransformView {
     type: ViewType.TEXT;
     childId?: number;
     containerId?: number;
+    name?: string;
     allowAnimations?: boolean;
     origin?: Origin;
     prompt?: Prompt;
@@ -96,6 +102,7 @@ export interface TokenView extends IScaledView, IColorView, ITransformView, ICon
     type: ViewType.TOKEN;
     childId?: number;
     containerId?: number;
+    name?: string;
     allowAnimations?: boolean;
     origin?: Origin;
     prompt?: Prompt;

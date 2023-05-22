@@ -62,6 +62,8 @@ export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
         const view: DeckView = {
             type: ViewType.DECK,
             
+            name: ctx.isHidden ? this.hiddenName : this.name,
+            
             prompt: prompt,
 
             width: dims.width,

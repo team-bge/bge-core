@@ -12,6 +12,11 @@ export abstract class GameObject {
      * Optional display name for this object.
      */
     name?: string;
+    
+    /**
+     * Optional display name for this object when hidden.
+     */
+    hiddenName?: string;
 
     /**
      * Builds a view of this object from the perspective of a player.

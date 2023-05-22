@@ -83,6 +83,8 @@ export class Zone extends GameObject {
         const view: ZoneView = {
             type: ViewType.ZONE,
             
+            name: ctx.isHidden ? this.hiddenName : this.name,
+            
             prompt: prompt,
 
             width: this.width,

@@ -159,6 +159,8 @@ export class Card extends GameObject implements ITextEmbeddable {
 
         const dims = dimensions ?? Card.getDimensions(Object.getPrototypeOf(this).constructor);
 
+        this.hiddenName = "Card";
+
         this.shape = dims.shape;
         this.width = dims.width;
         this.height = dims.height;
@@ -178,6 +180,8 @@ export class Card extends GameObject implements ITextEmbeddable {
     override render(ctx: RenderContext): CardView {
         let view = {
             type: ViewType.CARD,
+
+            name: ctx.isHidden ? this.hiddenName : this.name,
 
             prompt: ctx.player?.prompt.get(this),
 

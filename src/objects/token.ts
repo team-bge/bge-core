@@ -110,6 +110,8 @@ export class Token extends GameObject implements ITextEmbeddable {
     render(ctx: RenderContext): TokenView {
         return {
             type: ViewType.TOKEN,
+            
+            name: ctx.isHidden ? this.hiddenName : this.name,
 
             shape: this._shapeView,
 

@@ -97,6 +97,8 @@ export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
         const view: HandView = {
             type: ViewType.HAND,
             
+            name: ctx.isHidden ? this.hiddenName : this.name,
+            
             prompt: prompt,
 
             width: this.width,
