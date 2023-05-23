@@ -188,10 +188,16 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
         }, 10);
     }
 
+    protected onPreRender(): void {
+
+    }
+
     private dispatchUpdateViews() {
         this._scheduledUpdateView = false;
 
         if (this._onUpdateViews == null) return;
+
+        this.onPreRender();
 
         const views: GameView[] = [];
 
