@@ -293,6 +293,7 @@ export class RectangularArrangement extends Arrangement {
 
 export interface IPileArrangementOptions extends IArrangementOptions {
     itemRadius?: number;
+    localBounds?: Bounds;
 }
 
 export class PileArrangement extends Arrangement {
@@ -301,6 +302,7 @@ export class PileArrangement extends Arrangement {
     });
 
     readonly itemRadius?: number;
+    readonly localBounds?: Bounds;
 
     constructor(options?: IPileArrangementOptions) {
         super({
@@ -311,18 +313,25 @@ export class PileArrangement extends Arrangement {
         });
 
         this.itemRadius = options?.itemRadius;
+        this.localBounds = options?.localBounds;
     }
 
     protected override generateLocal(boundsArray: Bounds[], random: Random, parentLocalBounds?: Bounds): ITransform[] {
         const maxSize = boundsArray.reduce((s, x) => Vector3.max(s, x.size), Vector3.ZERO);
         const radius = this.itemRadius ?? (Math.sqrt(maxSize.x * maxSize.x + maxSize.y * maxSize.y) * 0.25);
         
-        const minX = parentLocalBounds.min.x + radius;
-        const minY = parentLocalBounds.min.y + radius;
-        const maxX = parentLocalBounds.max.x - radius;
-        const maxY = parentLocalBounds.max.y - radius;
+        const localBounds = this.localBounds ?? parentLocalBounds;
 
-        if (parentLocalBounds == null || minX >= maxX && minY >= maxY) {
+        if (localBounds == null) {
+            return PileArrangement.FALLBACK.generate(boundsArray);
+        }
+
+        const minX = localBounds.min.x + radius;
+        const minY = localBounds.min.y + radius;
+        const maxX = localBounds.max.x - radius;
+        const maxY = localBounds.max.y - radius;
+
+        if (minX >= maxX && minY >= maxY) {
             return PileArrangement.FALLBACK.generate(boundsArray);
         }
 
