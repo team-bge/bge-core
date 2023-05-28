@@ -30,7 +30,7 @@ export class NextState {
     private readonly _args: any[];
 
     get canUndo(): boolean {
-        return Reflect.getMetadata(NO_UNDO_KEY, this._func) !== false;
+        return Reflect.getMetadata(NO_UNDO_KEY, this._func) !== true;
     }
 
     get skipUndo(): boolean {
@@ -70,6 +70,8 @@ export class StateMachine<TGame extends Game = Game> {
 
     private _head: IStateStackFrame;
 
+    private _undone: boolean;
+
     constructor(game: TGame) {
         this.game = game;
 
@@ -103,6 +105,10 @@ export class StateMachine<TGame extends Game = Game> {
 
         while (true) {
             const result = await this.onRunState(this._head.state);
+
+            if (this._undone) {
+                continue;
+            }
 
             if (result.undone) {
                 this.undo();
@@ -142,11 +148,9 @@ export class StateMachine<TGame extends Game = Game> {
         return this.canUndo;
     }
 
-    private undo(): boolean {
-        if (!this.canUndo) {
-            throw new Error("Can't undo");
-        }
-        
+    undo(): boolean {
+        this._undone = true;
+
         while (this._head.undoStack.length > 0) {
             this._head.undoStack.pop()();
         }
@@ -179,6 +183,8 @@ export class StateMachine<TGame extends Game = Game> {
     }
 
     protected async onRunState(state: NextState): Promise<IRunStateResult> {
+        this._undone = false;
+
         const oldPromptCount = this.players.reduce((s, x) => s + x.prompt.respondedCount, 0);
         const next = await state.run(this);
         const newPromptCount = this.players.reduce((s, x) => s + x.prompt.respondedCount, 0);
@@ -224,7 +230,7 @@ export abstract class PlayerStateMachine<TGame extends Game = Game, TPlayer exte
             return await this.anyExclusive(() => [
                 super.onRunState(state),
                 this.prompt.click("Undo", {
-                    if: this.canUndo,
+                    if: this.canUndo && state.canUndo,
                     return: {
                         undone: true
                     }
