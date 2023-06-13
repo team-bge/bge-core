@@ -1,7 +1,7 @@
 import { Card, CardComparer, CardOrientation, ICardDimensions } from "./card.js";
 import { Internal } from "../internal.js";
 import { GameObject } from "./object.js";
-import { Random } from "../random.js";
+import { Random, random } from "../random.js";
 import { Bounds, Vector3 } from "../math/index.js";
 
 /**
@@ -549,19 +549,17 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
 
     /**
      * Shuffle all cards in this container.
-     * @param random Random number generator to use.
      */
-    shuffle(random: Random): void;
+    shuffle(): void;
 
     /**
      * Shuffle a range of cards in this container.
-     * @param random Random number generator to use.
      * @param from Start of the range to shuffle, from 0.
      * @param to Exclusive end of the range to shuffle.
      */
-    shuffle(random: Random, from: number, to: number): void;
+    shuffle(from: number, to: number): void;
     
-    shuffle(random: Random, from?: number, to?: number): void {
+    shuffle(from?: number, to?: number): void {
         random.shuffle(this._cards, from, to);
     }
 
