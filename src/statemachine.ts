@@ -1,7 +1,8 @@
 import { Delay } from "./delay.js";
-import { Game } from "./game.js";
+import { Game, game } from "./game.js";
 import { MessageBar } from "./messagebar.js";
 import { Player } from "./player.js";
+import { anyExclusive } from "./promisegroup.js";
 import { PromptHelper } from "./prompt.js";
 import { Random } from "./random.js";
 
@@ -61,25 +62,9 @@ export interface IRunStateResult {
     skipUndo?: boolean;
 }
 
-export class StateMachine<TGame extends Game = Game> {
-    readonly game: TGame;
-    readonly random: Random;
-    readonly delay: Delay;
-    readonly players: TGame["players"];
-    readonly message: MessageBar;
-
+export class StateMachine {
     private _head: IStateStackFrame;
-
     private _undone: boolean;
-
-    constructor(game: TGame) {
-        this.game = game;
-
-        this.random = game.random;
-        this.delay = game.delay;
-        this.players = game.players;
-        this.message = game.message;
-    }
 
     next<TFunc extends (this: this, ...args: Parameters<TFunc>) => StatePromise>(func: TFunc, ...args: Parameters<TFunc>): NextState {
         return new NextState(func, args);
@@ -185,36 +170,24 @@ export class StateMachine<TGame extends Game = Game> {
     protected async onRunState(state: NextState): Promise<IRunStateResult> {
         this._undone = false;
 
-        const oldPromptCount = this.players.reduce((s, x) => s + x.prompt.respondedCount, 0);
+        const oldPromptCount = game.players.reduce((s, x) => s + x.prompt.respondedCount, 0);
         const next = await state.run(this);
-        const newPromptCount = this.players.reduce((s, x) => s + x.prompt.respondedCount, 0);
+        const newPromptCount = game.players.reduce((s, x) => s + x.prompt.respondedCount, 0);
 
         return {
             next: next,
             skipUndo: newPromptCount === oldPromptCount || state.skipUndo
         };
     }
-
-    protected all<T>(createPromises: { (): Iterable<T | PromiseLike<T>> }) {
-        return this.game.all(createPromises);
-    }
-
-    protected any<T extends readonly unknown[] | []>(createPromises: { (): T }): Promise<Awaited<T[number]>> {
-        return this.game.any(createPromises);
-    }
-
-    protected anyExclusive<T extends readonly unknown[] | []>(createPromises: { (): T }): Promise<Awaited<T[number]>> {
-        return this.game.anyExclusive(createPromises);
-    }
 }
 
-export abstract class PlayerStateMachine<TGame extends Game = Game, TPlayer extends Player<TGame> = Player<TGame>> extends StateMachine<TGame> {
+export abstract class PlayerStateMachine<TPlayer extends Player = Player> extends StateMachine {
     readonly player: TPlayer;
     
     readonly prompt: PromptHelper;
 
     constructor(player: TPlayer) {
-        super(player.game);
+        super();
 
         this.player = player;
         this.prompt = player.prompt;
@@ -227,7 +200,7 @@ export abstract class PlayerStateMachine<TGame extends Game = Game, TPlayer exte
 
     protected override async onRunState(state: NextState): Promise<IRunStateResult> {
         try {
-            return await this.anyExclusive(() => [
+            return await anyExclusive(() => [
                 super.onRunState(state),
                 this.prompt.click("Undo", {
                     if: this.canUndo && state.canUndo,

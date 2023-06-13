@@ -75,12 +75,7 @@ export interface IGame {
      * @internal
      */
     dispatchUpdateView(): void;
-
-    /**
-     * @internal
-     */
-    get promiseGroup(): PromiseGroup | null;
-
+    
     /**
      * @internal
      */

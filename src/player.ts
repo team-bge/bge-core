@@ -1,6 +1,6 @@
 import { Color } from "./color.js";
 import { ChildIndexMap, ParentMap, RenderContext } from "./display.js";
-import { IGame, IPlayerConfig, ITextEmbeddable } from "./interfaces.js";
+import { IPlayerConfig, ITextEmbeddable } from "./interfaces.js";
 import { PromptHelper } from "./prompt.js";
 import { CameraView, TextEmbedView } from "./views.js";
 
@@ -9,7 +9,7 @@ import { CameraView, TextEmbedView } from "./views.js";
  * @description Use a deriving class to store any per-player properties, like scores or owned objects.
  * Use {@link Player.prompt} to request inputs from a player.
  */
-export class Player<TGame extends IGame = IGame> implements ITextEmbeddable {
+export class Player implements ITextEmbeddable {
     static readonly DEFAULT_COLORS: readonly Color[] = [
         Color.parse("0000ff"),
         Color.parse("ff0000"),
@@ -18,7 +18,6 @@ export class Player<TGame extends IGame = IGame> implements ITextEmbeddable {
     ];
 
     readonly index: number;
-    readonly game: TGame;
     readonly name: string;
 
     /**
@@ -40,8 +39,7 @@ export class Player<TGame extends IGame = IGame> implements ITextEmbeddable {
         return Player.DEFAULT_COLORS[this.index % Player.DEFAULT_COLORS.length];
     }
 
-    constructor(game: TGame, index: number, config: IPlayerConfig) {
-        this.game = game;
+    constructor(index: number, config: IPlayerConfig) {
         this.index = index;
         this.name = config.name;
     }

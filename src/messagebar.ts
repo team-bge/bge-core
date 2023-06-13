@@ -2,6 +2,7 @@ import { RenderContext } from "./display.js";
 import { Message, MessageEmbed } from "./interfaces.js";
 import { Player } from "./player.js";
 import { MessageView } from "./views.js";
+import { game } from "./game.js";
 
 /**
  * A single row of the `MessageBar`. Use `MessageBar.remove(row)` to remove it.
@@ -34,10 +35,6 @@ export class MessageRow {
     }
 }
 
-interface IPlayerSource {
-    get players(): readonly Player[];
-}
-
 /**
  * Helper for displaying messages at the top of the screen.
  */
@@ -59,16 +56,8 @@ export class MessageBar {
             throw new Error(`Expected at least ${maxIndex + 1} args, got ${args?.length ?? 0}.`);
         }
     }
-
-    private readonly _game: IPlayerSource;
+    
     private readonly _playerMap = new Map<Player, MessageRow[]>();
-
-    /**
-     * @internal
-     */
-    constructor(game: IPlayerSource) {
-        this._game = game;
-    }
 
     /**
      * Clears all non-prompt messages for all players.
@@ -210,7 +199,7 @@ export class MessageBar {
         const row = new MessageRow({ format: format, args: args });
 
         if (players == null) {
-            players = this._game.players;
+            players = game.players;
         }
 
         for (let player of players) {
@@ -304,3 +293,5 @@ export class MessageBar {
         return views;
     }
 }
+
+export const message = new MessageBar();

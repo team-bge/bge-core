@@ -208,3 +208,5 @@ export class Random {
         }
     }
 }
+
+export const random = new Random();

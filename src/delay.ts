@@ -1,5 +1,6 @@
-import { Game } from "./game.js";
-import { ReplayEvent, ReplayEventType } from "./replay.js";
+import { game } from "./game.js";
+import { PromiseGroup } from "./promisegroup.js";
+import { ReplayEvent, ReplayEventType, replay } from "./replay.js";
 
 interface IDelay {
     index: number;
@@ -11,13 +12,11 @@ interface IDelay {
  * Helper with methods to suspend the game for various amounts of time.
  */
 export class Delay {
-    private readonly _game: Game<any>;
     private _nextIndex: number;
 
     private readonly _active = new Map<number, IDelay>();
 
-    constructor(game: Game<any>) {
-        this._game = game;
+    constructor() {
         this._nextIndex = 0;
     }
 
@@ -60,19 +59,19 @@ export class Delay {
     async seconds(value: number): Promise<void> {
         const index = this._nextIndex++;
         
-        const group = this._game.promiseGroup;
+        const group = PromiseGroup.current;
         const event: ReplayEvent = {
             type: ReplayEventType.DELAY_COMPLETE,
             delayIndex: index
         };
 
-        if (await this._game.replay.pendingEvent(event) != null) {
+        if (await replay.pendingEvent(event) != null) {
             group?.itemResolved();
             return;
         }
 
-        if (this._game.replay.isRecording) {
-            this._game.dispatchUpdateView();
+        if (replay.isRecording) {
+            game.dispatchUpdateView();
         }
 
         const promise = new Promise<void>((resolve, reject) => {
@@ -93,9 +92,9 @@ export class Delay {
             await promise;
 
             if (this._active.delete(index)) {
-                this._game.replay.writeEvent(event);
+                replay.writeEvent(event);
                 group?.itemResolved();
-                this._game.dispatchUpdateView();
+                game.dispatchUpdateView();
             }
         } catch (e) {
             if (this._active.delete(index)) {
@@ -111,3 +110,8 @@ export class Delay {
         }
     }
 }
+
+/**
+ * Helper with methods to suspend the game for various amounts of time.
+ */
+export const delay = new Delay();

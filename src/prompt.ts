@@ -1,9 +1,11 @@
 import { Button, TextInput } from "./button.js";
-import { Game } from "./game.js";
+import { delay } from "./delay.js";
+import { Game, game } from "./game.js";
 import { Clickable, Message } from "./interfaces.js";
 import { GameObject } from "./objects/object.js";
 import { Player } from "./player.js";
-import { IPromptResponseEvent, ReplayEvent, ReplayEventType } from "./replay.js";
+import { PromiseGroup, anyExclusive } from "./promisegroup.js";
+import { IPromptResponseEvent, ReplayEvent, ReplayEventType, replay } from "./replay.js";
 import { Prompt, PromptKind } from "./views.js";
 
 interface IPromptInfo {
@@ -115,10 +117,6 @@ export class PromptHelper {
         this._player = player;
     }
 
-    private get game() {
-        return this._player.game as Game<any>;
-    }
-
     /**
      * Number of distinct active prompts for this player.
      */
@@ -151,7 +149,7 @@ export class PromptHelper {
         const set = new Set<Message>();
         const sorted: { message: Message, order: number }[] = [];
 
-        const anyDelays = this.game.delay.anyActive;
+        const anyDelays = delay.anyActive;
 
         for (let [_, prompt] of this._promptsByIndex) {
             if (prompt.message == null) {
@@ -182,7 +180,7 @@ export class PromptHelper {
             return undefined;
         }
 
-        if (!prompt.showDuringDelays && this.game.delay.anyActive) {
+        if (!prompt.showDuringDelays && delay.anyActive) {
             return undefined;
         }
 
@@ -198,7 +196,7 @@ export class PromptHelper {
     respond(index: number, payload?: any): void {
         const prompt = this._promptsByIndex.get(index);
 
-        if (prompt == null || !prompt.showDuringDelays && this.game.delay.anyActive) {
+        if (prompt == null || !prompt.showDuringDelays && delay.anyActive) {
             console.log(`Unable to find prompt ${index} for player ${this._player.index}.`);
             return;
         }
@@ -320,7 +318,7 @@ export class PromptHelper {
             return Promise.resolve(objectSet.values().next().value);
         }
 
-        return this.game.anyExclusive(() => [...objectSet].map(x => this.click(x, {
+        return anyExclusive(() => [...objectSet].map(x => this.click(x, {
             return: x,
             message: options.message
         })));
@@ -350,7 +348,7 @@ export class PromptHelper {
             reject: null
         };
 
-        const group = this.game.promiseGroup;
+        const group = PromiseGroup.current;
     
         if (object != null) {
             this._promptsByObject.set(object, promptInfo);
@@ -364,7 +362,7 @@ export class PromptHelper {
             promptIndex: index
         };
 
-        const pending = await this.game.replay.pendingEvent(event);
+        const pending = await replay.pendingEvent(event);
         let result = pending?.payload as T;
 
         if (pending == null) {
@@ -384,13 +382,13 @@ export class PromptHelper {
             
             group?.catch(promptInfo.reject);
     
-            if (this.game.replay.isRecording && this._promptsByIndex.has(index)) {
-                this.game.dispatchUpdateView();
+            if (replay.isRecording && this._promptsByIndex.has(index)) {
+                game.dispatchUpdateView();
             }
     
             try {
                 result = await promise;
-                this.game.replay.writeEvent({ ...event, payload: result } );
+                replay.writeEvent({ ...event, payload: result } );
             } catch (e) {
                 group?.itemRejected(e);
                 throw e;
@@ -403,8 +401,8 @@ export class PromptHelper {
 
         group?.itemResolved();
 
-        if (this.game.replay.isRecording) {
-            this.game.dispatchUpdateView();
+        if (replay.isRecording) {
+            game.dispatchUpdateView();
         }
 
         return result;

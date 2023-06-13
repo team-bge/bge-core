@@ -1,4 +1,4 @@
-import { Game } from "./game.js";
+import { game } from "./game.js";
 import { IPlayerConfig } from "./interfaces.js";
 
 export enum ReplayEventType {
@@ -45,7 +45,6 @@ class ReplayPromise {
 }
 
 export class Replay {
-    readonly game: Game;
     readonly events: ReplayEvent[];
 
     private readonly _promises: ReplayPromise[];
@@ -59,8 +58,7 @@ export class Replay {
         return this._playbackIndex === this.events.length;
     }
 
-    constructor(game: Game) {
-        this.game = game;
+    constructor() {
         this.events = [];
 
         this._promises = [];
@@ -151,3 +149,5 @@ export class Replay {
         return null;
     }
 }
+
+export const replay = new Replay();

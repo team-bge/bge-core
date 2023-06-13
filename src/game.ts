@@ -1,51 +1,27 @@
-import { Delay } from "./delay.js";
+import { delay } from "./delay.js";
 import { RenderContext } from "./display.js";
 import { IGame, IGameResult, IPlayerConfig, IRunConfig } from "./interfaces.js";
 import { AllGroup, AnyGroup, PromiseGroup } from "./promisegroup.js";
 import { Player } from "./player.js";
-import { Random } from "./random.js";
-import { MessageBar } from "./messagebar.js";
+import { random } from "./random.js";
+import { message } from "./messagebar.js";
 import { Basis, GameView, TableView, ViewType } from "./views.js";
 import { DisplayContainer } from "./displaycontainer.js";
-import { IReplayData, Replay } from "./replay.js";
+import { IReplayData, replay } from "./replay.js";
 import { Debugging } from "./debugging.js";
+
+export let game: Game;
 
 /**
  * Base class for a custom game, using a custom Player type.
  */
 export abstract class Game<TPlayer extends Player = Player> implements IGame {
-    private readonly _PlayerType: { new(game: IGame, index: number, config: IPlayerConfig): TPlayer };
+    private readonly _PlayerType: { new(index: number, config: IPlayerConfig): TPlayer };
     private _players: TPlayer[];
     private _playerConfigs: IPlayerConfig[];
 
     private _onUpdateViews?: { (gameViews: GameView[]): void };
     private _scheduledUpdateView = false;
-
-    private readonly _promiseGroups: (PromiseGroup | null)[] = [];
-
-    /**
-     * @internal
-     */
-    get promiseGroup(): PromiseGroup | null {
-        return this._promiseGroups.length > 0
-            ? this._promiseGroups[this._promiseGroups.length - 1]
-            : null;
-    }
-
-    /**
-     * Helper with methods to suspend the game for various amounts of time.
-     */
-    readonly delay: Delay;
-
-    /**
-     * Helper with methods to generate random numbers.
-     */
-    readonly random: Random;
-
-    /**
-     * Helper for displaying text, buttons and images in the top bar.
-     */
-    readonly message: MessageBar;
     
     /**
      * Dynamically add or remove objects to be displayed here.
@@ -53,22 +29,15 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
     readonly children: DisplayContainer;
 
     /**
-     * @internal
-     */
-    readonly replay: Replay;
-
-    /**
      * Base constructor for `Game<TPlayer>`. You need to pass in your player type here so that BGE knows how to make instances of it.
      * 
      * @param PlayerType Constructor for your custom player type.
      */
-    protected constructor(PlayerType: { new(game: IGame, index: number, config: IPlayerConfig): TPlayer }) {
+    protected constructor(PlayerType: { new(index: number, config: IPlayerConfig): TPlayer }) {
         this._PlayerType = PlayerType;
-        this.delay = new Delay(this);
-        this.random = new Random();
-        this.message = new MessageBar(this);
-        this.replay = new Replay(this);
         this.children = new DisplayContainer();
+
+        game = this;
 
         this.children.addProperties(this);
     }
@@ -86,9 +55,9 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
      */
     get replayData(): IReplayData {
         return {
-            seed: this.random.seed,
+            seed: random.seed,
             players: this._playerConfigs.map(x => ({ name: x.name })),
-            events: [...this.replay.events]
+            events: [...replay.events]
         };
     }
 
@@ -101,7 +70,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
             ? config.replay.seed
             : `${new Date().toISOString()} ${(Math.floor(Math.random() * 4294967296)).toString(16)}`;
 
-        this.random.initialize(seed);
+        random.initialize(seed);
         
         Debugging.baseBreakUrl = config.breakUrl;
 
@@ -117,7 +86,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
         this._onUpdateViews = config.onUpdateViews;
 
         for (let i = 0; i < config.players.length; ++i) {
-            const player = new this._PlayerType(this, i, config.players[i]);
+            const player = new this._PlayerType(i, config.players[i]);
             this._players.push(player);
         }
 
@@ -128,11 +97,11 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
         if (config.replay != null) {
             console.log(`Replay playback started (${config.replay.events.length} events)`);
 
-            const replayPromise = this.replay.run(config.replay);
+            const replayPromise = replay.run(config.replay);
             runPromise = this.onRun();
             const lastEventIndex = await replayPromise;
 
-            if (lastEventIndex < this.replay.events.length) {
+            if (lastEventIndex < replay.events.length) {
                 return {
                     replayIndex: lastEventIndex
                 };
@@ -218,7 +187,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
             player.prompt.cancelAll(reason);
         }
 
-        this.delay.cancelAll(reason);
+        delay.cancelAll(reason);
     }
 
     private render(playerIndex?: number): GameView {
@@ -246,7 +215,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
             basis: Basis.Y_FORWARD_Z_UP,
             playerIndex: player.index,
             hasPrompts: player.prompt.activeCount > 0,
-            messages: this.message.render(new RenderContext(player)),
+            messages: message.render(new RenderContext(player)),
             cameras: player.cameras,
             players: this.players.map(x => ({
                 name: x.name,
@@ -265,73 +234,5 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
     getNextPlayer(player: TPlayer): TPlayer {
         const index = this._players.indexOf(player);
         return this._players[(index + 1) % this._players.length];
-    }
-    
-    /**
-     * Creates a Promise that is resolved with an array of results when all of the provided Promises
-     * resolve, or rejected when any Promise is rejected. Wraps Promise.all<T>.
-     * 
-     * @param createPromises A function that should return an array or iterable of Promises. The promises should
-     * be created inside this function.
-     * 
-     * @returns A new Promise.
-     */
-    all<T>(createPromises: { (): Iterable<T | PromiseLike<T>> }) {
-        return Promise.all(this.wrapPromises(createPromises, new AllGroup(this.promiseGroup)));
-    }
-
-    /**
-     * Creates a Promise that is fulfilled by the first given Promise to be fulfilled, or rejected with
-     * an AggregateError containing an array of rejection reasons if all of the given promises are rejected.
-     * All the given promises can still independently fulfill after the first one, unlike with anyExclusive<T>.
-     * Wraps Promise.all<T>.
-     * 
-     * @param createPromises A function that should return an array or iterable of Promises. The promises should
-     * be created inside this function.
-     * 
-     * @returns A new Promise.
-     */
-    any<T extends readonly unknown[] | []>(createPromises: { (): T }): Promise<Awaited<T[number]>> {
-        return Promise.any(createPromises());
-    }
-
-    /**
-     * Creates a Promise that is fulfilled by the first given Promise to be fulfilled, or rejected with
-     * an AggregateError containing an array of rejection reasons if all of the given promises are rejected.
-     * Unlike any<T>, after any of the given promises fulfills an inner prompt or delay, the other promises
-     * are forcibly rejected. This is useful for letting players select from a range of actions, where responding
-     * to the first prompt of any action commits that player to only that action.
-     * 
-     * Note that you must pass in a function that returns an array of Promises. That function will be invoked
-     * once, and only any promises created during invokation will be exclusive. If that function returns promises
-     * that were previously created elsewhere, they won't be exclusive.
-     * 
-     * @param createPromises A function that should return an array or iterable of Promises. The promises should
-     * be created inside this function.
-     * 
-     * @returns A new Promise.
-     */
-    anyExclusive<T extends readonly unknown[] | []>(createPromises: { (): T }): Promise<Awaited<T[number]>>;
-    anyExclusive<T>(createPromises: { (): Iterable<T | PromiseLike<T>> }): Promise<Awaited<T>> {
-        return Promise.any(this.wrapPromises(createPromises, new AnyGroup(this.promiseGroup)));
-    }
-
-    /**
-     * @internal
-     */
-    wrapPromises<T>(func: { (): T }, group: PromiseGroup): T {
-        this._promiseGroups.push(group);
-
-        let result: T;
-
-        try {
-            result = func();
-        } finally {
-            if (this._promiseGroups.pop() != group) {
-                throw new Error("Expected different PromiseGroup");
-            }
-        }
-
-        return result;
     }
 }
