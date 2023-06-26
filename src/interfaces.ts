@@ -53,8 +53,8 @@ export interface IRunConfig {
     replay?: IReplayData;
     breakPoints?: number[];
     breakUrl?: string;
-    
-    onUpdateViews?: { (gameViews: GameView[]): void };
+
+    onUpdateViews?: { (gameViews: GameView[], spectatorView: GameView): void };
 }
 
 /**

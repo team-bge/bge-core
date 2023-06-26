@@ -20,7 +20,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
     private _players: TPlayer[];
     private _playerConfigs: IPlayerConfig[];
 
-    private _onUpdateViews?: { (gameViews: GameView[]): void };
+    private _onUpdateViews?: { (gameViews: GameView[], spectatorView: GameView): void };
     private _scheduledUpdateView = false;
     
     /**
@@ -174,7 +174,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
             views[i] = this.render(i);
         }
 
-        this._onUpdateViews(views);
+        this._onUpdateViews(views, this.render());
     }
     
     /**
@@ -213,10 +213,10 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
 
         return {
             basis: Basis.Y_FORWARD_Z_UP,
-            playerIndex: player.index,
-            hasPrompts: player.prompt.activeCount > 0,
+            playerIndex: player?.index,
+            hasPrompts: player?.prompt.activeCount > 0 ?? false,
             messages: message.render(new RenderContext(player)),
-            cameras: player.cameras,
+            cameras: player?.cameras ?? [],
             players: this.players.map(x => ({
                 name: x.name,
                 color: x.color.encoded,
