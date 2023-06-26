@@ -1,5 +1,5 @@
 import { delay } from "./delay.js";
-import { RenderContext } from "./display.js";
+import { ChildIndexMap, ParentMap, RenderContext } from "./display.js";
 import { IGame, IGameResult, IPlayerConfig, IRunConfig } from "./interfaces.js";
 import { AllGroup, AnyGroup, PromiseGroup } from "./promisegroup.js";
 import { Player } from "./player.js";
@@ -190,15 +190,23 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
         delay.cancelAll(reason);
     }
 
+    private _oldSpectatorChildIndexMap?: ChildIndexMap;
+    private _oldSpectatorParentMap?: ParentMap;
+
     private render(playerIndex?: number): GameView {
         const player = playerIndex !== undefined ? this.players[playerIndex] : null;
-        const ctx = new RenderContext(player, player?._oldChildIndexMap, player?._oldParentMap);
+        const ctx = new RenderContext(player,
+            player?._oldChildIndexMap ?? this._oldSpectatorChildIndexMap,
+            player?._oldParentMap ?? this._oldSpectatorParentMap);
 
         if (player != null) {
             player._oldChildIndexMap = ctx.childIndexMap;
             player._oldParentMap = ctx.newParentMap;
+        } else {
+            this._oldSpectatorChildIndexMap = ctx.childIndexMap;
+            this._oldSpectatorParentMap = ctx.newParentMap;
         }
-        
+
         ctx.childIndexMap.forgetUnused();
 
         const table: TableView = {
@@ -208,7 +216,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
 
         ctx.setParentView(this, table);
         this.children.render(ctx, this, table.children);
-        
+
         ctx.processAnimations();
 
         return {
