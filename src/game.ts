@@ -221,7 +221,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
 
         return {
             basis: Basis.Y_FORWARD_Z_UP,
-            playerIndex: player?.index,
+            playerIndex: player?.index ?? -1,
             hasPrompts: player?.prompt.activeCount > 0 ?? false,
             messages: message.render(new RenderContext(player)),
             cameras: player?.cameras ?? [],
