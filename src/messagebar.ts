@@ -35,6 +35,8 @@ export class MessageRow {
     }
 }
 
+export const SPECTATOR = Symbol("Spectator");
+
 /**
  * Helper for displaying messages at the top of the screen.
  */
@@ -56,8 +58,8 @@ export class MessageBar {
             throw new Error(`Expected at least ${maxIndex + 1} args, got ${args?.length ?? 0}.`);
         }
     }
-    
-    private readonly _playerMap = new Map<Player, MessageRow[]>();
+
+    private readonly _playerMap = new Map<Player | typeof SPECTATOR, MessageRow[]>();
 
     /**
      * Clears all non-prompt messages for all players.
@@ -137,11 +139,11 @@ export class MessageBar {
         return rows == null ? [] : [...rows];
     }
 
-    get all(): ReadonlyMap<Player, readonly MessageRow[]> {
+    get all(): ReadonlyMap<Player | typeof SPECTATOR, readonly MessageRow[]> {
         return new Map([...this._playerMap].map(x => x));
     }
 
-    set all(map: ReadonlyMap<Player, readonly MessageRow[]>) {
+    set all(map: ReadonlyMap<Player | typeof SPECTATOR, readonly MessageRow[]>) {
         this._playerMap.clear();
 
         if (map == null) {
@@ -177,7 +179,7 @@ export class MessageBar {
     add(players: Iterable<Player>, format: string, ...args: MessageEmbed[]): MessageRow;
 
     add(...args: any[]): MessageRow {
-        let players: Iterable<Player>;
+        let players: Iterable<Player | typeof SPECTATOR>;
         let format: string;
 
         if (typeof args[0] === "string") {
@@ -199,7 +201,7 @@ export class MessageBar {
         const row = new MessageRow({ format: format, args: args });
 
         if (players == null) {
-            players = game.players;
+            players = [...game.players, SPECTATOR];
         }
 
         for (let player of players) {
@@ -237,7 +239,7 @@ export class MessageBar {
     remove(row: MessageRow, players: Iterable<Player>): void;
 
     remove(row: MessageRow, playerOrPlayers?: Player | Iterable<Player>): void {
-        let players = playerOrPlayers instanceof Player
+        let players: Iterable<Player | typeof SPECTATOR> = playerOrPlayers instanceof Player
             ? [playerOrPlayers] : playerOrPlayers;
 
         if (players == null) {
@@ -276,8 +278,8 @@ export class MessageBar {
 
         const rows = ctx.player != null
             ? this._playerMap.get(ctx.player)
-            : null;
-            
+            : this._playerMap.get(SPECTATOR);
+
         if (rows != null) {
             for (let row of rows) {
                 views.push(MessageBar.renderMessage(ctx, row.message, false));
