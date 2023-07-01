@@ -247,13 +247,19 @@ export class RenderContext {
 
     private _updateHidden(options?: IDisplayOptions): boolean {
         const wasHidden = this._isHidden;
-        
-        if (options?.hiddenFor != null) {
-            this._isHidden = this.player != null && options.hiddenFor.includes(this.player);
-        }
-        
-        if (options?.revealedFor != null) {
-            this._isHidden = this.player == null || !options.revealedFor.includes(this.player);
+
+        const spectatorsSeeEverything = true;
+
+        if (spectatorsSeeEverything && this.player == null) {
+            this._isHidden = false;
+        } else {
+            if (options?.hiddenFor != null) {
+                this._isHidden = this.player != null && options.hiddenFor.includes(this.player);
+            }
+
+            if (options?.revealedFor != null) {
+                this._isHidden = this.player == null || !options.revealedFor.includes(this.player);
+            }
         }
 
         return wasHidden;
