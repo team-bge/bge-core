@@ -7,6 +7,7 @@ import { Bounds, Rotation, Vector3 } from "./math/index.js";
 import { GameObject } from "./objects/object.js";
 import { Player } from "./player.js";
 import { ILabelView, ITransformView, IView, Origin, TextEmbedView, ViewType } from "./views.js";
+import { game } from "./game.js";
 
 /**
  * Options for positioning and styling an object or array of objects.
@@ -248,9 +249,7 @@ export class RenderContext {
     private _updateHidden(options?: IDisplayOptions): boolean {
         const wasHidden = this._isHidden;
 
-        const spectatorsSeeEverything = true;
-
-        if (spectatorsSeeEverything && this.player == null) {
+        if (game.revealEverythingToSpectators && this.player == null) {
             this._isHidden = false;
         } else {
             if (options?.hiddenFor != null) {

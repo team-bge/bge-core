@@ -22,7 +22,12 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
 
     private _onUpdateViews?: { (gameViews: GameView[], spectatorView: GameView): void };
     private _scheduledUpdateView = false;
-    
+
+    /**
+     * If true, hidden objects like player hands are revealed to spectators.
+     */
+    revealEverythingToSpectators = false;
+
     /**
      * Dynamically add or remove objects to be displayed here.
      */
