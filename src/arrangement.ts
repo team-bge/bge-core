@@ -1,6 +1,12 @@
 import { Bounds, ITransform, Rotation, Vector3 } from "./math/index.js";
 import { Random } from "./random.js";
 
+/**
+ * {@link Arrangement}s handle deciding where to position items based on the local bounds of the parent object.
+ * 
+ * Each class extending {@link Arrangement} needs to implement {@link Arrangement.generateLocal}.
+ * Features like {@link IArrangementOptions.margin} and {@link IArrangementOptions.jitter} are handled in the base {@link Arrangement} class.
+ */
 export abstract class Arrangement {
     static readonly DEFAULT_MAX_JITTER_OFFSET = new Vector3(0.25, 0.25, 0);
     static readonly DEFAULT_MAX_JITTER_ROTATION = Rotation.z(5);
@@ -38,6 +44,13 @@ export abstract class Arrangement {
         this.minJitterRotation = options?.minJitterRotation ?? this.maxJitterRotation.inverse;
     }
 
+    /**
+     * Generates the transformations for a bunch of child objects, given the bounds of the containing object.
+     * @param boundsArray Axis aligned offsets and sizes of each child object.
+     * @param parentLocalBounds Offset and size of the containing object.
+     * @param jitterSeed Seed used to deterministically apply jitter to the generated arrangement.
+     * @returns Array of generated transformations, one for each element in {@link boundsArray}.
+     */
     generate(boundsArray: Bounds[], parentLocalBounds?: Bounds, jitterSeed?: string): ITransform[] {
         if (boundsArray.length === 0) { 
             return [];
@@ -69,6 +82,15 @@ export abstract class Arrangement {
         return localTransforms;
     }
 
+    /**
+     * When implemented in a deriving class, generates the base transformations for an array of objects.
+     * The returned array must contain exactly one element for each item in {@link boundsArray}.
+     * There's no need to handle {@link margin} or {@link jitter} here, those features are implemented
+     * in the base class.
+     * @param boundsArray Axis aligned offsets and sizes of each child object.
+     * @param random Random number generator available for adding variance to the generated transforms. Will produce the same sequence of samples between calls on the same instance.
+     * @param parentLocalBounds Offset and size of the containing object.
+     */
     protected abstract generateLocal(boundsArray: Bounds[], random: Random, parentLocalBounds?: Bounds): ITransform[];
 }
 
@@ -78,10 +100,27 @@ export enum Alignment {
     END
 }
 
+/**
+ * Base options common to all {@link Arrangement} types.
+ */
 export interface IArrangementOptions {
+    /**
+     * How much to expand the bounds of each child object, in each axis.
+     * Defaults to zero.
+     */
     margin?: Vector3;
 
+    /**
+     * If true, apply some random variance to the position and / or rotation
+     * of each child object. Uses {@link minJitterOffset}, {@link maxJitterOffset},
+     * {@link minJitterRotation} and {@link maxJitterRotation} to decide the range
+     * of offsets / rotations.
+     */
     jitter?: boolean;
+
+    /**
+     * 
+     */
     minJitterOffset?: Vector3;
     maxJitterOffset?: Vector3;
     minJitterRotation?: Rotation;
@@ -291,19 +330,49 @@ export class RectangularArrangement extends Arrangement {
     }
 }
 
+/**
+ * Options for {@link PileArrangement}.
+ */
 export interface IPileArrangementOptions extends IArrangementOptions {
+    /**
+     * When provided, replaces the size of each child object when arranging.
+     */
     itemRadius?: number;
+
+    /**
+     * When provided, used instead of the bounds of the parent object when arranging.
+     */
     localBounds?: Bounds;
 }
 
+/**
+ * Arrange an arbitrary number of objects in a pile, which can start to stack items
+ * on top of each other if needed. Objects are biased towards the middle of the available
+ * space.
+ */
 export class PileArrangement extends Arrangement {
+    /**
+     * Arrangement used if the available space can't be determined.
+     */
     static readonly FALLBACK = new LinearArrangement({
         axis: "z"
     });
 
+    /**
+     * When provided, replaces the size of each child object when arranging.
+     */
     readonly itemRadius?: number;
+    
+    /**
+     * When provided, used instead of the bounds of the parent object when arranging.
+     */
     readonly localBounds?: Bounds;
 
+    /**
+     * Arrange an arbitrary number of objects in a pile, which can start to stack items
+     * on top of each other if needed. Objects are biased towards the middle of the available
+     * space.
+     */
     constructor(options?: IPileArrangementOptions) {
         super({
             ...(options ?? {}),
@@ -317,6 +386,8 @@ export class PileArrangement extends Arrangement {
     }
 
     protected override generateLocal(boundsArray: Bounds[], random: Random, parentLocalBounds?: Bounds): ITransform[] {
+        // If itemRadius isn't provided in options, approximate based on the largest item bounds
+
         const maxSize = boundsArray.reduce((s, x) => Vector3.max(s, x.size), Vector3.ZERO);
         const radius = this.itemRadius ?? (Math.sqrt(maxSize.x * maxSize.x + maxSize.y * maxSize.y) * 0.25);
         
@@ -334,6 +405,10 @@ export class PileArrangement extends Arrangement {
         if (minX >= maxX && minY >= maxY) {
             return PileArrangement.FALLBACK.generate(boundsArray);
         }
+
+        // Rejection sample, trying to find positions for each item that
+        // are stacked the least high. We'll pick the best position after
+        // 256 attempts for each item.
 
         const height = maxSize.z;
 
