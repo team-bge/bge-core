@@ -33,7 +33,7 @@ cd bge-test
 npm link ../bge-core
 ```
 
-Now you can test the game, and with it test `bge-core`:
+Now you can test the game, and with it test your local copy of `bge-core`:
 
 ```bash
 npm start
