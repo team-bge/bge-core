@@ -551,6 +551,9 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
 
     }
 
+    /**
+     * Get the total number of items which will me needed to fill a pyramid layer of a given width
+     */
     static getPyramidLayerQuantity(layerSize: number, triangle: boolean): number
     {
         if (triangle) {
@@ -560,6 +563,9 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
         return layerSize * layerSize;
     }
 
+    /**
+     * Space placement of layerSize number of items of width 1, centered around 0
+     */
     static getPyramidRowDisplacements(layerSize: number): number[]
     {
         const minDisp = -(layerSize - 1)/2;
@@ -567,6 +573,9 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
         return displacementList;
     }
 
+    /**
+     * Get X,Y coordinates for all locations on a pyramid layer of a particular width (assuming item spacing of 1)
+     */
     static getPyramidLayerXY(layerSize: number, triangle: boolean): [number, number][]
     {
         let coords: [number, number][] = [];
@@ -594,6 +603,29 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
         }
 
         return coords;
+    }
+
+    /**
+     * The maximum angle we can rotate a cube of size itemLength, in a box of size boundsLength
+     */
+    static maxRotationInSpace(itemLength: number, boundsLength: number): number
+    {
+        let arcsin = Math.asin(boundsLength / (1.414 * itemLength));
+        // If arcsin is nan, we can rotate as much as we like
+        if (isNaN(arcsin)){
+            return 90;
+        }
+        // Otherwise, take pi/4 (45 degrees)
+        return ((arcsin * 180) / Math.PI) - 45;
+    }
+
+    /**
+     * Rotate a 2d vector by a given number of degrees
+     */
+    static rotate2d(x: number, y: number, angle: number){
+        let radians = angle * Math.PI / 180;
+        return [Math.cos(radians) * x - Math.sin(radians) * y,
+                Math.sin(radians) * x + Math.cos(radians) * y];
     }
 
     protected override generateLocal(boundsArray: Bounds[], random: Random, parentLocalBounds?: Bounds): ITransform[] {
@@ -632,6 +664,9 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
         if ((this.maxPyramidLayer !== undefined && this.maxPyramidLayer !== null) && this.maxPyramidLayer < maxPyramidLayer){
             maxPyramidLayer = this.maxPyramidLayer
         }
+
+        // How much can we rotate parts?
+        const partMaxRotate = PileArrangement.maxRotationInSpace(Math.max(maxSize.x, maxSize.y), pyramidSpacing);
 
         // Get min required quanitity from config or generate sensible value
         const minQuantityForPyramid = this.minQuantityForPyramid ?? PileArrangement.getPyramidLayerQuantity(maxPyramidLayer, triangle) / 5;
@@ -678,6 +713,21 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
         layerList.sort();
         layerList.reverse();
 
+        // Work out maximum rotation allowed for pyramid
+        const maxPyramidRotate = PileArrangement.maxRotationInSpace(layerList[0]*pyramidSpacing, minDimention);
+        // And an actual rotation
+        let pyramidRotate = random.int(maxPyramidRotate);
+
+        // Work out the maximum x and y offsets
+        let pyramidOrthogonalSpace = layerList[0]*pyramidSpacing * (0.5 + Math.abs(Math.cos((90 - pyramidRotate) * Math.PI / 180)));
+        let maxXOffset = (maxX - minX)/2 - pyramidOrthogonalSpace;
+        let maxYOffset = (maxX - minX)/2 - pyramidOrthogonalSpace;
+        maxXOffset = maxXOffset < 0 ? 0 : maxXOffset;
+        maxYOffset = maxYOffset < 0 ? 0 : maxYOffset;
+        // And get random offsets
+        let pyramidXOffset = random.float(-maxXOffset, maxXOffset);
+        let pyramidYOffset = random.float(-maxYOffset, maxYOffset);
+
         // Build pyramid
         remainingCubes = boundsArray.length
 
@@ -688,14 +738,23 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
         for (let layerSize of layerList){
             let coords = PileArrangement.getPyramidLayerXY(layerSize, triangle);
             for (let [x, y] of coords){
-                // TODO Center pyramids
-                // TODO Rotate pyramids
-                // TODO Randomise pyramid center
-                // TODO Jitter pyramids
-                // TODO Full jitter for layers of size 1
+                // Calculate random item rotation
+                let itemRotation = pyramidRotate + random.float(-partMaxRotate, partMaxRotate);
+                // If the layer is size one, add some extra rotation
+                if (layerSize == 1){
+                    itemRotation += random.int(-40, 40);
+                }
+
+                // Rotate x,y vector according to pyramid rotation & scale
+                let [xRotate, yRotate] = PileArrangement.rotate2d(x * pyramidSpacing, y * pyramidSpacing, pyramidRotate);
+
+                // Create transform
                 result.push({
-                    position: new Vector3(x * pyramidSpacing, y * pyramidSpacing, z * height)
+                    position: new Vector3(pyramidXOffset + xRotate, pyramidYOffset + yRotate, z * height),
+                    rotation: Rotation.z(itemRotation)
                 });
+
+                // Once we have added all the items, return
                 if (result.length >= boundsArray.length){
                     return result;
                 }
