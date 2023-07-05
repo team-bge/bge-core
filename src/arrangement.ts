@@ -331,9 +331,9 @@ export class RectangularArrangement extends Arrangement {
 }
 
 /**
- * Options for {@link PileArrangement}.
+ * Options for {@link ScatterArrangement}.
  */
-export interface IPileArrangementOptions extends IArrangementOptions {
+export interface IScatterArrangementOptions extends IArrangementOptions {
     /**
      * When provided, replaces the size of each child object when arranging.
      */
@@ -373,7 +373,7 @@ export class ScatterArrangement extends Arrangement {
      * on top of each other if needed. Objects are biased towards the middle of the available
      * space.
      */
-    constructor(options?: IPileArrangementOptions) {
+    constructor(options?: IScatterArrangementOptions) {
         super({
             ...(options ?? {}),
             jitter: options?.jitter ?? true,
@@ -459,6 +459,35 @@ export class ScatterArrangement extends Arrangement {
 }
 
 /**
+ * Options for {@link PileArrangement}.
+ */
+export interface IPileArrangementOptions extends IScatterArrangementOptions {
+    /**
+     * When provided, toggles between triangular based and square based pyramids
+     */
+    triangle?: boolean;
+
+    /**
+     * When provided, sets the percentage gap between items
+     */
+    percentGap?: number;
+
+    /**
+     * When provided, sets the minium number of items required to build a pyramid
+     */
+    minQuantityForPyramid?: number;
+
+    /**
+     * When provided, sets the maximum width for a pyramid layer
+     */
+    maxPyramidLayer?: number;
+
+    /**
+     * When provided, sets the minimum width for a pyramid layer
+     */
+    minPyramidLayer?: number;
+}
+/**
  * Stack in a pyramid
  */
  export class PileArrangement extends Arrangement {
@@ -479,6 +508,31 @@ export class ScatterArrangement extends Arrangement {
      */
     readonly localBounds?: Bounds;
 
+     /**
+     * When provided, toggles between triangular based and square based pyramids
+     */
+     readonly triangle?: boolean;
+
+     /**
+      * When provided, sets the percentage gap between items
+      */
+     readonly percentGap?: number;
+ 
+     /**
+      * When provided, sets the minium number of items required to build a pyramid
+      */
+     readonly minQuantityForPyramid?: number;
+ 
+     /**
+      * When provided, sets the maximum width for a pyramid layer
+      */
+     readonly maxPyramidLayer?: number;
+ 
+     /**
+      * When provided, sets the minimum width for a pyramid layer
+      */
+     readonly minPyramidLayer?: number;
+
     /**
      * Arrange an arbitrary number of objects in a pile, which can start to stack items
      * on top of each other if needed. Objects are biased towards the middle of the available
@@ -489,6 +543,57 @@ export class ScatterArrangement extends Arrangement {
 
         this.itemRadius = options?.itemRadius;
         this.localBounds = options?.localBounds;
+        this.triangle = options?.triangle;
+        this.percentGap = options?.percentGap;
+        this.minQuantityForPyramid = options?.minQuantityForPyramid;
+        this.maxPyramidLayer = options?.maxPyramidLayer;
+        this.minPyramidLayer = options?.minPyramidLayer;
+
+    }
+
+    static getPyramidLayerQuantity(layerSize: number, triangle: boolean): number
+    {
+        if (triangle) {
+            return (layerSize * (layerSize + 1)) / 2;
+        }
+        // otherwise
+        return layerSize * layerSize;
+    }
+
+    static getPyramidRowDisplacements(layerSize: number): number[]
+    {
+        const minDisp = -(layerSize - 1)/2;
+        let displacementList: number[] = Array.from({ length: layerSize }, (_, i) => i + minDisp);
+        return displacementList;
+    }
+
+    static getPyramidLayerXY(layerSize: number, triangle: boolean): [number, number][]
+    {
+        let coords: [number, number][] = [];
+
+        let xCoords = PileArrangement.getPyramidRowDisplacements(layerSize);
+
+        if (!triangle) {
+            for (let x of xCoords){
+                for (let y of xCoords){
+                    coords.push([x, y]);
+                }
+            }
+        }
+        else
+        {
+            // Triangle
+            let yRow = 1;
+            for (let x of xCoords){
+                let yCoords = PileArrangement.getPyramidRowDisplacements(yRow);
+                yRow += 1
+                for (let y of yCoords){
+                    coords.push([x, y]);
+                }
+            }
+        }
+
+        return coords;
     }
 
     protected override generateLocal(boundsArray: Bounds[], random: Random, parentLocalBounds?: Bounds): ITransform[] {
@@ -497,7 +602,13 @@ export class ScatterArrangement extends Arrangement {
         const maxSize = boundsArray.reduce((s, x) => Vector3.max(s, x.size), Vector3.ZERO);
         const radius = this.itemRadius ?? (Math.sqrt(maxSize.x * maxSize.x + maxSize.y * maxSize.y) * 0.25);
         
-        const percentGap = 0.1 // TODO: Parameterise
+        const percentGap = this.percentGap ?? 0.1;
+        let triangle = this.triangle ?? false;
+
+        // Edge case, for exactly 3 items, force use triangle
+        if (boundsArray.length == 3){
+            triangle = true;
+        }
 
         const localBounds = this.localBounds ?? parentLocalBounds;
 
@@ -505,25 +616,28 @@ export class ScatterArrangement extends Arrangement {
             return PileArrangement.FALLBACK.generate(boundsArray);
         }
 
-        const minX = localBounds.min.x + radius;
-        const minY = localBounds.min.y + radius;
-        const maxX = localBounds.max.x - radius;
-        const maxY = localBounds.max.y - radius;
+        const minX = localBounds.min.x;
+        const minY = localBounds.min.y;
+        const maxX = localBounds.max.x;
+        const maxY = localBounds.max.y;
 
         if (minX >= maxX && minY >= maxY) {
             return PileArrangement.FALLBACK.generate(boundsArray);
         }
 
-        // Work out the base x and y of a pyramid, assuming we want full rotation options for it, so 1/sqrt(2) times the shortest constraint
+        // Work out the base x and y of a pyramid
         const pyramidSpacing = Math.max(maxSize.x, maxSize.y) * (1 + percentGap);
         const minDimention = Math.min(maxX - minX, maxY - minY);
-        const maxPyramidLayer = Math.floor(0.707 * minDimention / pyramidSpacing);
+        let maxPyramidLayer = Math.floor(minDimention / pyramidSpacing);
+        if ((this.maxPyramidLayer !== undefined && this.maxPyramidLayer !== null) && this.maxPyramidLayer < maxPyramidLayer){
+            maxPyramidLayer = this.maxPyramidLayer
+        }
 
-        // TODO Allow an overwriteable config for this also
-        const minForPyramid = (maxPyramidLayer * maxPyramidLayer) / 2
+        // Get min required quanitity from config or generate sensible value
+        const minQuantityForPyramid = this.minQuantityForPyramid ?? PileArrangement.getPyramidLayerQuantity(maxPyramidLayer, triangle) / 5;
 
         // If too few, use a scatter arrangement
-        if (boundsArray.length <= minForPyramid) {
+        if (boundsArray.length <= minQuantityForPyramid) {
             const result = new ScatterArrangement({localBounds:localBounds, itemRadius: radius}).generate(boundsArray)
             // Add random rotations (otherwise correct jitter is not applied)
             for (let r of result){
@@ -532,21 +646,32 @@ export class ScatterArrangement extends Arrangement {
             return result
         }
 
+        // Set a minimum pyramid layer
+        let minPyramidLayer = 1;
+        if (this.minPyramidLayer !== undefined && this.minPyramidLayer !== null){
+            minPyramidLayer = this.minPyramidLayer < maxPyramidLayer ? this.minPyramidLayer : maxPyramidLayer;
+        }
+        // For small numbers of cubes, if practical, do not stack
+        let firstLayerQauntity = triangle ? 3 : 4;
+        if ((minPyramidLayer == 1) && (maxPyramidLayer > 1) && (boundsArray.length <= firstLayerQauntity)){
+            minPyramidLayer = 2;
+        }
+
         // Work out layers for the pyramid
         let layerList: number[] = [];
 
         let remainingCubes = boundsArray.length;
-        let currentLayerSize = 1
+        let currentLayerSize = minPyramidLayer
 
         while (remainingCubes > 0){
             layerList.push(currentLayerSize);
-            remainingCubes -= currentLayerSize * currentLayerSize;
-            if (remainingCubes < (currentLayerSize + 1) * (currentLayerSize + 1)){
+            remainingCubes -= PileArrangement.getPyramidLayerQuantity(currentLayerSize, triangle);
+            if (remainingCubes < PileArrangement.getPyramidLayerQuantity(currentLayerSize + 1, triangle)){
                 currentLayerSize = currentLayerSize
             } else if (currentLayerSize < maxPyramidLayer){
                 currentLayerSize += 1;
             } else {
-                currentLayerSize = 1;
+                currentLayerSize = minPyramidLayer;
             }
         }
 
@@ -561,21 +686,21 @@ export class ScatterArrangement extends Arrangement {
         const height = maxSize.z;
 
         for (let layerSize of layerList){
-            for (let x = 0; x < layerSize; x++){
-                for (let y = 0; y < layerSize; y++){
-                    // TODO Center pyramids
-                    // TODO Rotate pyramids
-                    // TODO Randomise pyramid center
-                    // TODO Jitter pyramids
-                    result.push({
-                        position: new Vector3(x * pyramidSpacing, y * pyramidSpacing, z * height)
-                    });
-                    if (result.length >= boundsArray.length){
-                        return result
-                    }
+            let coords = PileArrangement.getPyramidLayerXY(layerSize, triangle);
+            for (let [x, y] of coords){
+                // TODO Center pyramids
+                // TODO Rotate pyramids
+                // TODO Randomise pyramid center
+                // TODO Jitter pyramids
+                // TODO Full jitter for layers of size 1
+                result.push({
+                    position: new Vector3(x * pyramidSpacing, y * pyramidSpacing, z * height)
+                });
+                if (result.length >= boundsArray.length){
+                    return result;
                 }
             }
-            z += 1
+            z += 1;
         }
 
         return result;
