@@ -721,7 +721,7 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
         // Work out the maximum x and y offsets
         let pyramidOrthogonalSpace = layerList[0]*pyramidSpacing * (0.5 + Math.abs(Math.cos((90 - pyramidRotate) * Math.PI / 180)));
         let maxXOffset = (maxX - minX)/2 - pyramidOrthogonalSpace;
-        let maxYOffset = (maxX - minX)/2 - pyramidOrthogonalSpace;
+        let maxYOffset = (maxY - minY)/2 - pyramidOrthogonalSpace;
         maxXOffset = maxXOffset < 0 ? 0 : maxXOffset;
         maxYOffset = maxYOffset < 0 ? 0 : maxYOffset;
         // And get random offsets
