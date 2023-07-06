@@ -337,7 +337,7 @@ export interface IScatterArrangementOptions extends IArrangementOptions {
     /**
      * When provided, replaces the size of each child object when arranging.
      */
-    itemRadius?: number;
+    itemWidth?: number;
 
     /**
      * When provided, used instead of the bounds of the parent object when arranging.
@@ -361,7 +361,7 @@ export class ScatterArrangement extends Arrangement {
     /**
      * When provided, replaces the size of each child object when arranging.
      */
-    readonly itemRadius?: number;
+    readonly itemWidth?: number;
     
     /**
      * When provided, used instead of the bounds of the parent object when arranging.
@@ -381,15 +381,15 @@ export class ScatterArrangement extends Arrangement {
             maxJitterRotation: options?.maxJitterRotation ?? Rotation.z(90)
         });
 
-        this.itemRadius = options?.itemRadius;
+        this.itemWidth = options?.itemWidth;
         this.localBounds = options?.localBounds;
     }
 
     protected override generateLocal(boundsArray: Bounds[], random: Random, parentLocalBounds?: Bounds): ITransform[] {
-        // If itemRadius isn't provided in options, approximate based on the largest item bounds
+        // If itemWidth isn't provided in options, approximate radius based on the largest item bounds
 
         const maxSize = boundsArray.reduce((s, x) => Vector3.max(s, x.size), Vector3.ZERO);
-        const radius = this.itemRadius ?? (Math.sqrt(maxSize.x * maxSize.x + maxSize.y * maxSize.y) * 0.25);
+        const radius = this.itemWidth ?? (Math.sqrt(maxSize.x * maxSize.x + maxSize.y * maxSize.y) * 0.25);
         
         const localBounds = this.localBounds ?? parentLocalBounds;
 
@@ -496,7 +496,7 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
     /**
      * When provided, replaces the size of each child object when arranging.
      */
-    readonly itemRadius?: number;
+    readonly itemWidth?: number;
     
     /**
      * When provided, used instead of the bounds of the parent object when arranging.
@@ -533,18 +533,18 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
         let margin = Vector3.ZERO;
         if (options.margin !== undefined && options.margin !== null){
             margin = options.margin;
-        } else if (options.itemRadius !== undefined && options.itemRadius !== null){
-            margin = new Vector3(options.itemRadius * 0.1, options.itemRadius * 0.1, 0);
+        } else if (options.itemWidth !== undefined && options.itemWidth !== null){
+            margin = new Vector3(options.itemWidth * 0.1, options.itemWidth * 0.1, 0);
         }
 
         // Calcuate a max jitter rotation when object radius is provided
         let maxJitterRotation = 0;
         let maxXYMargin = Math.max(margin.x, margin.y);
-        let radius = options.itemRadius;
-        if ((maxXYMargin > 0) && (options.itemRadius !== undefined && options.itemRadius !== null)){
-            maxJitterRotation = PileArrangement.maxRotationInSpace(options.itemRadius, options.itemRadius + maxXYMargin);
+        let width = options.itemWidth;
+        if ((maxXYMargin > 0) && (options.itemWidth !== undefined && options.itemWidth !== null)){
+            maxJitterRotation = PileArrangement.maxRotationInSpace(options.itemWidth, options.itemWidth + maxXYMargin);
             // If radius is specified, we need to add the margin to it for spacing
-            radius += maxXYMargin;
+            width += maxXYMargin;
         }
 
         super({
@@ -555,7 +555,7 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
             maxJitterRotation: Rotation.z(maxJitterRotation),
         });
 
-        this.itemRadius = radius;
+        this.itemWidth = width;
         this.localBounds = options?.localBounds;
         this.triangle = options?.triangle;
         this.minQuantityForPyramid = options?.minQuantityForPyramid;
@@ -642,10 +642,10 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
     }
 
     protected override generateLocal(boundsArray: Bounds[], random: Random, parentLocalBounds?: Bounds): ITransform[] {
-        // If itemRadius isn't provided in options, approximate based on the largest item bounds
+        // If itemWidth isn't provided in options, approximate based on the largest item bounds
 
         const maxSize = boundsArray.reduce((s, x) => Vector3.max(s, x.size), Vector3.ZERO);
-        const radius = this.itemRadius ?? Math.max(maxSize.x, maxSize.y);  // Only consider radius in x and y for pyramid purposes
+        const width = this.itemWidth ?? Math.max(maxSize.x, maxSize.y);  // Only consider radius in x and y for pyramid purposes
         
         let triangle = this.triangle ?? false;
 
@@ -671,7 +671,7 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
 
         // Work out the base x and y of a pyramid
         const minDimention = Math.min(maxX - minX, maxY - minY);
-        let maxPyramidLayer = Math.floor(minDimention / radius);
+        let maxPyramidLayer = Math.floor(minDimention / width);
         if ((this.maxPyramidLayer !== undefined && this.maxPyramidLayer !== null) && this.maxPyramidLayer < maxPyramidLayer){
             maxPyramidLayer = this.maxPyramidLayer;
         }
@@ -681,7 +681,7 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
 
         // If too few, use a scatter arrangement
         if (boundsArray.length <= minQuantityForPyramid) {
-            const result = new ScatterArrangement({localBounds:localBounds, itemRadius: radius}).generate(boundsArray)
+            const result = new ScatterArrangement({localBounds:localBounds, itemWidth: width}).generate(boundsArray)
             // Add random rotations (otherwise correct jitter is not applied)
             for (let r of result){
                 r.rotation = Rotation.z(random.int(90))
@@ -722,12 +722,12 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
         layerList.reverse();
 
         // Work out maximum rotation allowed for pyramid
-        const maxPyramidRotate = PileArrangement.maxRotationInSpace(layerList[0]*radius, minDimention);
+        const maxPyramidRotate = PileArrangement.maxRotationInSpace(layerList[0]*width, minDimention);
         // And an actual rotation
         let pyramidRotate = random.int(maxPyramidRotate);
 
         // Work out the maximum x and y offsets
-        let pyramidOrthogonalSpace = layerList[0]*radius * (0.5 + Math.abs(Math.cos((90 - pyramidRotate) * Math.PI / 180)));
+        let pyramidOrthogonalSpace = layerList[0]*width * (0.5 + Math.abs(Math.cos((90 - pyramidRotate) * Math.PI / 180)));
         let maxXOffset = (maxX - minX)/2 - pyramidOrthogonalSpace;
         let maxYOffset = (maxY - minY)/2 - pyramidOrthogonalSpace;
         maxXOffset = maxXOffset < 0 ? 0 : maxXOffset;
@@ -754,7 +754,7 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
                 }
 
                 // Rotate x,y vector according to pyramid rotation & scale
-                let [xRotate, yRotate] = PileArrangement.rotate2d(x * radius, y * radius, pyramidRotate);
+                let [xRotate, yRotate] = PileArrangement.rotate2d(x * width, y * width, pyramidRotate);
 
                 // Create transform
                 result.push({
