@@ -389,7 +389,7 @@ export class ScatterArrangement extends Arrangement {
         // If itemWidth isn't provided in options, approximate radius based on the largest item bounds
 
         const maxSize = boundsArray.reduce((s, x) => Vector3.max(s, x.size), Vector3.ZERO);
-        const radius = this.itemWidth ?? (Math.sqrt(maxSize.x * maxSize.x + maxSize.y * maxSize.y) * 0.25);
+        const radius = this.itemWidth ?? (Math.sqrt(maxSize.x * maxSize.x + maxSize.y * maxSize.y) * 0.5);
         
         const localBounds = this.localBounds ?? parentLocalBounds;
 
