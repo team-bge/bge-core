@@ -331,13 +331,13 @@ export class RectangularArrangement extends Arrangement {
 }
 
 /**
- * Options for {@link PileArrangement}.
+ * Options for {@link ScatterArrangement}.
  */
-export interface IPileArrangementOptions extends IArrangementOptions {
+export interface IScatterArrangementOptions extends IArrangementOptions {
     /**
      * When provided, replaces the size of each child object when arranging.
      */
-    itemRadius?: number;
+    itemWidth?: number;
 
     /**
      * When provided, used instead of the bounds of the parent object when arranging.
@@ -346,11 +346,11 @@ export interface IPileArrangementOptions extends IArrangementOptions {
 }
 
 /**
- * Arrange an arbitrary number of objects in a pile, which can start to stack items
+ * Scatter an arbitrary number of objects, which can start to stack items
  * on top of each other if needed. Objects are biased towards the middle of the available
  * space.
  */
-export class PileArrangement extends Arrangement {
+export class ScatterArrangement extends Arrangement {
     /**
      * Arrangement used if the available space can't be determined.
      */
@@ -361,7 +361,7 @@ export class PileArrangement extends Arrangement {
     /**
      * When provided, replaces the size of each child object when arranging.
      */
-    readonly itemRadius?: number;
+    readonly itemWidth?: number;
     
     /**
      * When provided, used instead of the bounds of the parent object when arranging.
@@ -373,7 +373,7 @@ export class PileArrangement extends Arrangement {
      * on top of each other if needed. Objects are biased towards the middle of the available
      * space.
      */
-    constructor(options?: IPileArrangementOptions) {
+    constructor(options?: IScatterArrangementOptions) {
         super({
             ...(options ?? {}),
             jitter: options?.jitter ?? true,
@@ -381,20 +381,20 @@ export class PileArrangement extends Arrangement {
             maxJitterRotation: options?.maxJitterRotation ?? Rotation.z(90)
         });
 
-        this.itemRadius = options?.itemRadius;
+        this.itemWidth = options?.itemWidth;
         this.localBounds = options?.localBounds;
     }
 
     protected override generateLocal(boundsArray: Bounds[], random: Random, parentLocalBounds?: Bounds): ITransform[] {
-        // If itemRadius isn't provided in options, approximate based on the largest item bounds
+        // If itemWidth isn't provided in options, approximate radius based on the largest item bounds
 
         const maxSize = boundsArray.reduce((s, x) => Vector3.max(s, x.size), Vector3.ZERO);
-        const radius = this.itemRadius ?? (Math.sqrt(maxSize.x * maxSize.x + maxSize.y * maxSize.y) * 0.25);
+        const radius = this.itemWidth ?? (Math.sqrt(maxSize.x * maxSize.x + maxSize.y * maxSize.y) * 0.5);
         
         const localBounds = this.localBounds ?? parentLocalBounds;
 
         if (localBounds == null) {
-            return PileArrangement.FALLBACK.generate(boundsArray);
+            return ScatterArrangement.FALLBACK.generate(boundsArray);
         }
 
         const minX = localBounds.min.x + radius;
@@ -403,7 +403,7 @@ export class PileArrangement extends Arrangement {
         const maxY = localBounds.max.y - radius;
 
         if (minX >= maxX && minY >= maxY) {
-            return PileArrangement.FALLBACK.generate(boundsArray);
+            return ScatterArrangement.FALLBACK.generate(boundsArray);
         }
 
         // Rejection sample, trying to find positions for each item that
@@ -452,6 +452,322 @@ export class PileArrangement extends Arrangement {
             result.push({
                 position: new Vector3(bestX, bestY, bestZ)
             });
+        }
+
+        return result;
+    }
+}
+
+/**
+ * Options for {@link PileArrangement}.
+ */
+export interface IPileArrangementOptions extends IScatterArrangementOptions {
+    /**
+     * When provided, toggles between triangular based and square based pyramids
+     */
+    triangle?: boolean;
+
+    /**
+     * When provided, sets the minium number of items required to build a pyramid
+     */
+    minQuantityForPyramid?: number;
+
+    /**
+     * When provided, sets the maximum width for a pyramid layer
+     */
+    maxPyramidLayer?: number;
+
+    /**
+     * When provided, sets the minimum width for a pyramid layer
+     */
+    minPyramidLayer?: number;
+}
+/**
+ * Stack in a pyramid
+ */
+ export class PileArrangement extends Arrangement {
+    /**
+     * Arrangement used if the available space can't be determined.
+     */
+    static readonly FALLBACK = new LinearArrangement({
+        axis: "z"
+    });
+
+    /**
+     * When provided, replaces the size of each child object when arranging.
+     */
+    readonly itemWidth?: number;
+    
+    /**
+     * When provided, used instead of the bounds of the parent object when arranging.
+     */
+    readonly localBounds?: Bounds;
+
+     /**
+     * When provided, toggles between triangular based and square based pyramids
+     */
+     readonly triangle?: boolean;
+ 
+     /**
+      * When provided, sets the minium number of items required to build a pyramid
+      */
+     readonly minQuantityForPyramid?: number;
+ 
+     /**
+      * When provided, sets the maximum width for a pyramid layer
+      */
+     readonly maxPyramidLayer?: number;
+ 
+     /**
+      * When provided, sets the minimum width for a pyramid layer
+      */
+     readonly minPyramidLayer?: number;
+
+    /**
+     * Arrange an arbitrary number of objects in a pile, which can start to stack items
+     * on top of each other if needed. Objects are biased towards the middle of the available
+     * space.
+     */
+    constructor(options?: IPileArrangementOptions) {
+        // Calcuate a default margin when radius is provided (10% in x and y)
+        let margin = Vector3.ZERO;
+        if (options.margin !== undefined && options.margin !== null){
+            margin = options.margin;
+        } else if (options.itemWidth !== undefined && options.itemWidth !== null){
+            margin = new Vector3(options.itemWidth * 0.1, options.itemWidth * 0.1, 0);
+        }
+
+        // Calcuate a max jitter rotation when object radius is provided
+        let maxJitterRotation = 0;
+        let maxXYMargin = Math.max(margin.x, margin.y);
+        let width = options.itemWidth;
+        if ((maxXYMargin > 0) && (options.itemWidth !== undefined && options.itemWidth !== null)){
+            maxJitterRotation = PileArrangement.maxRotationInSpace(options.itemWidth, options.itemWidth + maxXYMargin);
+            // If radius is specified, we need to add the margin to it for spacing
+            width += maxXYMargin;
+        }
+
+        super({
+            ...(options ?? {}),
+            margin: margin,
+            jitter: options?.jitter ?? true,
+            maxJitterOffset: Vector3.ZERO,  // Force Jitter offset to zero for pile arrangement, as we push items up next to each other
+            maxJitterRotation: Rotation.z(maxJitterRotation),
+        });
+
+        this.itemWidth = width;
+        this.localBounds = options?.localBounds;
+        this.triangle = options?.triangle;
+        this.minQuantityForPyramid = options?.minQuantityForPyramid;
+        this.maxPyramidLayer = options?.maxPyramidLayer;
+        this.minPyramidLayer = options?.minPyramidLayer;
+
+    }
+
+    /**
+     * Get the total number of items which will me needed to fill a pyramid layer of a given width
+     */
+    static getPyramidLayerQuantity(layerSize: number, triangle: boolean): number
+    {
+        if (triangle) {
+            return (layerSize * (layerSize + 1)) / 2;
+        }
+        // otherwise
+        return layerSize * layerSize;
+    }
+
+    /**
+     * Space placement of layerSize number of items of width 1, centered around 0
+     */
+    static getPyramidRowDisplacements(layerSize: number): number[]
+    {
+        const minDisp = -(layerSize - 1)/2;
+        let displacementList: number[] = Array.from({ length: layerSize }, (_, i) => i + minDisp);
+        return displacementList;
+    }
+
+    /**
+     * Get X,Y coordinates for all locations on a pyramid layer of a particular width (assuming item spacing of 1)
+     */
+    static getPyramidLayerXY(layerSize: number, triangle: boolean): [number, number][]
+    {
+        let coords: [number, number][] = [];
+
+        let xCoords = PileArrangement.getPyramidRowDisplacements(layerSize);
+
+        if (!triangle) {
+            for (let x of xCoords){
+                for (let y of xCoords){
+                    coords.push([x, y]);
+                }
+            }
+        }
+        else
+        {
+            // Triangle
+            let yRow = 1;
+            for (let x of xCoords){
+                let yCoords = PileArrangement.getPyramidRowDisplacements(yRow);
+                yRow += 1
+                for (let y of yCoords){
+                    coords.push([x, y]);
+                }
+            }
+        }
+
+        return coords;
+    }
+
+    /**
+     * The maximum angle we can rotate a cube of size itemLength, in a box of size boundsLength
+     */
+    static maxRotationInSpace(itemLength: number, boundsLength: number): number
+    {
+        let arcsin = Math.asin(boundsLength / (1.414 * itemLength));
+        // If arcsin is nan, we can rotate as much as we like
+        if (isNaN(arcsin)){
+            return 90;
+        }
+        // Otherwise, take pi/4 (45 degrees)
+        return ((arcsin * 180) / Math.PI) - 45;
+    }
+
+    /**
+     * Rotate a 2d vector by a given number of degrees
+     */
+    static rotate2d(x: number, y: number, angle: number){
+        let radians = angle * Math.PI / 180;
+        return [Math.cos(radians) * x - Math.sin(radians) * y,
+                Math.sin(radians) * x + Math.cos(radians) * y];
+    }
+
+    protected override generateLocal(boundsArray: Bounds[], random: Random, parentLocalBounds?: Bounds): ITransform[] {
+        // If itemWidth isn't provided in options, approximate based on the largest item bounds
+
+        const maxSize = boundsArray.reduce((s, x) => Vector3.max(s, x.size), Vector3.ZERO);
+        const width = this.itemWidth ?? Math.max(maxSize.x, maxSize.y);  // Only consider radius in x and y for pyramid purposes
+        
+        let triangle = this.triangle ?? false;
+
+        // Edge case, for exactly 3 items, force use triangle
+        if (boundsArray.length == 3){
+            triangle = true;
+        }
+
+        const localBounds = this.localBounds ?? parentLocalBounds;
+
+        if (localBounds == null) {
+            return PileArrangement.FALLBACK.generate(boundsArray);
+        }
+
+        const minX = localBounds.min.x;
+        const minY = localBounds.min.y;
+        const maxX = localBounds.max.x;
+        const maxY = localBounds.max.y;
+
+        if (minX >= maxX && minY >= maxY) {
+            return PileArrangement.FALLBACK.generate(boundsArray);
+        }
+
+        // Work out the base x and y of a pyramid
+        const minDimention = Math.min(maxX - minX, maxY - minY);
+        let maxPyramidLayer = Math.floor(minDimention / width);
+        if ((this.maxPyramidLayer !== undefined && this.maxPyramidLayer !== null) && this.maxPyramidLayer < maxPyramidLayer){
+            maxPyramidLayer = this.maxPyramidLayer;
+        }
+
+        // Get min required quanitity from config or generate sensible value
+        const minQuantityForPyramid = this.minQuantityForPyramid ?? PileArrangement.getPyramidLayerQuantity(maxPyramidLayer, triangle) / 5;
+
+        // If too few, use a scatter arrangement
+        if (boundsArray.length <= minQuantityForPyramid) {
+            const result = new ScatterArrangement({localBounds:localBounds, itemWidth: width}).generate(boundsArray)
+            // Add random rotations (otherwise correct jitter is not applied)
+            for (let r of result){
+                r.rotation = Rotation.z(random.int(90))
+            }
+            return result
+        }
+
+        // Set a minimum pyramid layer
+        let minPyramidLayer = 1;
+        if (this.minPyramidLayer !== undefined && this.minPyramidLayer !== null){
+            minPyramidLayer = this.minPyramidLayer < maxPyramidLayer ? this.minPyramidLayer : maxPyramidLayer;
+        }
+        // For small numbers of cubes, if practical, do not stack
+        let firstLayerQauntity = triangle ? 3 : 4;
+        if ((minPyramidLayer == 1) && (maxPyramidLayer > 1) && (boundsArray.length <= firstLayerQauntity)){
+            minPyramidLayer = 2;
+        }
+
+        // Work out layers for the pyramid
+        let layerList: number[] = [];
+
+        let remainingCubes = boundsArray.length;
+        let currentLayerSize = minPyramidLayer
+
+        while (remainingCubes > 0){
+            layerList.push(currentLayerSize);
+            remainingCubes -= PileArrangement.getPyramidLayerQuantity(currentLayerSize, triangle);
+            if (remainingCubes < PileArrangement.getPyramidLayerQuantity(currentLayerSize + 1, triangle)){
+                currentLayerSize = currentLayerSize
+            } else if (currentLayerSize < maxPyramidLayer){
+                currentLayerSize += 1;
+            } else {
+                currentLayerSize = minPyramidLayer;
+            }
+        }
+
+        layerList.sort();
+        layerList.reverse();
+
+        // Work out maximum rotation allowed for pyramid
+        const maxPyramidRotate = PileArrangement.maxRotationInSpace(layerList[0]*width, minDimention);
+        // And an actual rotation
+        let pyramidRotate = random.int(maxPyramidRotate);
+
+        // Work out the maximum x and y offsets
+        let pyramidOrthogonalSpace = layerList[0]*width * (0.5 + Math.abs(Math.cos((90 - pyramidRotate) * Math.PI / 180)));
+        let maxXOffset = (maxX - minX)/2 - pyramidOrthogonalSpace;
+        let maxYOffset = (maxY - minY)/2 - pyramidOrthogonalSpace;
+        maxXOffset = maxXOffset < 0 ? 0 : maxXOffset;
+        maxYOffset = maxYOffset < 0 ? 0 : maxYOffset;
+        // And get random offsets
+        let pyramidXOffset = random.float(-maxXOffset, maxXOffset);
+        let pyramidYOffset = random.float(-maxYOffset, maxYOffset);
+
+        // Build pyramid
+        remainingCubes = boundsArray.length
+
+        const result: ITransform[] = [];
+        let z = 0;
+        const height = maxSize.z;
+
+        for (let layerSize of layerList){
+            let coords = PileArrangement.getPyramidLayerXY(layerSize, triangle);
+            for (let [x, y] of coords){
+                // By default, rotate items with the pyramid
+                let itemRotation = pyramidRotate;
+                // If the layer is size one, and jitter, add some extra rotation
+                if (this.jitter && layerSize == 1){
+                    itemRotation += random.int(-40, 40);
+                }
+
+                // Rotate x,y vector according to pyramid rotation & scale
+                let [xRotate, yRotate] = PileArrangement.rotate2d(x * width, y * width, pyramidRotate);
+
+                // Create transform
+                result.push({
+                    position: new Vector3(pyramidXOffset + xRotate, pyramidYOffset + yRotate, z * height),
+                    rotation: Rotation.z(itemRotation)
+                });
+
+                // Once we have added all the items, return
+                if (result.length >= boundsArray.length){
+                    return result;
+                }
+            }
+            z += 1;
         }
 
         return result;
