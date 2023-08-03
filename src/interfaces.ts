@@ -45,9 +45,6 @@ export type MessageEmbed = string | boolean | number | ITextEmbeddable | readonl
  */
 export type Message = string | { format: string, args?: MessageEmbed[] };
 
-/**
- * @internal
- */
 export interface IRunConfig {
     players: IPlayerConfig[];
     replay?: IReplayData;
@@ -62,12 +59,13 @@ export interface IRunConfig {
  */
 export interface IGame {
     /**
-     * @internal
+     * Called exactly once by a host to run a game.
+     * @param config Configuration containing info like player count and names
      */
     run(config: IRunConfig): Promise<IGameResult>;
 
     /**
-     * @internal
+     * Called by a host when a player responds to a prompt.
      */
     respondToPrompt(playerIndex: number, promptIndex: number, payload?: any): void;
     
@@ -77,7 +75,7 @@ export interface IGame {
     dispatchUpdateView(): void;
     
     /**
-     * @internal
+     * Describes all of the actions taken so far, so that the game can be resumed later.
      */
     get replayData(): IReplayData;
 }

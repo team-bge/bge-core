@@ -7,7 +7,8 @@ import { CardView, HandView, OutlineStyle, ViewType } from "../views.js";
 import { Alignment } from "../arrangement.js";
 
 /**
- * Options for creating a `Hand<TCard>`.
+ * @category Objects
+ * @summary Options for creating a {@link Hand<TCard>}.
  */
 export interface IHandOptions<TCard extends Card> {
     /**
@@ -27,7 +28,8 @@ export interface IHandOptions<TCard extends Card> {
 }
 
 /**
- * Holds a wad of cards, where each card is displayed separately.
+ * @category Objects
+ * @summary Holds a wad of cards, where each card is displayed separately.
  */
 export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
     /** 

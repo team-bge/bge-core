@@ -4,11 +4,13 @@ import { Bounds, Vector3 } from "../math/index.js";
 import { GameObject } from "./object.js";
 import { IView, OutlineStyle, ViewType, ZoneView } from "../views.js";
 import { Color } from "../color.js";
+import { display } from "../displaycontainer.js";
 
 /**
+ * @category Objects
  * @summary Represents a rectangular region on the table, with an outline and optional label.
- * @description Child objects can be dynamically added or removed with `Zone.children`, or in
- * a deriving class with `@display()` annotated properties.
+ * @description Child objects can be dynamically added or removed with {@link Zone.children}, or in
+ * a deriving class with {@link display} annotated properties.
  */
 export class Zone extends GameObject {
     /**
@@ -54,7 +56,7 @@ export class Zone extends GameObject {
 
     /**
      * @summary Contains child objects that are displayed inside this zone.
-     * @description This will also contain objects from `@display()` annotated properties,
+     * @description This will also contain objects from {@link display} annotated properties,
      * using the property keys as names.
      */
     readonly children = new DisplayContainer();

@@ -5,7 +5,7 @@ import { MessageView } from "./views.js";
 import { game } from "./game.js";
 
 /**
- * A single row of the `MessageBar`. Use `MessageBar.remove(row)` to remove it.
+ * @summary A single row of the {@link MessageBar}. Use {@link MessageBar.remove} to remove it.
  */
 export class MessageRow {
     private _message: Message;
@@ -26,7 +26,7 @@ export class MessageRow {
 
     /**
      * Replaces the displayed message in the row.
-     * @param format A string containing embed points, for example `"Hello {0}"` will insert `args[0]` after the word "Hello ".
+     * @param format A string containing embed points, for example `"Hello {0}"` will insert {@link args}`[0]` after the word "Hello ".
      * @param args Optional array of values to embed in the message.
      */
     update(format: string, ...args: any[]): void {
@@ -95,14 +95,14 @@ export class MessageBar {
 
     /**
      * Clears any existing non-prompt messages, then adds the given formatted message for every player.
-     * @param format A string containing embed points, for example `"Hello {0}"` will insert `args[0]` after the word "Hello ".
+     * @param format A string containing embed points, for example `"Hello {0}"` will insert {@link args}`[0]` after the word "Hello ".
      * @param args Optional array of values to embed in the message.
      */
     set(format: string, ...args: MessageEmbed[]): MessageRow;
 
     /**
      * Clears any existing non-prompt messages, then adds the given formatted message for the given player.
-     * @param format A string containing embed points, for example `"Hello {0}"` will insert `args[0]` after the word "Hello ".
+     * @param format A string containing embed points, for example `"Hello {0}"` will insert {@link args}`[0]` after the word "Hello ".
      * @param args Optional array of values to embed in the message.
      * @param player Player to set a message for.
      */
@@ -110,7 +110,7 @@ export class MessageBar {
     
     /**
      * Clears any existing non-prompt messages, then adds the given formatted message for the given players.
-     * @param format A string containing embed points, for example `"Hello {0}"` will insert `args[0]` after the word "Hello ".
+     * @param format A string containing embed points, for example `"Hello {0}"` will insert {@link args}`[0]` after the word "Hello ".
      * @param args Optional array of values to embed in the message.
      * @param player Players to set a message for.
      */
@@ -157,14 +157,14 @@ export class MessageBar {
 
     /**
      * Adds the given formatted message for every player, below any existing non-prompt messages.
-     * @param format A string containing embed points, for example `"Hello {0}"` will insert `args[0]` after the word "Hello ".
+     * @param format A string containing embed points, for example `"Hello {0}"` will insert {@link args}`[0]` after the word "Hello ".
      * @param args Optional array of values to embed in the message.
      */
     add(format: string, ...args: MessageEmbed[]): MessageRow;
 
     /**
      * Adds the given formatted message for the given player, below any existing non-prompt messages.
-     * @param format A string containing embed points, for example `"Hello {0}"` will insert `args[0]` after the word "Hello ".
+     * @param format A string containing embed points, for example `"Hello {0}"` will insert {@link args}`[0]` after the word "Hello ".
      * @param args Optional array of values to embed in the message.
      * @param player Player to add a message for.
      */
@@ -172,7 +172,7 @@ export class MessageBar {
     
     /**
      * Adds the given formatted message for the given players, below any existing non-prompt messages.
-     * @param format A string containing embed points, for example `"Hello {0}"` will insert `args[0]` after the word "Hello ".
+     * @param format A string containing embed points, for example `"Hello {0}"` will insert {@link args}`[0]` after the word "Hello ".
      * @param args Optional array of values to embed in the message.
      * @param player Players to add a message for.
      */
@@ -220,20 +220,20 @@ export class MessageBar {
 
     /**
      * Removes the given message for all players.
-     * @param row A previously-added message, as returned by `add()` or `set()`.
+     * @param row A previously-added message, as returned by {@link add} or {@link set}.
      */
     remove(row: MessageRow): void;
     
     /**
      * Removes the given message for the given player.
-     * @param row A previously-added message, as returned by `add()` or `set()`.
+     * @param row A previously-added message, as returned by {@link add} or {@link set}.
      * @param player Player to remove a message for.
      */
     remove(row: MessageRow, player: Player): void;
     
     /**
      * Removes the given message for the given players.
-     * @param row A previously-added message, as returned by `add()` or `set()`.
+     * @param row A previously-added message, as returned by {@link add} or {@link set}.
      * @param player Players to remove a message for.
      */
     remove(row: MessageRow, players: Iterable<Player>): void;

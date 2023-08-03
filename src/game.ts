@@ -34,7 +34,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
     readonly children: DisplayContainer;
 
     /**
-     * Base constructor for `Game<TPlayer>`. You need to pass in your player type here so that BGE knows how to make instances of it.
+     * Base constructor for {@link Game<TPlayer>}. You need to pass in your player type here so that BGE knows how to make instances of it.
      * 
      * @param PlayerType Constructor for your custom player type.
      */
@@ -48,14 +48,14 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
     }
 
     /**
-     * Array of all the players in this running game. Only valid after `init()` has been called.
+     * Array of all the players in this running game. Only valid when {@link onInitialize} has been called.
      */
     get players(): readonly TPlayer[] {
         return this._players;
     }
 
     /**
-     * Information describing inputs fed to the game so far. Can be passed to {@see Game.run(config)} to
+     * Information describing inputs fed to the game so far. Can be passed to {@link run} to
      * resume a suspended game, or recreate the final state of a completed game.
      */
     get replayData(): IReplayData {

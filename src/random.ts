@@ -76,13 +76,13 @@ export class Random {
     float(): number;
 
     /**
-     * Generates a uniformly-distributed floating-point number between 0 (inclusive) and `max` (exclusive).
+     * Generates a uniformly-distributed floating-point number between 0 (inclusive) and {@link max} (exclusive).
      * @param max The generated number will be less than this value.
      */
     float(max: number): number;
 
     /**
-     * Generates a uniformly-distributed floating-point number between `min` (inclusive) and `max` (exclusive).
+     * Generates a uniformly-distributed floating-point number between {@link min} (inclusive) and {@link max} (exclusive).
      * @param min The generated number will be at least this value.
      * @param max The generated number will be less than this value.
      */
@@ -116,13 +116,13 @@ export class Random {
     }
 
     /**
-     * Generates a uniformly-distributed integer between 0 (inclusive) and `max` (exclusive).
+     * Generates a uniformly-distributed integer between 0 (inclusive) and {@link max} (exclusive).
      * @param max The generated number will be less than this value. 
      */
     int(max: number): number;
     
     /**
-     * Generates a uniformly-distributed integer between `min` (inclusive) and `max` (exclusive).
+     * Generates a uniformly-distributed integer between {@link min} (inclusive) and {@link max} (exclusive).
      * @param min The generated number will be at least this value.
      * @param max The generated number will be less than this value.
      */
@@ -151,7 +151,7 @@ export class Random {
     }
 
     /**
-     * Returns `true` with the given `probability`, which is 0.5 by default (50%).
+     * Returns `true` with the given {@link probability}, which is 0.5 by default (50%).
      * @param probability Chance of returning true, between 0 and 1.
      */
     chance(probability: number = 0.5): boolean {

@@ -60,7 +60,7 @@ export interface IDisplayOptions {
     rotation?: Rotation | number;
 
     /**
-     * For displaying an array of objects, strategy to use when arranging. Defaults to {@link Arrangement.Auto}.
+     * For displaying an array of objects, strategy to use when arranging. Defaults to {@link RenderContext.DEFAULT_ARRANGEMENT}.
      */
     arrangement?: Arrangement;
 
@@ -107,6 +107,9 @@ interface IParentChildIndices {
     next: Map<DisplayChild, number>;
 }
 
+/**
+ * @internal
+ */
 export class ChildIndexMap {
     private readonly _map = new Map<DisplayParent, IParentChildIndices>();
 
@@ -144,6 +147,9 @@ export class ChildIndexMap {
  * Context used when rendering objects, containing information about visibility and ownership.
  */
 export class RenderContext {
+    /**
+     * Arrangement used when no specific arrangement is specified.
+     */
     private static readonly DEFAULT_ARRANGEMENT = new LinearArrangement({
         axis: "x"
     });
@@ -173,6 +179,9 @@ export class RenderContext {
      */
     readonly noAnimations: boolean;
 
+    /**
+     * @internal
+     */
     readonly oldParentMap: ParentMap;
 
     readonly oldParents: Set<DisplayParent>;

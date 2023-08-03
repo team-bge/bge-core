@@ -10,14 +10,14 @@ export type DisplayOptionsFunc<TParent = any, TValue = any> = { (this: TParent, 
 
 /**
  * Decorates a property to be displayed as a child of the containing object.
- * Supported for `GameObject` values, or `string` / `number` values to display them as text.
+ * Supported for {@link GameObject} values, or `string` / `number` values to display them as text.
  * @param options Optional positioning and styling options.
  */
 export function display(options?: IDisplayOptions): PropertyDecorator;
 
 /**
  * Decorates a property to be displayed as a child of the containing object.
- * Supported for `GameObject` values, or `string` / `number` values to display them as text.
+ * Supported for {@link GameObject} values, or `string` / `number` values to display them as text.
  * @param optionsFn Function invoked whenever this property is rendered, to dynamically control how it is displayed.
  */
 export function display<TParent = any, TValue = any>(optionsFn: DisplayOptionsFunc<TParent, TValue>): PropertyDecorator;
@@ -117,9 +117,9 @@ export class DisplayContainer {
     }
 
     /**
-     * @summary Adds all properties of `parent` annotated with `@display()`.
+     * @summary Adds all properties of {@link parent} annotated with {@link display}.
      * @description The value of each property will be fetched each time this container is rendered,
-     * so new values assigned after `addProperties()` is called will always be displayed.
+     * so new values assigned after {@link addProperties} is called will always be displayed.
      * @param parent Object to search through the properties of.
      */
     addProperties(parent: Object): void {
@@ -153,7 +153,7 @@ export class DisplayContainer {
     }
 
     /**
-     * Applies transform `a` to transform `b`, returning the result. Neither `a` nor `b` are modified.
+     * Applies transform {@link a} to transform {@link b}, returning the result. Neither {@link a} nor {@link b} are modified.
      * @param a Outer transformation.
      * @param b Inner transformation.
      * @returns The combined transformation.
@@ -161,11 +161,11 @@ export class DisplayContainer {
     static applyTransform(a: ITransform, b: ITransform): ITransform;
     
     /**
-     * Applies transform `a` to transform `b`, storing the result in `out`. Neither `a` nor `b` are modified.
+     * Applies transform {@link a} to transform {@link b}, storing the result in {@link out}. Neither {@link a} nor {@link b} are modified.
      * @param a Outer transformation.
      * @param b Inner transformation.
      * @param out Target for the combined transformation.
-     * @returns `out`
+     * @returns Combined transform {@link out}
      */
     static applyTransform(a: ITransform, b: ITransform, out: ITransform): ITransform;
 

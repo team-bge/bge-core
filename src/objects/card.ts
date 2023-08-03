@@ -1,14 +1,20 @@
 import { RenderContext } from "../display.js";
-import { DisplayContainer } from "../displaycontainer.js";
+import { DisplayContainer, display } from "../displaycontainer.js";
 import { ITextEmbeddable } from "../interfaces.js";
 import { GameObject } from "./object.js";
 import { CardView, ImageView, TextEmbedView, ViewType } from "../views.js";
 import { Bounds, Vector3 } from "../math/index.js";
 
+/**
+ * @category Objects
+ */
 export class CardFace {
     image?: ImageView;
 }
 
+/**
+ * @category Objects
+ */
 export enum CardShape {
     RECTANGLE,
     HEXAGON
@@ -17,7 +23,8 @@ export enum CardShape {
 const cardDimensionsKey = Symbol("card:dimensions");
 
 /**
- * Describes whether a card is face up or down.
+ * @category Objects
+ * @summary Describes whether a card is face up or down.
  */
 export enum CardOrientation {
     /**
@@ -34,7 +41,8 @@ export enum CardOrientation {
 export type CardComparer<TCard extends Card> = { (a: TCard, b: TCard): number };
 
 /**
- * Describes the dimensions of a rectangular card in centimeters.
+ * @category Objects
+ * @summary Describes the dimensions of a rectangular card in centimeters.
  */
 export interface ICardDimensions {
     shape: CardShape;
@@ -61,7 +69,8 @@ export interface ICardDimensions {
 }
 
 /**
- * Specify the dimensions of a custom card class.
+ * @category Objects
+ * @summary Specify the dimensions of a custom card class.
  * @param width Width in centimeters.
  */
 export function rectangleCard(width: number, height: number, thickness: number, cornerRadius: number = 0): ClassDecorator {
@@ -84,13 +93,14 @@ export function hexagonCard(size: number, thickness: number): ClassDecorator {
 }
 
 /**
+ * @category Objects
  * @summary A game object representing a rectangular playing card.
  * @description Can have arbitrary front and back images, dimensions (including thickness), and rounded corners.
- * Specify dimensions using the `@Card.width()`, `@Card.height()`, and `@Card.thickness` decorators on your custom class.
+ * Specify dimensions using a {@link rectangleCard} or {@link hexagonCard} decorator on your custom class.
  */
 export class Card extends GameObject implements ITextEmbeddable {
     /**
-     * Get the dimensions of a card class, as specified by `width` / `height` / `thickness` decorators.
+     * Get the dimensions of a card class, as specified by {@link rectangleCard} / {@link hexagonCard} decorator.
      * @param CardType Type of card to get the dimensions of.
      * @returns Width, height, and thickness of the card in centimeters.
      */
@@ -149,7 +159,7 @@ export class Card extends GameObject implements ITextEmbeddable {
 
     /**
      * @summary Contains child objects that are displayed on top of this card.
-     * @description This will also contain objects from `@display()` annotated properties,
+     * @description This will also contain objects from {@link display} annotated properties,
      * using the property keys as names.
      */
     readonly children = new DisplayContainer();

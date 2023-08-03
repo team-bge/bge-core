@@ -5,7 +5,8 @@ import { Random, random } from "../random.js";
 import { Bounds, Vector3 } from "../math/index.js";
 
 /**
- * Interface for anything that can receive dealt cards.
+ * @category Objects
+ * @summary Interface for anything that can receive dealt cards.
  */
 export interface ICardReceiver<TCard extends Card> {
     /**
@@ -37,7 +38,8 @@ class ArrayCardReceiver<TCard extends Card> implements ICardReceiver<TCard> {
 }
 
 /**
- * Base class for general card containers, like decks and hands. We don't assume anything about how cards are stored.
+ * @category Objects
+ * @summary Base class for general card containers, like decks and hands. We don't assume anything about how cards are stored.
  */
 export abstract class CardContainer<TCard extends Card> extends GameObject implements ICardReceiver<TCard> {
     private readonly _CardType: { new(...args: any[]): TCard };
@@ -154,7 +156,8 @@ export abstract class CardContainer<TCard extends Card> extends GameObject imple
 }
 
 /**
- * Describes in which order items are added or removed from a linear container.
+ * @category Objects
+ * @summary Describes in which order items are added or removed from a linear container.
  */
 export enum LinearContainerKind {
     /**
@@ -168,17 +171,15 @@ export enum LinearContainerKind {
     FIRST_IN_LAST_OUT
 }
 
-/**
- * @internal
- */
-interface ILinearContainerCard<TCard extends Card> {
+export interface ILinearContainerCard<TCard extends Card> {
     card: TCard;
     orientation: CardOrientation;
     selected: boolean;
 }
 
 /**
- * Base class for card containers that store their contents as an ordered list of cards, like hands and decks.
+ * @category Objects
+ * @summary Base class for card containers that store their contents as an ordered list of cards, like hands and decks.
  */
 export abstract class LinearCardContainer<TCard extends Card> extends CardContainer<TCard> implements Iterable<TCard> {
     private readonly _cards: ILinearContainerCard<TCard>[] = [];
@@ -246,7 +247,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
 
     /**
      * Gets a card by index.
-     * @param index Index of the card to get, starting at 0 and strictly less than `count`.
+     * @param index Index of the card to get, starting at 0 and strictly less than {@link count}.
      * @returns Retrieved card.
      */
     getCard(index: number): TCard {
@@ -511,7 +512,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      * Deal up to the given number of cards to each target.
      * @param targets Recipients of the deal.
      * @param count Maximum number of cards to deal to each recipient.
-     * @param firstTargetIndex Index of the first recipient in `targets`.
+     * @param firstTargetIndex Index of the first recipient in {@link targets}.
      */
     deal(targets: ICardReceiver<TCard>[] | TCard[][], count: number = 1, firstTargetIndex: number = 0): void {
         
@@ -529,7 +530,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      * Deals up to the given total number of cards, divided between the given targets.
      * @param targets Recipients of the deal.
      * @param totalCount Maximum number of cards to deal in total.
-     * @param firstTargetIndex Index of the first recipient in `targets`.
+     * @param firstTargetIndex Index of the first recipient in {@link targets}.
      */
     dealTotal(targets: ICardReceiver<TCard>[] | TCard[][], totalCount: number, handLimit?: number, firstTargetIndex: number = 0): void {
         

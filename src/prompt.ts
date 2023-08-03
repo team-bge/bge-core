@@ -1,10 +1,10 @@
 import { Button, TextInput } from "./button.js";
 import { delay } from "./delay.js";
-import { Game, game } from "./game.js";
+import { game } from "./game.js";
 import { Clickable, Message } from "./interfaces.js";
 import { GameObject } from "./objects/object.js";
 import { Player } from "./player.js";
-import { PromiseGroup, anyExclusive } from "./promisegroup.js";
+import { PromiseGroup, anyExclusive, all } from "./promisegroup.js";
 import { IPromptResponseEvent, ReplayEvent, ReplayEventType, replay } from "./replay.js";
 import { Prompt, PromptKind } from "./views.js";
 
@@ -49,7 +49,7 @@ export interface IClickOptions extends IPromptOptions {
 }
 
 /**
- * Options for prompting a player to click on a `Button`.
+ * @summary Options for prompting a player to click on a {@link Button}.
  */
 export interface IButtonClickOptions extends IClickOptions {
     /**
@@ -71,7 +71,7 @@ export interface IReturnClickOptions<TReturn> extends IClickOptions {
 }
 
 /**
- * Options for a prompt to click a `GameObject`.
+ * @summary Options for a prompt to click a {@link GameObject}.
  */
 export interface IObjectClickOptions extends IClickOptions {
     /**
@@ -97,9 +97,9 @@ export interface ITextInputOptions extends IPromptOptions {
  * * Resolve when the player responds to the prompt
  * * Reject when the prompt is cancelled
  * 
- * Prompts will cancel if they are created in a `Game.exclusiveAny()` call, and another prompt
+ * Prompts will cancel if they are created in a {@link anyExclusive} call, and another prompt
  * or delay created in the same call resolved first. Prompts will also cancel when created in
- * a `Game.all()` call, and another promise in that call rejected.
+ * a {@link all} call, and another promise in that call rejected.
  */
 export class PromptHelper {
     private readonly _player: Player;
@@ -212,7 +212,7 @@ export class PromptHelper {
      * Creates a prompt that resolves when the player clicks on the given button. The button will be
      * displayed in a message seen only by the prompted player. When resolved, the clicked button
      * will be returned.
-     * @param object `Button` to be clicked.
+     * @param object {@link Button} to be clicked.
      * @param options Optional options to configure the prompt.
      * @returns A promise that resolves to the clicked button.
      */
@@ -231,9 +231,9 @@ export class PromptHelper {
     /**
      * Creates a prompt that resolves when the player clicks on the given button. The button will be
      * displayed in a message seen only by the prompted player. When resolved, the value specified in
-     * `options.return` will be returned.
-     * @param object `Button` to be clicked.
-     * @param options Options to configure the prompt, including the `return` value.
+     * {@link IReturnClickOptions.return} will be returned.
+     * @param object {@link Button} to be clicked.
+     * @param options Options to configure the prompt, including the {@link IReturnClickOptions.return} value.
      * @returns A promise that resolves to {@link IReturnClickOptions.return}.
      */
     click<TValue>(object: Button, options: IReturnClickOptions<TValue> & IButtonClickOptions): Promise<TValue>;
@@ -242,7 +242,7 @@ export class PromptHelper {
     /**
      * Creates a prompt that resolves when the player clicks on the given button. The button will be
      * displayed in a message seen only by the prompted player. When resolved, the value specified in
-     * `options.return` will be returned.
+     * {@link IReturnClickOptions.return} will be returned.
      * @param label Text to be displayed on the button.
      * @param options Options to configure the prompt, including the {@link IReturnClickOptions.return} value.
      * @returns A promise that resolves to {@link IReturnClickOptions.return}.
@@ -250,22 +250,22 @@ export class PromptHelper {
     click<TValue>(label: string, options: IReturnClickOptions<TValue> & IButtonClickOptions): Promise<TValue>;
 
     /**
-     * Creates a prompt that resolves when the player clicks on the given `GameObject`. An accompanying
-     * message must be provided in `options.message` that will be displayed to the prompted player. When
+     * Creates a prompt that resolves when the player clicks on the given {@link GameObject}. An accompanying
+     * message must be provided in {@link IObjectClickOptions.message} that will be displayed to the prompted player. When
      * resolved, the clicked object will be returned.
-     * @param object `GameObject` to be clicked.
-     * @param options Options to configure the prompt, including the `message` text.
+     * @param object {@link GameObject} to be clicked.
+     * @param options Options to configure the prompt, including the {@link IObjectClickOptions.message} text.
      * @returns A promise that resolves to the clicked object.
      */
     click<TObject extends GameObject>(object: TObject, options: IObjectClickOptions): Promise<TObject>;
 
     /**
-     * Creates a prompt that resolves when the player clicks on the given `GameObject`. An accompanying
-     * message must be provided in `options.message` that will be displayed to the prompted player. When
-     * resolved, the value specified in `options.return` will be returned.
-     * @param object `GameObject` to be clicked.
-     * @param options Options to configure the prompt, including the `message` text and `return` value.
-     * @returns A promise that resolves to `options.return`.
+     * Creates a prompt that resolves when the player clicks on the given {@link GameObject}. An accompanying
+     * message must be provided in {@link IObjectClickOptions.message} that will be displayed to the prompted player. When
+     * resolved, the value specified in {@link IReturnClickOptions.return} will be returned.
+     * @param object {@link GameObject} to be clicked.
+     * @param options Options to configure the prompt, including the {@link IObjectClickOptions.message} text and {@link IReturnClickOptions.return} value.
+     * @returns A promise that resolves to {@link IReturnClickOptions.return}.
      */
     click<TValue>(object: GameObject, options: IReturnClickOptions<TValue> & IObjectClickOptions): Promise<TValue>;
     
@@ -298,11 +298,11 @@ export class PromptHelper {
     }
 
     /**
-     * Creates a prompt that resolves when any of the given `GameObject`s are clicked on. An accompanying
-     * message must be provided in `options.message` that will be displayed to the prompted player. When
+     * Creates a prompt that resolves when any of the given {@link GameObject}s are clicked on. An accompanying
+     * message must be provided in {@link IObjectClickOptions.message} that will be displayed to the prompted player. When
      * resolved, the clicked object will be returned.
      * @param objects The set of objects to be clicked.
-     * @param options Options to configure the prompt, including the `message` text.
+     * @param options Options to configure the prompt, including the {@link IObjectClickOptions.message} text.
      * @returns A promise that resolves to the clicked object.
      */
     clickAny<TObject extends GameObject>(objects: ArrayLike<TObject> | Iterable<TObject>,
