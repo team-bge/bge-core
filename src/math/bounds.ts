@@ -1,5 +1,8 @@
 import { Vector3 } from "./vector3.js";
 
+/**
+ * @category Geometry
+ */
 export class Bounds {
     readonly min: Vector3;
     readonly max: Vector3;

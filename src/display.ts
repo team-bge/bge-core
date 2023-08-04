@@ -10,7 +10,8 @@ import { ILabelView, ITransformView, IView, Origin, TextEmbedView, ViewType } fr
 import { game } from "./game.js";
 
 /**
- * Options for positioning and styling an object or array of objects.
+ * @category Display
+ * @summary Options for positioning and styling an object or array of objects.
  */
 export interface IDisplayOptions {
     /**
@@ -86,7 +87,14 @@ export interface IDisplayOptions {
     jitterSeed?: string;
 }
 
+/**
+ * @category Display
+ */
 export type DisplayParent = GameObject | IGame;
+
+/**
+ * @category Display
+ */
 export type DisplayChild = GameObject | { (): string | number };
 
 interface IParentInfo {
@@ -144,7 +152,8 @@ export class ChildIndexMap {
 }
 
 /**
- * Context used when rendering objects, containing information about visibility and ownership.
+ * @category Display
+ * @summary Context used when rendering objects, containing information about visibility and ownership.
  */
 export class RenderContext {
     /**

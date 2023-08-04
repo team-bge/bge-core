@@ -3,7 +3,7 @@ import { Bounds } from "../math/index.js";
 import { IView } from "../views.js";
 
 /**
- * @category Objects
+ * @category Game Objects
  * @summary Base class for all gameplay related objects and containers.
  */
 export abstract class GameObject {

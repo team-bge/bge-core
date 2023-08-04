@@ -1,3 +1,6 @@
+/**
+ * @internal
+ */
 export class Debugging {
     private static _breakPoints: Set<number>;
     private static _lastBreakIndex: number = 0;

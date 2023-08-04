@@ -6,26 +6,40 @@ import { anyExclusive } from "./promisegroup.js";
 import { PromptHelper } from "./prompt.js";
 import { Random } from "./random.js";
 
+/**
+ * @category State Machines
+ */
 export type StateFunc = (this: StateMachine, ...args: any[]) => StatePromise;
+
+/**
+ * @category State Machines
+ */
 export type StatePromise = Promise<NextState | null>;
 
 const SKIP_UNDO_KEY = Symbol("state:skipundo");
 const NO_UNDO_KEY = Symbol("state:noundo");
 
 /**
- * Used to decorate state machine functions that will be skipped when undoing.
+ * @category Decorators
+ * @category State Machines
+ * @summary Used to decorate state machine functions that will be skipped when undoing.
  */
 export const skipUndo: MethodDecorator = (target: any, propertyKey) => {
     Reflect.defineMetadata(SKIP_UNDO_KEY, true, target[propertyKey]);
 };
 
 /**
- * Used to decorate state machine functions that cannot be undone.
+ * @category Decorators
+ * @category State Machines
+ * @summary Used to decorate state machine functions that cannot be undone.
  */
 export const noUndo: MethodDecorator = (target: any, propertyKey) => {
     Reflect.defineMetadata(NO_UNDO_KEY, true, target[propertyKey]);
 };
 
+/**
+ * @category State Machines
+ */
 export class NextState {
     private readonly _func: StateFunc;
     private readonly _args: any[];
@@ -56,12 +70,18 @@ interface IStateStackFrame {
     undoStack: (() => void)[];
 }
 
+/**
+ * @category State Machines
+ */
 export interface IRunStateResult {
     next?: NextState;
     undone?: boolean;
     skipUndo?: boolean;
 }
 
+/**
+ * @category State Machines
+ */
 export class StateMachine {
     private _head: IStateStackFrame;
     private _undone: boolean;
@@ -181,6 +201,9 @@ export class StateMachine {
     }
 }
 
+/**
+ * @category State Machines
+ */
 export abstract class PlayerStateMachine<TPlayer extends Player = Player> extends StateMachine {
     readonly player: TPlayer;
     

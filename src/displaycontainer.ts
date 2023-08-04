@@ -6,17 +6,24 @@ import { IView } from "./views.js";
 const displayOptionsKey = Symbol("display:options");
 const displayKeysKey = Symbol("display:keys");
 
+/**
+ * @category Display
+ */
 export type DisplayOptionsFunc<TParent = any, TValue = any> = { (this: TParent, ctx: RenderContext, value: TValue): IDisplayOptions };
 
 /**
- * Decorates a property to be displayed as a child of the containing object.
+ * @category Display
+ * @category Decorators
+ * @summary Decorates a property to be displayed as a child of the containing object.
  * Supported for {@link GameObject} values, or `string` / `number` values to display them as text.
  * @param options Optional positioning and styling options.
  */
 export function display(options?: IDisplayOptions): PropertyDecorator;
 
 /**
- * Decorates a property to be displayed as a child of the containing object.
+ * @category Display
+ * @category Decorators
+ * @summary Decorates a property to be displayed as a child of the containing object.
  * Supported for {@link GameObject} values, or `string` / `number` values to display them as text.
  * @param optionsFn Function invoked whenever this property is rendered, to dynamically control how it is displayed.
  */
@@ -45,7 +52,8 @@ interface IChildProperty {
 }
 
 /**
- * Container for dynamically adding, removing, and repositioning objects for display.
+ * @category Display
+ * @summary Container for dynamically adding, removing, and repositioning objects for display.
  */
 export class DisplayContainer {
     private static _nextIndex = 1;

@@ -1,5 +1,8 @@
 import { game } from "./game";
 
+/**
+ * @category Async
+ */
 export abstract class PromiseGroup {
     private static _promiseGroups: (PromiseGroup | null)[] = [];
 
@@ -87,6 +90,9 @@ export abstract class PromiseGroup {
     }
 }
 
+/**
+ * @category Async
+ */
 export class AnyGroup extends PromiseGroup {
     private _anyResolved = false;
 
@@ -104,6 +110,9 @@ export class AnyGroup extends PromiseGroup {
     }
 }
 
+/**
+ * @category Async
+ */
 export class AllGroup extends PromiseGroup {
     private _anyRejected = false;
 
@@ -122,7 +131,8 @@ export class AllGroup extends PromiseGroup {
 }
 
 /**
- * Creates a Promise that is resolved with an array of results when all of the provided Promises
+ * @category Async
+ * @summary Creates a Promise that is resolved with an array of results when all of the provided Promises
  * resolve, or rejected when any Promise is rejected. Wraps Promise.all<T>.
  * 
  * @param createPromises A function that should return an array or iterable of Promises. The promises should
@@ -135,9 +145,11 @@ export function all<T>(createPromises: { (): Iterable<T | PromiseLike<T>> }) {
 }
 
 /**
- * Creates a Promise that is fulfilled by the first given Promise to be fulfilled, or rejected with
+ * @category Async
+ * @summary Creates a Promise that is fulfilled by the first given Promise to be fulfilled, or rejected with
  * an AggregateError containing an array of rejection reasons if all of the given promises are rejected.
- * All the given promises can still independently fulfill after the first one, unlike with anyExclusive<T>.
+ * 
+ * @description All the given promises can still independently fulfill after the first one, unlike with anyExclusive<T>.
  * Wraps Promise.all<T>.
  * 
  * @param createPromises A function that should return an array or iterable of Promises. The promises should
@@ -150,9 +162,11 @@ export function any<T extends readonly unknown[] | []>(createPromises: { (): T }
 }
 
 /**
- * Creates a Promise that is fulfilled by the first given Promise to be fulfilled, or rejected with
+ * @category Async
+ * @summary Creates a Promise that is fulfilled by the first given Promise to be fulfilled, or rejected with
  * an AggregateError containing an array of rejection reasons if all of the given promises are rejected.
- * Unlike any<T>, after any of the given promises fulfills an inner prompt or delay, the other promises
+ * 
+ * @description Unlike any<T>, after any of the given promises fulfills an inner prompt or delay, the other promises
  * are forcibly rejected. This is useful for letting players select from a range of actions, where responding
  * to the first prompt of any action commits that player to only that action.
  * 

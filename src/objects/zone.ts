@@ -7,7 +7,7 @@ import { Color } from "../color.js";
 import { display } from "../displaycontainer.js";
 
 /**
- * @category Objects
+ * @category Game Objects
  * @summary Represents a rectangular region on the table, with an outline and optional label.
  * @description Child objects can be dynamically added or removed with {@link Zone.children}, or in
  * a deriving class with {@link display} annotated properties.

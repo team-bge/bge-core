@@ -6,14 +6,14 @@ import { CardView, ImageView, TextEmbedView, ViewType } from "../views.js";
 import { Bounds, Vector3 } from "../math/index.js";
 
 /**
- * @category Objects
+ * @category Game Objects
  */
 export class CardFace {
     image?: ImageView;
 }
 
 /**
- * @category Objects
+ * @category Game Objects
  */
 export enum CardShape {
     RECTANGLE,
@@ -23,7 +23,7 @@ export enum CardShape {
 const cardDimensionsKey = Symbol("card:dimensions");
 
 /**
- * @category Objects
+ * @category Game Objects
  * @summary Describes whether a card is face up or down.
  */
 export enum CardOrientation {
@@ -38,10 +38,13 @@ export enum CardOrientation {
     FACE_DOWN
 }
 
+/**
+ * @category Game Objects
+ */
 export type CardComparer<TCard extends Card> = { (a: TCard, b: TCard): number };
 
 /**
- * @category Objects
+ * @category Game Objects
  * @summary Describes the dimensions of a rectangular card in centimeters.
  */
 export interface ICardDimensions {
@@ -69,7 +72,8 @@ export interface ICardDimensions {
 }
 
 /**
- * @category Objects
+ * @category Decorators
+ * @category Game Objects
  * @summary Specify the dimensions of a custom card class.
  * @param width Width in centimeters.
  */
@@ -83,6 +87,10 @@ export function rectangleCard(width: number, height: number, thickness: number, 
     } as ICardDimensions);
 }
 
+/**
+ * @category Decorators
+ * @category Game Objects
+ */
 export function hexagonCard(size: number, thickness: number): ClassDecorator {
     return Reflect.metadata(cardDimensionsKey, {
         shape: CardShape.HEXAGON,
@@ -93,7 +101,7 @@ export function hexagonCard(size: number, thickness: number): ClassDecorator {
 }
 
 /**
- * @category Objects
+ * @category Game Objects
  * @summary A game object representing a rectangular playing card.
  * @description Can have arbitrary front and back images, dimensions (including thickness), and rounded corners.
  * Specify dimensions using a {@link rectangleCard} or {@link hexagonCard} decorator on your custom class.

@@ -1,12 +1,15 @@
 import { Button, TextInput } from "./button.js";
 import { RenderContext } from "./display.js";
-import { PromiseGroup } from "./promisegroup.js";
+import { Game } from "./game.js";
 import { GameObject } from "./objects/object.js";
 import { IReplayData } from "./replay.js";
 import { GameView, TextEmbedView } from "./views.js";
 
+import { API_VERSION } from "./index.js";
+
 /**
- * Information configuring a player, including their name.
+ * @category Core
+ * @summary Information configuring a player, including their name.
  */
 export interface IPlayerConfig {
     /**
@@ -16,7 +19,8 @@ export interface IPlayerConfig {
 }
 
 /**
- * Returned by a game when it ends, describing the final scores.
+ * @category Core
+ * @summary Returned by a game when it ends, describing the final scores.
  */
 export interface IGameResult {
     /**
@@ -31,20 +35,26 @@ export interface IGameResult {
 }
 
 /**
- * Types of objects that can be used in a player click prompt.
+ * @category Prompts
+ * @summary Types of objects that can be used in a player click prompt.
  */
 export type Clickable = GameObject | Button | TextInput;
 
 /**
- * Types of value that can be embedded in a message.
+ * @category Messages
+ * @summary Types of value that can be embedded in a message.
  */
 export type MessageEmbed = string | boolean | number | ITextEmbeddable | readonly MessageEmbed[];
 
 /**
- * Describes a message displayed at the top of the screen. Can include embedded buttons or other objects.
+ * @category Messages
+ * @summary Describes a message displayed at the top of the screen. Can include embedded buttons or other objects.
  */
 export type Message = string | { format: string, args?: MessageEmbed[] };
 
+/**
+ * @category Core
+ */
 export interface IRunConfig {
     players: IPlayerConfig[];
     replay?: IReplayData;
@@ -55,7 +65,8 @@ export interface IRunConfig {
 }
 
 /**
- * Base interface for a custom game. You'll want to extend @see Game<TPlayer> instead.
+ * @category Core
+ * @summary Base interface for a custom game. You'll want to extend {@link Game<TPlayer>} instead.
  */
 export interface IGame {
     /**
@@ -80,29 +91,47 @@ export interface IGame {
     get replayData(): IReplayData;
 }
 
+/**
+ * @category Settings
+ */
 export interface ISettings {
     [key: string]: Setting;
 }
 
+/**
+ * @category Settings
+ */
 export type Setting =
     | ICheckBoxSetting
     | ISelectSetting;
 
+/**
+ * @category Settings
+ */
 export interface ISetting {
     title?: string;
     description?: string;
 }
 
+/**
+ * @category Settings
+ */
 export interface ICheckBoxSetting extends ISetting {
     type: "checkbox";
     default?: boolean;
 }
 
+/**
+ * @category Settings
+ */
 export interface ISelectSetting extends ISetting {
     type: "select";
     options: ISelectOption[];
 }
 
+/**
+ * @category Settings
+ */
 export interface ISelectOption {
     title?: string;
     description?: string;
@@ -110,12 +139,13 @@ export interface ISelectOption {
 }
 
 /**
- * Your game should default export this interface, describing how to configure and play your game.
+ * @category Core
+ * @summary Your game should default export this interface, describing how to configure and play your game.
  */
 export interface IGameConfig {
     /**
      * Describes which version of the BGE API your game was built with.
-     * This should be set to API_VERSION in bge-core.
+     * This should be set to {@link API_VERSION} in bge-core.
      */
     apiVersion: number;
 
@@ -138,7 +168,8 @@ export interface IGameConfig {
 }
 
 /**
- * Interface for objects that can be embedded in messages.
+ * @category Messages
+ * @summary Interface for objects that can be embedded in messages.
  */
 export interface ITextEmbeddable {
     /**

@@ -3,6 +3,7 @@ import { ITextEmbeddable } from "./interfaces.js";
 import { PromptKind, TextEmbedView } from "./views.js";
 
 /**
+ * @category Messages
  * @summary A clickable button that can appear in a message.
  * @description Buttons will automatically be shown to players if used in a Player.prompt.click(button).
  */
@@ -29,6 +30,9 @@ export class Button implements ITextEmbeddable {
     }
 }
 
+/**
+ * @category Messages
+ */
 export class TextInput implements ITextEmbeddable {
     readonly label: string;
 

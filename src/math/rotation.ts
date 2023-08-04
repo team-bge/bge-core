@@ -2,8 +2,9 @@ import { Bounds } from "./bounds.js";
 import { Vector3 } from "./vector3.js";
 
 /**
- * Represents a 3D rotation.
- * Use {@link angleAxis}, {@link x}, {@link y}, {@link z}, or {@link euler} to create
+ * @category Geometry
+ * @summary Represents a 3D rotation.
+ * @description Use {@link angleAxis}, {@link x}, {@link y}, {@link z}, or {@link euler} to create
  * {@link Rotation}s, and combine them using {@link mul}. Apply a rotation to a {@link Vector3} using
  * {@link rotate}.
  */

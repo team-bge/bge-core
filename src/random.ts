@@ -1,7 +1,8 @@
 import { IGame } from "./interfaces.js";
 
 /**
- * Helper with methods to generate random numbers.
+ * @category Core
+ * @summary Helper with methods to generate random numbers.
  */
 export class Random {
     // Adapted from https://stackoverflow.com/a/47593316
@@ -209,4 +210,10 @@ export class Random {
     }
 }
 
+/**
+ * @category Core
+ * @category Singletons
+ * @summary Shared random number generator instance, seeded when the game starts.
+ * @description To ensure replay function correctly, make sure you only use this instance in a deterministic way.
+ */
 export const random = new Random();

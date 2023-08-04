@@ -5,6 +5,7 @@ import { PromptHelper } from "./prompt.js";
 import { CameraView, TextEmbedView } from "./views.js";
 
 /**
+ * @category Core
  * @summary Represents a player in a game.
  * @description Use a deriving class to store any per-player properties, like scores or owned objects.
  * Use {@link Player.prompt} to request inputs from a player.

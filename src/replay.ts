@@ -1,21 +1,33 @@
 import { game } from "./game.js";
 import { IPlayerConfig } from "./interfaces.js";
 
+/**
+ * @category Replays
+ */
 export enum ReplayEventType {
     PROMPT_RESPONSE,
     DELAY_COMPLETE
 }
 
+/**
+ * @category Replays
+ */
 export interface IReplayData {
     seed: string;
     players: readonly IPlayerConfig[];
     events: readonly ReplayEvent[];
 }
 
+/**
+ * @category Replays
+ */
 export type ReplayEvent =
     | IPromptResponseEvent
     | IDelayCompleteEvent;
 
+/**
+ * @category Replays
+ */
 export interface IPromptResponseEvent {
     type: ReplayEventType.PROMPT_RESPONSE;
     playerIndex: number;
@@ -23,6 +35,9 @@ export interface IPromptResponseEvent {
     payload?: any;
 }
 
+/**
+ * @category Replays
+ */
 export interface IDelayCompleteEvent {
     type: ReplayEventType.DELAY_COMPLETE;
     delayIndex: number;
@@ -44,6 +59,9 @@ class ReplayPromise {
     }
 }
 
+/**
+ * @category Replays
+ */
 export class Replay {
     readonly events: ReplayEvent[];
 
@@ -150,4 +168,9 @@ export class Replay {
     }
 }
 
+/**
+ * @category Replays
+ * @category Singletons
+ * @summary The currently recording / playing list of events.
+ */
 export const replay = new Replay();

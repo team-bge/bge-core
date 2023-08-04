@@ -1,3 +1,6 @@
+/**
+ * @category Display
+ */
 export class Color {
     static readonly TRANSPARENT = new Color(0, 0, 0, 0);
     static readonly BLACK = new Color(0, 0, 0);

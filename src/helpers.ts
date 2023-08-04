@@ -1,3 +1,6 @@
+/**
+ * @category Core
+ */
 export class Helpers {
     /**
      * Gets the element from the given collection with the smallest value returned by {@link getValue}.

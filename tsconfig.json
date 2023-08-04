@@ -18,6 +18,11 @@
     "entryPoints": ["src/index.ts"],
     "excludeInternal": true,
     "excludePrivate": true,
+    "navigation": {
+      "includeCategories": true,
+      "includeGroups": false
+    },
+    "categorizeByGroup": false,
     "out": "../team-bge.github.io/_docs"
   }
 }

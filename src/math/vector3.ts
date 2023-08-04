@@ -1,3 +1,6 @@
+/**
+ * @category Geometry
+ */
 export class Vector3 {
     static readonly ZERO = new Vector3(0, 0, 0);
     static readonly UNIT_X = new Vector3(1, 0, 0);

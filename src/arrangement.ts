@@ -2,9 +2,9 @@ import { Bounds, ITransform, Rotation, Vector3 } from "./math/index.js";
 import { Random } from "./random.js";
 
 /**
- * {@link Arrangement}s handle deciding where to position items based on the local bounds of the parent object.
- * 
- * Each class extending {@link Arrangement} needs to implement {@link Arrangement.generateLocal}.
+ * @category Arrangements
+ * @summary {@link Arrangement}s handle deciding where to position items based on the local bounds of the parent object.
+ * @description Each class extending {@link Arrangement} needs to implement {@link Arrangement.generateLocal}.
  * Features like {@link IArrangementOptions.margin} and {@link IArrangementOptions.jitter} are handled in the base {@link Arrangement} class.
  */
 export abstract class Arrangement {
@@ -94,6 +94,9 @@ export abstract class Arrangement {
     protected abstract generateLocal(boundsArray: Bounds[], random: Random, parentLocalBounds?: Bounds): ITransform[];
 }
 
+/**
+ * @category Arrangements
+ */
 export enum Alignment {
     START,
     CENTER,
@@ -101,7 +104,8 @@ export enum Alignment {
 }
 
 /**
- * Base options common to all {@link Arrangement} types.
+ * @category Arrangements
+ * @summary Base options common to all {@link Arrangement} types.
  */
 export interface IArrangementOptions {
     /**
@@ -127,6 +131,9 @@ export interface IArrangementOptions {
     maxJitterRotation?: Rotation;
 }
 
+/**
+ * @category Arrangements
+ */
 export interface ILinearArrangementOptions extends IArrangementOptions {
     axis?: "x" | "y" | "z";
 
@@ -139,6 +146,9 @@ export interface ILinearArrangementOptions extends IArrangementOptions {
     reverse?: boolean;
 }
 
+/**
+ * @category Arrangements
+ */
 export class LinearArrangement extends Arrangement {
     readonly axis: Vector3;
     readonly offAxis: Vector3;
@@ -214,10 +224,16 @@ export class LinearArrangement extends Arrangement {
     }
 }
 
+/**
+ * @category Arrangements
+ */
 export interface IRadialArrangementOptions extends IArrangementOptions {
     innerRadius?: number;
 }
 
+/**
+ * @category Arrangements
+ */
 export class RadialArrangement extends Arrangement {
     readonly innerRadius: number;
 
@@ -250,10 +266,16 @@ export class RadialArrangement extends Arrangement {
     }
 }
 
+/**
+ * @category Arrangements
+ */
 export interface IRectangularArrangementOptions extends IArrangementOptions {
     size: Vector3;
 }
 
+/**
+ * @category Arrangements
+ */
 export class RectangularArrangement extends Arrangement {
     readonly size: Vector3;
 
@@ -331,7 +353,8 @@ export class RectangularArrangement extends Arrangement {
 }
 
 /**
- * Options for {@link ScatterArrangement}.
+ * @category Arrangements
+ * @summary Options for {@link ScatterArrangement}.
  */
 export interface IScatterArrangementOptions extends IArrangementOptions {
     /**
@@ -346,7 +369,8 @@ export interface IScatterArrangementOptions extends IArrangementOptions {
 }
 
 /**
- * Scatter an arbitrary number of objects, which can start to stack items
+ * @category Arrangements
+ * @summary Scatter an arbitrary number of objects, which can start to stack items
  * on top of each other if needed. Objects are biased towards the middle of the available
  * space.
  */
@@ -459,7 +483,8 @@ export class ScatterArrangement extends Arrangement {
 }
 
 /**
- * Options for {@link PileArrangement}.
+ * @category Arrangements
+ * @summary Options for {@link PileArrangement}.
  */
 export interface IPileArrangementOptions extends IScatterArrangementOptions {
     /**
@@ -482,8 +507,10 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
      */
     minPyramidLayer?: number;
 }
+
 /**
- * Stack in a pyramid
+ * @category Arrangements
+ * @summary Stack in a pyramid.
  */
  export class PileArrangement extends Arrangement {
     /**

@@ -5,7 +5,7 @@ import { CardView, DeckView, OutlineStyle, ViewType } from "../views.js";
 import { Bounds, Rotation, Vector3 } from "../math/index.js";
 
 /**
- * @category Objects
+ * @category Game Objects
  * @summary Configuration for a deck.
  */
 export interface IDeckOptions {
@@ -21,7 +21,7 @@ export interface IDeckOptions {
 }
 
 /**
- * @category Objects
+ * @category Game Objects
  * @summary Stores a first-in-last-out stack of cards. Only the top card is visible, but players can see how many cards are in the stack.
  */
 export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {

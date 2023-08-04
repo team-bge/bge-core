@@ -5,6 +5,7 @@ import { MessageView } from "./views.js";
 import { game } from "./game.js";
 
 /**
+ * @category Messages
  * @summary A single row of the {@link MessageBar}. Use {@link MessageBar.remove} to remove it.
  */
 export class MessageRow {
@@ -35,10 +36,15 @@ export class MessageRow {
     }
 }
 
+/**
+ * @category Core
+ * @summary Represents a spectator, rather than a player that can act in the game.
+ */
 export const SPECTATOR = Symbol("Spectator");
 
 /**
- * Helper for displaying messages at the top of the screen.
+ * @category Messages
+ * @summary Helper for displaying messages at the top of the screen.
  */
 export class MessageBar {
     /**
@@ -296,4 +302,9 @@ export class MessageBar {
     }
 }
 
+/**
+ * @category Singletons
+ * @category Messages
+ * @summary Helper for displaying messages at the top of the screen.
+ */
 export const message = new MessageBar();

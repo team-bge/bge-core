@@ -19,6 +19,9 @@ interface IPromptInfo {
     reject: { (reason?: any): void };
 }
 
+/**
+ * @category Prompts
+ */
 export interface IPromptOptions {
     /**
      * Sorting order for displaying a message about this prompt in the message bar.
@@ -43,12 +46,14 @@ export interface IPromptOptions {
 }
 
 /**
- * Base options for prompting a player to click on something.
+ * @category Prompts
+ * @summary Base options for prompting a player to click on something.
  */
 export interface IClickOptions extends IPromptOptions {
 }
 
 /**
+ * @category Prompts
  * @summary Options for prompting a player to click on a {@link Button}.
  */
 export interface IButtonClickOptions extends IClickOptions {
@@ -61,7 +66,8 @@ export interface IButtonClickOptions extends IClickOptions {
 }
 
 /**
- * Options for a prompt with a custom return value.
+ * @category Prompts
+ * @summary Options for a prompt with a custom return value.
  */
 export interface IReturnClickOptions<TReturn> extends IClickOptions {
     /**
@@ -71,6 +77,7 @@ export interface IReturnClickOptions<TReturn> extends IClickOptions {
 }
 
 /**
+ * @category Prompts
  * @summary Options for a prompt to click a {@link GameObject}.
  */
 export interface IObjectClickOptions extends IClickOptions {
@@ -80,6 +87,9 @@ export interface IObjectClickOptions extends IClickOptions {
     message: Message;
 }
 
+/**
+ * @category Prompts
+ */
 export interface IClickAnyOptions extends IObjectClickOptions {
     /**
      * If true, automatically resolve this prompt if there is exactly one object to click on.
@@ -87,11 +97,15 @@ export interface IClickAnyOptions extends IObjectClickOptions {
     autoResolveIfSingle?: boolean;
 }
 
+/**
+ * @category Prompts
+ */
 export interface ITextInputOptions extends IPromptOptions {
     
 }
 
 /**
+ * @category Prompts
  * @summary Helper to create input prompts for a player.
  * @description The prompts will be created as promises that:
  * * Resolve when the player responds to the prompt

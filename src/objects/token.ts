@@ -6,7 +6,7 @@ import { ShapeView, TextEmbedView, TokenView, ViewType } from "../views.js";
 import { Color } from "../color.js";
 
 /**
- * @category Objects
+ * @category Game Objects
  * @summary Optional configuration for a {@link Token}.
  */
 export interface ITokenOptions {
@@ -38,7 +38,7 @@ export interface ITokenOptions {
 }
 
 /**
- * @category Objects
+ * @category Game Objects
  */
 export interface ISvgTokenOptions extends ITokenOptions {
     /**
@@ -48,7 +48,7 @@ export interface ISvgTokenOptions extends ITokenOptions {
 }
 
 /**
- * @category Objects
+ * @category Game Objects
  */
 export interface IPolygonTokenOptions extends ITokenOptions {
     /**
@@ -58,7 +58,7 @@ export interface IPolygonTokenOptions extends ITokenOptions {
 }
 
 /**
- * @category Objects
+ * @category Game Objects
  * @summary A playing piece with a 3D model, tint color, and scale.
  */
 export class Token extends GameObject implements ITextEmbeddable {
