@@ -3,6 +3,15 @@ import { IGame } from "./interfaces.js";
 /**
  * Helper with methods to generate random numbers.
  * @category Core
+ * @example Use the global shared instance:
+ * ```ts
+ * let value = bge.random.int(10, 20);
+ * ```
+ * @example Create an instance with a seed string:
+ * ```ts
+ * let myRandom = new bge.Random("my cool seed");
+ * let value = myRandom.int(10, 20);
+ * ```
  */
 export class Random {
     // Adapted from https://stackoverflow.com/a/47593316
@@ -41,13 +50,38 @@ export class Random {
     private _seed: string;
     private _source: { (): number };
 
+    /**
+     * Seed string used when creating this instance.
+     * @example Print the seed of the shared instance:
+     * ```ts
+     * console.log(bge.random.seed);
+     * ```
+     */
     get seed(): string {
         return this._seed;
     }
 
-    get isInitialized(): boolean {
+    private get isInitialized(): boolean {
         return this._source != null;
     }
+
+    /**
+     * @internal
+     */
+    constructor();
+
+    /**
+     * Create an instance of {@link Random} with a given seed. Instances created
+     * with the same seed will output the same sequence of values, as long as each
+     * method is called in the same order each time.
+     * @param seed String to be hashed and used as an initial state.
+     * @example Create an instance with a seed string:
+     * ```ts
+     * let myRandom = new bge.Random("my cool seed");
+     * let value = myRandom.int(10, 20);
+     * ```
+     */
+    constructor(seed: string);
 
     constructor(seed?: string) {
         if (seed != null) {
@@ -73,12 +107,20 @@ export class Random {
 
     /**
      * Generates a uniformly-distributed floating-point number between 0 (inclusive) and 1 (exclusive).
+     * @example Generate a floating-point value between 0 and 1:
+     * ```ts
+     * let value = bge.random.float();
+     * ```
      */
     float(): number;
 
     /**
      * Generates a uniformly-distributed floating-point number between 0 (inclusive) and {@link max} (exclusive).
      * @param max The generated number will be less than this value.
+     * @example Generate a floating-point value between 0 and 10:
+     * ```ts
+     * let value = bge.random.float(10);
+     * ```
      */
     float(max: number): number;
 
@@ -86,6 +128,10 @@ export class Random {
      * Generates a uniformly-distributed floating-point number between {@link min} (inclusive) and {@link max} (exclusive).
      * @param min The generated number will be at least this value.
      * @param max The generated number will be less than this value.
+     * @example Generate a floating-point value between 10 and 20:
+     * ```ts
+     * let value = bge.random.float(10, 20);
+     * ```
      */
     float(min: number, max: number): number;
 
@@ -119,6 +165,10 @@ export class Random {
     /**
      * Generates a uniformly-distributed integer between 0 (inclusive) and {@link max} (exclusive).
      * @param max The generated number will be less than this value. 
+     * @example Generate an integer value between 0 and 9 (inclusive):
+     * ```ts
+     * let value = bge.random.int(10);
+     * ```
      */
     int(max: number): number;
     
@@ -126,6 +176,10 @@ export class Random {
      * Generates a uniformly-distributed integer between {@link min} (inclusive) and {@link max} (exclusive).
      * @param min The generated number will be at least this value.
      * @param max The generated number will be less than this value.
+     * @example Generate an integer value between 10 and 19 (inclusive):
+     * ```ts
+     * let value = bge.random.int(10, 20);
+     * ```
      */
     int(min: number, max: number): number;
 
@@ -154,6 +208,14 @@ export class Random {
     /**
      * Returns `true` with the given {@link probability}, which is 0.5 by default (50%).
      * @param probability Chance of returning true, between 0 and 1.
+     * @example Coin flip:
+     * ```ts
+     * console.log(bge.random.chance() ? "Heads" : "Tails");
+     * ```
+     * @example Weighted coin flip, with a 75% bias towards heads:
+     * ```ts
+     * console.log(bge.random.chance(0.75) ? "Heads" : "Tails");
+     * ```
      */
     chance(probability: number = 0.5): boolean {
         if (probability <= 0.0) {
@@ -170,7 +232,12 @@ export class Random {
     /**
      * Returns a uniformly selected random item from an array.
      * @param items Array of items to select from.
-     * @returns An item chosed from the given array.
+     * @returns An item chosen from the given array.
+     * @example Pick a random name from a list:
+     * ```ts
+     * let list = ["Alice", "Bob", "Charlie"];
+     * let name = bge.random.item(list);
+     * ```
      */
     item<TItem>(items: ReadonlyArray<TItem>): TItem {
         if (items.length < 1) {
@@ -225,5 +292,9 @@ export class Random {
  * To ensure replay function correctly, make sure you only use this instance in a deterministic way.
  * @category Core
  * @category Singletons
+ * @example Use the global shared instance:
+ * ```ts
+ * let value = bge.random.int(10, 20);
+ * ```
  */
 export const random = new Random();
