@@ -7,7 +7,7 @@ import { IGame } from "./interfaces.js";
  * ```ts
  * let value = bge.random.int(10, 20);
  * ```
- * @example Create an instance with a seed string:
+ * Create an instance with a seed string:
  * ```ts
  * let myRandom = new bge.Random("my cool seed");
  * let value = myRandom.int(10, 20);
@@ -208,11 +208,11 @@ export class Random {
     /**
      * Returns `true` with the given {@link probability}, which is 0.5 by default (50%).
      * @param probability Chance of returning true, between 0 and 1.
-     * @example Coin flip:
+     * @example Fair coin flip:
      * ```ts
      * console.log(bge.random.chance() ? "Heads" : "Tails");
      * ```
-     * @example Weighted coin flip, with a 75% bias towards heads:
+     * Weighted coin flip, with a 75% bias towards heads:
      * ```ts
      * console.log(bge.random.chance(0.75) ? "Heads" : "Tails");
      * ```
