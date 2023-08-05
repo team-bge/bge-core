@@ -33,7 +33,7 @@ export * from "./objects/index.js";
 import { IGameConfig } from "./interfaces.js";
 
 /**
+ * Current API version, to be exported as {@link IGameConfig.apiVersion}.
  * @category Core
- * @summary Current API version, to be exported as {@link IGameConfig.apiVersion}.
  */
 export const API_VERSION = 3;

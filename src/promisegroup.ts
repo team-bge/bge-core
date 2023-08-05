@@ -131,53 +131,44 @@ export class AllGroup extends PromiseGroup {
 }
 
 /**
- * @category Async
- * @summary Creates a Promise that is resolved with an array of results when all of the provided Promises
+ * Creates a Promise that is resolved with an array of results when all of the provided Promises
  * resolve, or rejected when any Promise is rejected. Wraps Promise.all<T>.
- * 
  * @param createPromises A function that should return an array or iterable of Promises. The promises should
  * be created inside this function.
- * 
  * @returns A new Promise.
+ * @category Async
  */
 export function all<T>(createPromises: { (): Iterable<T | PromiseLike<T>> }) {
     return Promise.all(PromiseGroup.wrapPromises(createPromises, new AllGroup(PromiseGroup.current)));
 }
 
 /**
- * @category Async
- * @summary Creates a Promise that is fulfilled by the first given Promise to be fulfilled, or rejected with
+ * Creates a Promise that is fulfilled by the first given Promise to be fulfilled, or rejected with
  * an AggregateError containing an array of rejection reasons if all of the given promises are rejected.
- * 
- * @description All the given promises can still independently fulfill after the first one, unlike with anyExclusive<T>.
+ * All the given promises can still independently fulfill after the first one, unlike with anyExclusive<T>.
  * Wraps Promise.all<T>.
- * 
  * @param createPromises A function that should return an array or iterable of Promises. The promises should
  * be created inside this function.
- * 
  * @returns A new Promise.
+ * @category Async
  */
 export function any<T extends readonly unknown[] | []>(createPromises: { (): T }): Promise<Awaited<T[number]>> {
     return Promise.any(createPromises());
 }
 
 /**
- * @category Async
- * @summary Creates a Promise that is fulfilled by the first given Promise to be fulfilled, or rejected with
+ * Creates a Promise that is fulfilled by the first given Promise to be fulfilled, or rejected with
  * an AggregateError containing an array of rejection reasons if all of the given promises are rejected.
- * 
- * @description Unlike any<T>, after any of the given promises fulfills an inner prompt or delay, the other promises
+ * Unlike any<T>, after any of the given promises fulfills an inner prompt or delay, the other promises
  * are forcibly rejected. This is useful for letting players select from a range of actions, where responding
  * to the first prompt of any action commits that player to only that action.
- * 
  * Note that you must pass in a function that returns an array of Promises. That function will be invoked
  * once, and only any promises created during invokation will be exclusive. If that function returns promises
  * that were previously created elsewhere, they won't be exclusive.
- * 
  * @param createPromises A function that should return an array or iterable of Promises. The promises should
  * be created inside this function.
- * 
  * @returns A new Promise.
+ * @category Async
  */
 export function anyExclusive<T extends readonly unknown[] | []>(createPromises: { (): T }): Promise<Awaited<T[number]>>;
 export function anyExclusive<T>(createPromises: { (): Iterable<T | PromiseLike<T>> }): Promise<Awaited<T>> {

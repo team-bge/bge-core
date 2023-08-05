@@ -169,8 +169,8 @@ export class Replay {
 }
 
 /**
+ * The currently recording / playing list of events.
  * @category Replays
  * @category Singletons
- * @summary The currently recording / playing list of events.
  */
 export const replay = new Replay();

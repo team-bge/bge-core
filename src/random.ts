@@ -1,8 +1,8 @@
 import { IGame } from "./interfaces.js";
 
 /**
+ * Helper with methods to generate random numbers.
  * @category Core
- * @summary Helper with methods to generate random numbers.
  */
 export class Random {
     // Adapted from https://stackoverflow.com/a/47593316
@@ -183,6 +183,11 @@ export class Random {
     /**
      * Shuffles all items of the given array in-place.
      * @param array Array of items to shuffle
+     * @example Shuffle a list of numbers:
+     * ```ts
+     * let list = [1, 2, 3, 4, 5];
+     * bge.random.shuffle(list);
+     * ```
      */
     shuffle<TItem>(array: TItem[]): void;
     
@@ -191,6 +196,11 @@ export class Random {
      * @param array Array of items to shuffle.
      * @param from Start of the range to shuffle, from 0.
      * @param to Exclusive end of the range to shuffle.
+     * @example Shuffle the middle 3 items of a list with 5 numbers:
+     * ```ts
+     * let list = [1, 2, 3, 4, 5];
+     * bge.random.shuffle(list, 1, 4);
+     * ```
      */
     shuffle<TItem>(array: TItem[], from: number, to: number): void;
 
@@ -211,9 +221,9 @@ export class Random {
 }
 
 /**
+ * Shared random number generator instance, seeded when the game starts.
+ * To ensure replay function correctly, make sure you only use this instance in a deterministic way.
  * @category Core
  * @category Singletons
- * @summary Shared random number generator instance, seeded when the game starts.
- * @description To ensure replay function correctly, make sure you only use this instance in a deterministic way.
  */
 export const random = new Random();

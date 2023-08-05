@@ -7,10 +7,10 @@ import { Color } from "../color.js";
 import { display } from "../displaycontainer.js";
 
 /**
- * @category Game Objects
- * @summary Represents a rectangular region on the table, with an outline and optional label.
- * @description Child objects can be dynamically added or removed with {@link Zone.children}, or in
+ * Represents a rectangular region on the table, with an outline and optional label.
+ * Child objects can be dynamically added or removed with {@link Zone.children}, or in
  * a deriving class with {@link display} annotated properties.
+ * @category Game Objects
  */
 export class Zone extends GameObject {
     /**
@@ -55,8 +55,8 @@ export class Zone extends GameObject {
     margin = 1.5;
 
     /**
-     * @summary Contains child objects that are displayed inside this zone.
-     * @description This will also contain objects from {@link display} annotated properties,
+     * Contains child objects that are displayed inside this zone.
+     * This will also contain objects from {@link display} annotated properties,
      * using the property keys as names.
      */
     readonly children = new DisplayContainer();

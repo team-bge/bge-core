@@ -23,8 +23,8 @@ export enum CardShape {
 const cardDimensionsKey = Symbol("card:dimensions");
 
 /**
+ * Describes whether a card is face up or down.
  * @category Game Objects
- * @summary Describes whether a card is face up or down.
  */
 export enum CardOrientation {
     /**
@@ -44,8 +44,8 @@ export enum CardOrientation {
 export type CardComparer<TCard extends Card> = { (a: TCard, b: TCard): number };
 
 /**
+ * Describes the dimensions of a rectangular card in centimeters.
  * @category Game Objects
- * @summary Describes the dimensions of a rectangular card in centimeters.
  */
 export interface ICardDimensions {
     shape: CardShape;
@@ -72,9 +72,9 @@ export interface ICardDimensions {
 }
 
 /**
+ * Specify the dimensions of a custom card class.
  * @category Decorators
  * @category Game Objects
- * @summary Specify the dimensions of a custom card class.
  * @param width Width in centimeters.
  */
 export function rectangleCard(width: number, height: number, thickness: number, cornerRadius: number = 0): ClassDecorator {
@@ -101,10 +101,10 @@ export function hexagonCard(size: number, thickness: number): ClassDecorator {
 }
 
 /**
- * @category Game Objects
- * @summary A game object representing a rectangular playing card.
- * @description Can have arbitrary front and back images, dimensions (including thickness), and rounded corners.
+ * A game object representing a rectangular playing card.
+ * Can have arbitrary front and back images, dimensions (including thickness), and rounded corners.
  * Specify dimensions using a {@link rectangleCard} or {@link hexagonCard} decorator on your custom class.
+ * @category Game Objects
  */
 export class Card extends GameObject implements ITextEmbeddable {
     /**
@@ -166,8 +166,8 @@ export class Card extends GameObject implements ITextEmbeddable {
     readonly back = new CardFace();
 
     /**
-     * @summary Contains child objects that are displayed on top of this card.
-     * @description This will also contain objects from {@link display} annotated properties,
+     * Contains child objects that are displayed on top of this card.
+     * This will also contain objects from {@link display} annotated properties,
      * using the property keys as names.
      */
     readonly children = new DisplayContainer();

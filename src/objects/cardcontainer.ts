@@ -5,8 +5,8 @@ import { Random, random } from "../random.js";
 import { Bounds, Vector3 } from "../math/index.js";
 
 /**
+ * Interface for anything that can receive dealt cards.
  * @category Game Objects
- * @summary Interface for anything that can receive dealt cards.
  */
 export interface ICardReceiver<TCard extends Card> {
     /**
@@ -38,8 +38,8 @@ class ArrayCardReceiver<TCard extends Card> implements ICardReceiver<TCard> {
 }
 
 /**
+ * Base class for general card containers, like decks and hands. We don't assume anything about how cards are stored.
  * @category Game Objects
- * @summary Base class for general card containers, like decks and hands. We don't assume anything about how cards are stored.
  */
 export abstract class CardContainer<TCard extends Card> extends GameObject implements ICardReceiver<TCard> {
     private readonly _CardType: { new(...args: any[]): TCard };
@@ -156,8 +156,8 @@ export abstract class CardContainer<TCard extends Card> extends GameObject imple
 }
 
 /**
+ * Describes in which order items are added or removed from a linear container.
  * @category Game Objects
- * @summary Describes in which order items are added or removed from a linear container.
  */
 export enum LinearContainerKind {
     /**
@@ -181,8 +181,8 @@ export interface ILinearContainerCard<TCard extends Card> {
 }
 
 /**
+ * Base class for card containers that store their contents as an ordered list of cards, like hands and decks.
  * @category Game Objects
- * @summary Base class for card containers that store their contents as an ordered list of cards, like hands and decks.
  */
 export abstract class LinearCardContainer<TCard extends Card> extends CardContainer<TCard> implements Iterable<TCard> {
     private readonly _cards: ILinearContainerCard<TCard>[] = [];

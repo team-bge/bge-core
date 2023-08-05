@@ -3,8 +3,8 @@ import { Bounds } from "../math/index.js";
 import { IView } from "../views.js";
 
 /**
+ * Base class for all gameplay related objects and containers.
  * @category Game Objects
- * @summary Base class for all gameplay related objects and containers.
  */
 export abstract class GameObject {
     _lastActionIndex: number;

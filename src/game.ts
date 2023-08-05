@@ -11,15 +11,15 @@ import { IReplayData, replay } from "./replay.js";
 import { Debugging } from "./debugging.js";
 
 /**
+ * The currently running game instance.
  * @category Singletons
  * @category Core
- * @summary The currently running game instance.
  */
 export let game: Game;
 
 /**
+ * Base class for a custom game, using a custom Player type.
  * @category Core
- * @summary Base class for a custom game, using a custom Player type.
  */
 export abstract class Game<TPlayer extends Player = Player> implements IGame {
     private readonly _PlayerType: { new(index: number, config: IPlayerConfig): TPlayer };

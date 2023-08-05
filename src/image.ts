@@ -1,8 +1,8 @@
 import { ImageView } from "./views.js";
 
 /**
+ * Helper methods for specifying simple or tiled images.
  * @category Display
- * @summary Helper methods for specifying simple or tiled images.
  */
 export abstract class Image {
     /**

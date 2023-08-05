@@ -9,8 +9,8 @@ interface IDelay {
 }
 
 /**
+ * Helper with methods to suspend the game for various amounts of time.
  * @category Async
- * @summary Helper with methods to suspend the game for various amounts of time.
  */
 export class Delay {
     private _nextIndex: number;
@@ -113,8 +113,8 @@ export class Delay {
 }
 
 /**
+ * Helper with methods to suspend the game for various amounts of time.
  * @category Singletons
  * @category Async
- * @summary Helper with methods to suspend the game for various amounts of time.
  */
 export const delay = new Delay();

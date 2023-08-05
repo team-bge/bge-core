@@ -20,18 +20,18 @@ const SKIP_UNDO_KEY = Symbol("state:skipundo");
 const NO_UNDO_KEY = Symbol("state:noundo");
 
 /**
+ * Used to decorate state machine functions that will be skipped when undoing.
  * @category Decorators
  * @category State Machines
- * @summary Used to decorate state machine functions that will be skipped when undoing.
  */
 export const skipUndo: MethodDecorator = (target: any, propertyKey) => {
     Reflect.defineMetadata(SKIP_UNDO_KEY, true, target[propertyKey]);
 };
 
 /**
+ * Used to decorate state machine functions that cannot be undone.
  * @category Decorators
  * @category State Machines
- * @summary Used to decorate state machine functions that cannot be undone.
  */
 export const noUndo: MethodDecorator = (target: any, propertyKey) => {
     Reflect.defineMetadata(NO_UNDO_KEY, true, target[propertyKey]);

@@ -46,15 +46,15 @@ export interface IPromptOptions {
 }
 
 /**
+ * Base options for prompting a player to click on something.
  * @category Prompts
- * @summary Base options for prompting a player to click on something.
  */
 export interface IClickOptions extends IPromptOptions {
 }
 
 /**
+ * Options for prompting a player to click on a {@link Button}.
  * @category Prompts
- * @summary Options for prompting a player to click on a {@link Button}.
  */
 export interface IButtonClickOptions extends IClickOptions {
     /**
@@ -66,8 +66,8 @@ export interface IButtonClickOptions extends IClickOptions {
 }
 
 /**
+ * Options for a prompt with a custom return value.
  * @category Prompts
- * @summary Options for a prompt with a custom return value.
  */
 export interface IReturnClickOptions<TReturn> extends IClickOptions {
     /**
@@ -77,8 +77,8 @@ export interface IReturnClickOptions<TReturn> extends IClickOptions {
 }
 
 /**
+ * Options for a prompt to click a {@link GameObject}.
  * @category Prompts
- * @summary Options for a prompt to click a {@link GameObject}.
  */
 export interface IObjectClickOptions extends IClickOptions {
     /**
@@ -105,15 +105,15 @@ export interface ITextInputOptions extends IPromptOptions {
 }
 
 /**
- * @category Prompts
- * @summary Helper to create input prompts for a player.
- * @description The prompts will be created as promises that:
+ * Helper to create input prompts for a player.
+ * The prompts will be created as promises that:
  * * Resolve when the player responds to the prompt
  * * Reject when the prompt is cancelled
  * 
- * Prompts will cancel if they are created in a {@link anyExclusive} call, and another prompt
+ * Prompts will cancel if they are created in an {@link anyExclusive} call, and another prompt
  * or delay created in the same call resolved first. Prompts will also cancel when created in
- * a {@link all} call, and another promise in that call rejected.
+ * an {@link all} call, and another promise in that call rejected.
+ * @category Prompts
  */
 export class PromptHelper {
     private readonly _player: Player;

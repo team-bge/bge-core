@@ -8,8 +8,8 @@ import { GameView, TextEmbedView } from "./views.js";
 import { API_VERSION } from "./index.js";
 
 /**
+ * Information configuring a player, including their name.
  * @category Core
- * @summary Information configuring a player, including their name.
  */
 export interface IPlayerConfig {
     /**
@@ -19,8 +19,8 @@ export interface IPlayerConfig {
 }
 
 /**
+ * Returned by a game when it ends, describing the final scores.
  * @category Core
- * @summary Returned by a game when it ends, describing the final scores.
  */
 export interface IGameResult {
     /**
@@ -35,20 +35,20 @@ export interface IGameResult {
 }
 
 /**
+ * Types of objects that can be used in a player click prompt.
  * @category Prompts
- * @summary Types of objects that can be used in a player click prompt.
  */
 export type Clickable = GameObject | Button | TextInput;
 
 /**
+ * Types of value that can be embedded in a message.
  * @category Messages
- * @summary Types of value that can be embedded in a message.
  */
 export type MessageEmbed = string | boolean | number | ITextEmbeddable | readonly MessageEmbed[];
 
 /**
+ * Describes a message displayed at the top of the screen. Can include embedded buttons or other objects.
  * @category Messages
- * @summary Describes a message displayed at the top of the screen. Can include embedded buttons or other objects.
  */
 export type Message = string | { format: string, args?: MessageEmbed[] };
 
@@ -65,8 +65,8 @@ export interface IRunConfig {
 }
 
 /**
+ * Base interface for a custom game. You'll want to extend {@link Game<TPlayer>} instead.
  * @category Core
- * @summary Base interface for a custom game. You'll want to extend {@link Game<TPlayer>} instead.
  */
 export interface IGame {
     /**
@@ -139,8 +139,8 @@ export interface ISelectOption {
 }
 
 /**
+ * Your game should default export this interface, describing how to configure and play your game.
  * @category Core
- * @summary Your game should default export this interface, describing how to configure and play your game.
  */
 export interface IGameConfig {
     /**
@@ -168,8 +168,8 @@ export interface IGameConfig {
 }
 
 /**
+ * Interface for objects that can be embedded in messages.
  * @category Messages
- * @summary Interface for objects that can be embedded in messages.
  */
 export interface ITextEmbeddable {
     /**
