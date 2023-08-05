@@ -24,6 +24,6 @@
     },
     "disableSources": true,
     "categorizeByGroup": false,
-    "out": "../team-bge.github.io/_docs"
+    "out": "./docs"
   }
 }
