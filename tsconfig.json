@@ -22,6 +22,9 @@
       "includeCategories": true,
       "includeGroups": false
     },
+    "navigationLinks": {
+      "Board Game Engine": "https://team-bge.github.io/"
+    },
     "disableSources": true,
     "categorizeByGroup": false,
     "out": "./docs"
