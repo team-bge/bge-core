@@ -1,6 +1,6 @@
 {
   "name": "bge-core",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Core TypeScript library for writing games.",
   "type": "module",
   "dependencies": {
