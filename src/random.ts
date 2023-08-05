@@ -106,8 +106,8 @@ export class Random {
     }
 
     /**
-     * Generates a uniformly-distributed floating-point number between 0 (inclusive) and 1 (exclusive).
-     * @example Generate a floating-point value between 0 and 1:
+     * Generates a uniformly-distributed floating-point number between `0` (inclusive) and `1` (exclusive).
+     * @example Generate a floating-point value between `0` and `1`:
      * ```ts
      * let value = bge.random.float();
      * ```
@@ -115,9 +115,9 @@ export class Random {
     float(): number;
 
     /**
-     * Generates a uniformly-distributed floating-point number between 0 (inclusive) and {@link max} (exclusive).
+     * Generates a uniformly-distributed floating-point number between `0` (inclusive) and {@link max} (exclusive).
      * @param max The generated number will be less than this value.
-     * @example Generate a floating-point value between 0 and 10:
+     * @example Generate a floating-point value between `0` and `10`:
      * ```ts
      * let value = bge.random.float(10);
      * ```
@@ -128,7 +128,7 @@ export class Random {
      * Generates a uniformly-distributed floating-point number between {@link min} (inclusive) and {@link max} (exclusive).
      * @param min The generated number will be at least this value.
      * @param max The generated number will be less than this value.
-     * @example Generate a floating-point value between 10 and 20:
+     * @example Generate a floating-point value between `10` and `20`:
      * ```ts
      * let value = bge.random.float(10, 20);
      * ```
@@ -163,11 +163,11 @@ export class Random {
     }
 
     /**
-     * Generates a uniformly-distributed integer between 0 (inclusive) and {@link max} (exclusive).
+     * Generates a uniformly-distributed integer between `0` (inclusive) and {@link max} (exclusive).
      * @param max The generated number will be less than this value. 
-     * @example Generate an integer value between 0 and 9 (inclusive):
+     * @example Generate either `0`, `1`, `2`, `3` or `4`:
      * ```ts
-     * let value = bge.random.int(10);
+     * let value = bge.random.int(5);
      * ```
      */
     int(max: number): number;
@@ -176,9 +176,9 @@ export class Random {
      * Generates a uniformly-distributed integer between {@link min} (inclusive) and {@link max} (exclusive).
      * @param min The generated number will be at least this value.
      * @param max The generated number will be less than this value.
-     * @example Generate an integer value between 10 and 19 (inclusive):
+     * @example Generate either `10`, `11`, `12`, `13` or `14`:
      * ```ts
-     * let value = bge.random.int(10, 20);
+     * let value = bge.random.int(10, 15);
      * ```
      */
     int(min: number, max: number): number;
@@ -206,8 +206,8 @@ export class Random {
     }
 
     /**
-     * Returns `true` with the given {@link probability}, which is 0.5 by default (50%).
-     * @param probability Chance of returning true, between 0 and 1.
+     * Returns `true` with the given {@link probability}, which is `0.5` by default (50%).
+     * @param probability Chance of returning true, between `0` and `1`.
      * @example Fair coin flip:
      * ```ts
      * console.log(bge.random.chance() ? "Heads" : "Tails");
