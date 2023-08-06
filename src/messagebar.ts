@@ -200,13 +200,13 @@ export class MessageBar {
             args = args.slice(2);
         }
 
-        MessageBar.validate(format, args);
+        MessageBar.validate(format, args as MessageEmbed[]);
 
         if (players instanceof Player) {
             players = [players];
         }
 
-        const row = new MessageRow({ format: format, args: args });
+        const row = new MessageRow({ format: format, args: args as MessageEmbed[] });
 
         if (players == null) {
             players = [...game.players, SPECTATOR];

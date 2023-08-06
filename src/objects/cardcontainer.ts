@@ -1,4 +1,4 @@
-import { Card, CardComparer, CardOrientation, ICardDimensions } from "./card.js";
+import { Card, CardComparer, CardOrientation, CardType, ICardDimensions } from "./card.js";
 import { Internal } from "../internal.js";
 import { GameObject } from "./object.js";
 import { random } from "../random.js";

@@ -1,7 +1,7 @@
 import { Bounds, Rotation, Vector3 } from "../math/index.js";
 
-import { Card, CardComparer, CardOrientation } from "./card.js";
-import { LinearCardContainer, LinearContainerKind, CardType } from "./cardcontainer.js";
+import { Card, CardComparer, CardOrientation, CardType } from "./card.js";
+import { LinearCardContainer, LinearContainerKind } from "./cardcontainer.js";
 import { RenderContext } from "../display.js";
 import { CardView, HandView, OutlineStyle, ViewType } from "../views.js";
 import { Alignment } from "../arrangement.js";

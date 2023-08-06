@@ -526,7 +526,7 @@ export class RenderContext {
         let index = 0;
         const delay = Math.min(0.1, 0.75 / this._origins.length);
 
-        for (const [_, origin] of this._origins.sort(([indexA, _], [indexB, _]) => indexA - indexB)) {
+        for (const [_, origin] of this._origins.sort(([indexA, _originA], [indexB, _originB]) => indexA - indexB)) {
             origin.delay = index++ * delay;
         }
     }
