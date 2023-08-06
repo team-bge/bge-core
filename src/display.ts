@@ -290,7 +290,6 @@ export class RenderContext {
 
     private _renderChild(child: DisplayChild, value: GameObject | number | string, parent: DisplayParent, isInternal: boolean, options?: IDisplayOptions): IView {
         let view: IView;
-        let oldParentInfo: IParentInfo;
 
         let localPosition = options?.position == null ? Vector3.ZERO : new Vector3(options.position);
 
@@ -306,7 +305,7 @@ export class RenderContext {
             localRotation: RenderContext.asRotation(options?.rotation)
         };
 
-        oldParentInfo = this.oldParentMap.get(child);
+        const oldParentInfo = this.oldParentMap.get(child);
 
         if (this._isInvisible(options)) {
             return null;
@@ -527,7 +526,7 @@ export class RenderContext {
         let index = 0;
         const delay = Math.min(0.1, 0.75 / this._origins.length);
 
-        for (const [_, origin] of this._origins.sort(([indexA, originA], [indexB, originB]) => indexA - indexB)) {
+        for (const [_, origin] of this._origins.sort(([indexA, _], [indexB, _]) => indexA - indexB)) {
             origin.delay = index++ * delay;
         }
     }
@@ -536,6 +535,7 @@ export class RenderContext {
      * @param value
      * @internal
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     renderTextEmbed(value: any): TextEmbedView {
         try {
             switch (typeof value) {

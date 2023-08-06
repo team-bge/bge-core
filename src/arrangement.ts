@@ -440,7 +440,7 @@ export class ScatterArrangement extends Arrangement {
 
         const diameterSq = radius * radius * 4;
 
-        for (const bounds of boundsArray) {
+        for (const _ of boundsArray) {
             let bestX: number;
             let bestY: number;
             let bestZ = Number.POSITIVE_INFINITY;
@@ -747,7 +747,8 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
             layerList.push(currentLayerSize);
             remainingCubes -= PileArrangement.getPyramidLayerQuantity(currentLayerSize, triangle);
             if (remainingCubes < PileArrangement.getPyramidLayerQuantity(currentLayerSize + 1, triangle)){
-                currentLayerSize = currentLayerSize
+                // TODO: was this correct?
+                // currentLayerSize = currentLayerSize
             } else if (currentLayerSize < maxPyramidLayer){
                 currentLayerSize += 1;
             } else {

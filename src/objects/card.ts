@@ -5,6 +5,9 @@ import { GameObject } from "./object.js";
 import { CardView, ImageView, TextEmbedView, ViewType } from "../views.js";
 import { Bounds, Vector3 } from "../math/index.js";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type CardType<TCard extends Card> = { new(...args: any[]): TCard };
+
 /**
  * @category Game Objects
  */
@@ -117,7 +120,7 @@ export class Card extends GameObject implements ITextEmbeddable {
      * @param CardType Type of card to get the dimensions of.
      * @returns Width, height, and thickness of the card in centimeters.
      */
-    static getDimensions(CardType: { new(...args: any[]): Card }): ICardDimensions {
+    static getDimensions<TCard extends Card>(CardType: CardType<TCard>): ICardDimensions {
         return Reflect.getMetadata(cardDimensionsKey, CardType)
         ?? {
             shape: CardShape.RECTANGLE,
@@ -228,8 +231,8 @@ export class Card extends GameObject implements ITextEmbeddable {
 
         return view;
     }
-    
-    renderTextEmbed(ctx: RenderContext): TextEmbedView {
+
+    renderTextEmbed(_: RenderContext): TextEmbedView {
         return {
             icon: { ...this.front.image, aspectRatio: this.width / this.height },
             label: this.name

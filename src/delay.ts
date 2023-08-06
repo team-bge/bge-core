@@ -5,6 +5,7 @@ import { ReplayEvent, ReplayEventType, replay } from "./replay.js";
 interface IDelay {
     index: number;
     duration: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     reject: { (reason?: any): void };
 }
 
@@ -105,6 +106,7 @@ export class Delay {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     cancelAll(reason?: any): void {
         for (const info of [...this._active.values()]) {
             info.reject(reason ?? "All delays cancelled");

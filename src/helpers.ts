@@ -68,6 +68,7 @@ export class Helpers {
         return array;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     static printError(e: any): void {
         console.error(e);
 

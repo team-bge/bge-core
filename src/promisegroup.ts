@@ -21,13 +21,16 @@ export abstract class PromiseGroup {
         this._promiseGroups.push(group);
 
         let result: T;
+        let matchingGroup: boolean;
 
         try {
             result = func();
         } finally {
-            if (this._promiseGroups.pop() != group) {
-                throw new Error("Expected different PromiseGroup");
-            }
+            matchingGroup = this._promiseGroups.pop() == group;
+        }
+
+        if (!matchingGroup) {
+            throw new Error("Expected different PromiseGroup");
         }
 
         return result;
@@ -59,6 +62,8 @@ export abstract class PromiseGroup {
     }
 
     abstract itemResolved(): void;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     abstract itemRejected(reason?: any): void;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -107,8 +112,8 @@ export class AnyGroup extends PromiseGroup {
         this.reject("AnyGroup resolved");
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any @typescript-eslint/no-unused-vars
-    itemRejected(reason?: any): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    itemRejected(_?: any): void {
         // 
     }
 }

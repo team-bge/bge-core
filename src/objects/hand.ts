@@ -1,7 +1,7 @@
 import { Bounds, Rotation, Vector3 } from "../math/index.js";
 
 import { Card, CardComparer, CardOrientation } from "./card.js";
-import { LinearCardContainer, LinearContainerKind } from "./cardcontainer.js";
+import { LinearCardContainer, LinearContainerKind, CardType } from "./cardcontainer.js";
 import { RenderContext } from "../display.js";
 import { CardView, HandView, OutlineStyle, ViewType } from "../views.js";
 import { Alignment } from "../arrangement.js";
@@ -79,7 +79,7 @@ export class Hand<TCard extends Card> extends LinearCardContainer<TCard> {
      * @param width Maximum width of the area that hand cards are displayed in, in centimeters.
      * @param options Optional configuration options.
      */
-    constructor(CardType: { new(...args: any[]): TCard }, width: number, options?: IHandOptions<TCard>) {
+    constructor(CardType: CardType<TCard>, width: number, options?: IHandOptions<TCard>) {
         super(CardType, LinearContainerKind.FIRST_IN_LAST_OUT, options?.orientation, options?.autoSort);
     
         const dims = Card.getDimensions(CardType);

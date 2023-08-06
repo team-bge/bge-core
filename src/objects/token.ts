@@ -130,7 +130,7 @@ export class Token extends GameObject implements ITextEmbeddable {
         };
     }
 
-    renderTextEmbed(ctx: RenderContext): TextEmbedView {
+    renderTextEmbed(_: RenderContext): TextEmbedView {
         return {
             icon: { url: "https://iili.io/HG55yVS.png", color: this.color, aspectRatio: 1 },
             label: this.name

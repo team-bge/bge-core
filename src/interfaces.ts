@@ -78,6 +78,7 @@ export interface IGame {
     /**
      * Called by a host when a player responds to a prompt.
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     respondToPrompt(playerIndex: number, promptIndex: number, payload?: any): void;
     
     /**

@@ -31,6 +31,7 @@ export class MessageRow {
      * @param format A string containing embed points, for example `"Hello {0}"` will insert {@link args}`[0]` after the word "Hello ".
      * @param args Optional array of values to embed in the message.
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     update(format: string, ...args: any[]): void {
         MessageBar.validate(format, args);
         this._message = { format: format, args: args };
@@ -53,7 +54,7 @@ export class MessageBar {
      * @param format Message format string.
      * @param args Array of embedded values to include in the message.
      */
-    static validate(format: string, args?: any[]): void {
+    static validate(format: string, args?: MessageEmbed[]): void {
         let maxIndex = -1;
             
         for(const match of format.matchAll(/\{\s*(?<index>[0-9]+)\s*(?::(?<format>[^}]*))?\}/gi)) {
@@ -123,7 +124,7 @@ export class MessageBar {
      */
     set(players: Iterable<Player>, format: string, ...args: MessageEmbed[]): MessageRow;
 
-    set(...args: any[]): MessageRow {
+    set(...args: unknown[]): MessageRow {
         let players: Iterable<Player>;
         let format: string;
 
@@ -132,13 +133,13 @@ export class MessageBar {
             format = args[0];
             args = args.slice(1);
         } else {
-            players = args[0];
-            format = args[1];
+            players = args[0] as Iterable<Player>;
+            format = args[1] as string;
             args = args.slice(2);
         }
-        
+
         this.clear(players);
-        return this.add(players, format, ...args);
+        return this.add(players, format, ...args as MessageEmbed[]);
     }
 
     getRows(player: Player): readonly MessageRow[] {
@@ -185,7 +186,7 @@ export class MessageBar {
      */
     add(players: Iterable<Player>, format: string, ...args: MessageEmbed[]): MessageRow;
 
-    add(...args: any[]): MessageRow {
+    add(...args: unknown[]): MessageRow {
         let players: Iterable<Player | typeof SPECTATOR>;
         let format: string;
 
@@ -194,8 +195,8 @@ export class MessageBar {
             format = args[0];
             args = args.slice(1);
         } else {
-            players = args[0];
-            format = args[1];
+            players = args[0] as Iterable<Player>;
+            format = args[1] as string;
             args = args.slice(2);
         }
 

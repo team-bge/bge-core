@@ -44,8 +44,8 @@ export class Player implements ITextEmbeddable {
         this.index = index;
         this.name = config.name;
     }
-    
-    renderTextEmbed(ctx: RenderContext): TextEmbedView {
+
+    renderTextEmbed(_: RenderContext): TextEmbedView {
         return {
             label: this.name
         };

@@ -9,7 +9,7 @@ const displayKeysKey = Symbol("display:keys");
 /**
  * @category Display
  */
-export type DisplayOptionsFunc<TParent = any, TValue = any> = { (this: TParent, ctx: RenderContext, value: TValue): IDisplayOptions };
+export type DisplayOptionsFunc<TParent = object, TValue = unknown> = { (this: TParent, ctx: RenderContext, value: TValue): IDisplayOptions };
 
 /**
  * Decorates a property to be displayed as a child of the containing object.
@@ -27,7 +27,7 @@ export function display(options?: IDisplayOptions): PropertyDecorator;
  * @category Decorators
  * @param optionsFn Function invoked whenever this property is rendered, to dynamically control how it is displayed.
  */
-export function display<TParent = any, TValue = any>(optionsFn: DisplayOptionsFunc<TParent, TValue>): PropertyDecorator;
+export function display<TParent = object, TValue = unknown>(optionsFn: DisplayOptionsFunc<TParent, TValue>): PropertyDecorator;
 
 /**
  *
@@ -48,7 +48,7 @@ export function display(options?: IDisplayOptions | DisplayOptionsFunc): Propert
 }
 
 interface IChildProperty {
-    parent: Object;
+    parent: object;
     getValue: { (): GameObject | Iterable<GameObject> | string | number };
     annotationOptions: (IDisplayOptions | DisplayOptionsFunc)[];
     dynamicOptions?: IDisplayOptions;
@@ -134,7 +134,7 @@ export class DisplayContainer {
      * so new values assigned after {@link addProperties} is called will always be displayed.
      * @param parent Object to search through the properties of.
      */
-    addProperties(parent: Object): void {
+    addProperties(parent: object): void {
         const displayList = Reflect.getOwnMetadata(displayKeysKey, Object.getPrototypeOf(parent).constructor) as Set<string>;
         if (displayList == null || displayList.size === 0) {
             return;
@@ -146,10 +146,12 @@ export class DisplayContainer {
             if (options == null) {
                 continue;
             }
-            
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let value: any;
-            
+
             try {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 value = (parent as any)[key];
             } catch (e) {
                 value = null;
@@ -157,6 +159,7 @@ export class DisplayContainer {
 
             this._childProperties.set(key, {
                 parent,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 getValue: typeof value === "function" ? value : () => (parent as any)[key],
                 annotationOptions: options,
                 jitterSeed: `${DisplayContainer._nextIndex++}`
@@ -214,7 +217,7 @@ export class DisplayContainer {
             }
         }
 
-        for (const [key, property] of this._childProperties) {
+        for (const [_, property] of this._childProperties) {
             const options: IDisplayOptions = { jitterSeed: property.jitterSeed };
             const value = property.getValue();
 
@@ -231,6 +234,7 @@ export class DisplayContainer {
             }
 
             const childView = typeof value === "string" || typeof value === "number"
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 ? ctx.renderText(property.getValue as any, value, parent, options)
                 : value instanceof GameObject
                     ? ctx.renderChild(value, parent, options)

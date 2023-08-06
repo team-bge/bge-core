@@ -1,8 +1,7 @@
 import { Card, CardComparer, CardOrientation, ICardDimensions } from "./card.js";
 import { Internal } from "../internal.js";
 import { GameObject } from "./object.js";
-import { Random, random } from "../random.js";
-import { Bounds, Vector3 } from "../math/index.js";
+import { random } from "../random.js";
 
 /**
  * Interface for anything that can receive dealt cards.
@@ -42,7 +41,7 @@ class ArrayCardReceiver<TCard extends Card> implements ICardReceiver<TCard> {
  * @category Game Objects
  */
 export abstract class CardContainer<TCard extends Card> extends GameObject implements ICardReceiver<TCard> {
-    private readonly _CardType: { new(...args: any[]): TCard };
+    private readonly _CardType: CardType<TCard>;
 
     /**
      * Gets the dimensions of the card type stored in this container.
@@ -67,7 +66,7 @@ export abstract class CardContainer<TCard extends Card> extends GameObject imple
      * Base class for general card containers, like decks and hands.
      * @param CardType Constructor for the type of card stored in this container. Used to find the card dimensions.
      */
-    constructor(CardType: { new(...args: any[]): TCard }) {
+    constructor(CardType: CardType<TCard>) {
         super();
 
         this._CardType = CardType;
@@ -205,7 +204,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      * @param orientation Are newly added cards face up or face down.
      * @param autoSort Optional comparison function to auto-sort newly added cards.
      */
-    constructor(CardType: { new(...args: any[]): TCard }, kind: LinearContainerKind, orientation: CardOrientation = CardOrientation.FACE_UP, autoSort?: CardComparer<TCard>) {
+    constructor(CardType: CardType<TCard>, kind: LinearContainerKind, orientation: CardOrientation = CardOrientation.FACE_UP, autoSort?: CardComparer<TCard>) {
         super(CardType);
 
         this._kind = kind;

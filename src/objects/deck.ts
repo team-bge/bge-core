@@ -1,5 +1,5 @@
 import { Card, CardOrientation } from "./card.js";
-import { LinearCardContainer, LinearContainerKind } from "./cardcontainer.js";
+import { LinearCardContainer, LinearContainerKind, CardType } from "./cardcontainer.js";
 import { RenderContext } from "../display.js";
 import { CardView, DeckView, OutlineStyle, ViewType } from "../views.js";
 import { Bounds, Rotation, Vector3 } from "../math/index.js";
@@ -36,7 +36,7 @@ export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
      * @param CardType Constructor for the type of card stored in this container. Used to find the card dimensions.
      * @param options Optional configuration for the deck.
      */
-    constructor(CardType: { new(...args: any[]): TCard }, options?: IDeckOptions) {
+    constructor(CardType: CardType<TCard>, options?: IDeckOptions) {
         super(CardType, LinearContainerKind.FIRST_IN_LAST_OUT, options?.orientation);
     
         this.alwaysShowCount = options?.alwaysShowCount ?? false;

@@ -1,7 +1,6 @@
 import { delay } from "./delay.js";
 import { ChildIndexMap, ParentMap, RenderContext } from "./display.js";
 import { IGame, IGameResult, IPlayerConfig, IRunConfig } from "./interfaces.js";
-import { AllGroup, AnyGroup, PromiseGroup } from "./promisegroup.js";
 import { Player } from "./player.js";
 import { random } from "./random.js";
 import { message } from "./messagebar.js";
@@ -47,6 +46,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
         this._PlayerType = PlayerType;
         this.children = new DisplayContainer();
 
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         game = this;
 
         this.children.addProperties(this);
@@ -149,6 +149,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
      * @param promptIndex Which prompt did they respond to.
      * @param payload
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     respondToPrompt(playerIndex: number, promptIndex: number, payload?: any): void {
         const player = this._players[playerIndex];
         player.prompt.respond(promptIndex, payload);
@@ -192,6 +193,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
      * Cancel all player input prompts and delays with the given reason.
      * @param reason A message or error describing why the promises were cancelled.
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     cancelAllPromises(reason?: any) {
 
         for (const player of this.players) {
