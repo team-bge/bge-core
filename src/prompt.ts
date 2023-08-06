@@ -5,7 +5,7 @@ import { Clickable, Message } from "./interfaces.js";
 import { GameObject } from "./objects/object.js";
 import { Player } from "./player.js";
 import { PromiseGroup, anyExclusive, all } from "./promisegroup.js";
-import { IPromptResponseEvent, ReplayEvent, ReplayEventType, replay } from "./replay.js";
+import { IPromptResponseEvent, ReplayEventType, replay } from "./replay.js";
 import { Prompt, PromptKind } from "./views.js";
 
 interface IPromptInfo {
@@ -15,8 +15,8 @@ interface IPromptInfo {
     message: Message;
     showDuringDelays: boolean;
     order: number;
-    resolve: { (payload?: any): void };
-    reject: { (reason?: any): void };
+    resolve: { (payload?: any): void }; // eslint-disable-line @typescript-eslint/no-explicit-any
+    reject: { (reason?: any): void }; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 /**
@@ -28,12 +28,12 @@ export interface IPromptOptions {
      * Defaults to 0. Messages with the same order value are sorted by newest first.
      */
     order?: number;
-    
+
     /**
      * Show this prompt when delays are active. Defaults to false.
      */
     showDuringDelays?: boolean;
-    
+
     /**
      * Only create the prompt if true. Defaults to true.
      */
@@ -165,7 +165,7 @@ export class PromptHelper {
 
         const anyDelays = delay.anyActive;
 
-        for (let [_, prompt] of this._promptsByIndex) {
+        for (const [, prompt] of this._promptsByIndex) {
             if (prompt.message == null) {
                 continue;
             }
@@ -207,6 +207,7 @@ export class PromptHelper {
     /**
      * @internal
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     respond(index: number, payload?: any): void {
         const prompt = this._promptsByIndex.get(index);
 
@@ -282,9 +283,9 @@ export class PromptHelper {
      * @returns A promise that resolves to {@link IReturnClickOptions.return}.
      */
     click<TValue>(object: GameObject, options: IReturnClickOptions<TValue> & IObjectClickOptions): Promise<TValue>;
-    
+
     async click<TObject extends Clickable | string, TValue>(target: TObject,
-        options?: (IButtonClickOptions | IObjectClickOptions) & (IReturnClickOptions<TValue> | {})): Promise<TObject | TValue> {
+        options?: (IButtonClickOptions | IObjectClickOptions) & (IReturnClickOptions<TValue> | object)): Promise<TObject | TValue> {
         if (options?.if === false) {
             return Promise.reject("Prompt condition is false");
         }
@@ -381,13 +382,13 @@ export class PromptHelper {
 
         if (pending == null) {
             const promise = new Promise<T>((resolve, reject) => {
-                promptInfo.resolve = (payload?: any) => {
+                promptInfo.resolve = payload => {
                     if (this.remove(index, object)) {
                         resolve(payload);
                     }
                 };
     
-                promptInfo.reject = (reason?: any) => {
+                promptInfo.reject = reason => {
                     if (this.remove(index, object)) {
                         reject(reason);
                     }
@@ -425,8 +426,9 @@ export class PromptHelper {
     /**
      * Cancels all active prompts for this player.
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     cancelAll(reason?: any): void {
-        for (let info of [...this._promptsByIndex.values()]) {
+        for (const info of [...this._promptsByIndex.values()]) {
             info.reject(reason ?? "All prompts cancelled");
         }
 

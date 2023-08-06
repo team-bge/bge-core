@@ -1,14 +1,12 @@
-import { Delay } from "./delay.js";
-import { Game, game } from "./game.js";
-import { MessageBar } from "./messagebar.js";
+import { game } from "./game.js";
 import { Player } from "./player.js";
 import { anyExclusive } from "./promisegroup.js";
 import { PromptHelper } from "./prompt.js";
-import { Random } from "./random.js";
 
 /**
  * @category State Machines
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type StateFunc = (this: StateMachine, ...args: any[]) => StatePromise;
 
 /**
@@ -24,6 +22,7 @@ const NO_UNDO_KEY = Symbol("state:noundo");
  * @category Decorators
  * @category State Machines
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const skipUndo: MethodDecorator = (target: any, propertyKey) => {
     Reflect.defineMetadata(SKIP_UNDO_KEY, true, target[propertyKey]);
 };
@@ -33,6 +32,7 @@ export const skipUndo: MethodDecorator = (target: any, propertyKey) => {
  * @category Decorators
  * @category State Machines
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const noUndo: MethodDecorator = (target: any, propertyKey) => {
     Reflect.defineMetadata(NO_UNDO_KEY, true, target[propertyKey]);
 };
@@ -42,6 +42,8 @@ export const noUndo: MethodDecorator = (target: any, propertyKey) => {
  */
 export class NextState {
     private readonly _func: StateFunc;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private readonly _args: any[];
 
     get canUndo(): boolean {
@@ -52,6 +54,7 @@ export class NextState {
         return Reflect.getMetadata(SKIP_UNDO_KEY, this._func) === true;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     constructor(func: StateFunc, args: any[]) {
         this._func = func;
         this._args = args;
@@ -108,6 +111,7 @@ export class StateMachine {
             undoStack: []
         };
 
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             const result = await this.onRunState(this._head.state);
 
@@ -159,7 +163,8 @@ export class StateMachine {
         while (this._head.undoStack.length > 0) {
             this._head.undoStack.pop()();
         }
-        
+
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             this._head = this._head.prev;
 

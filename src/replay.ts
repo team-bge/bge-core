@@ -1,4 +1,3 @@
-import { game } from "./game.js";
 import { IPlayerConfig } from "./interfaces.js";
 
 /**
@@ -32,7 +31,7 @@ export interface IPromptResponseEvent {
     type: ReplayEventType.PROMPT_RESPONSE;
     playerIndex: number;
     promptIndex: number;
-    payload?: any;
+    payload?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 /**
@@ -49,7 +48,7 @@ class ReplayPromise {
     readonly promise: Promise<ReplayEvent>;
 
     constructor() {
-        this.promise = new Promise<ReplayEvent>((resolve, reject) => {
+        this.promise = new Promise<ReplayEvent>((resolve) => {
             this._resolve = resolve;
         });
     }
@@ -137,8 +136,8 @@ export class Replay {
             return null;
         }
 
-        let keys = Object.getOwnPropertyNames(event) as (keyof T)[];
-        
+        const keys = Object.getOwnPropertyNames(event) as (keyof T)[];
+
         for (let index = this._playbackIndex; index < this.events.length; ++index) {
             const pending = this.events[index];
 
@@ -148,7 +147,7 @@ export class Replay {
 
             let match = true;
             
-            for (let key of keys) {
+            for (const key of keys) {
                 if (event[key] !== (pending as T)[key]) {
                     match = false;
                     break;

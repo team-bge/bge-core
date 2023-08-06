@@ -196,13 +196,11 @@ export class LinearArrangement extends Arrangement {
         let pos = offAxisMaxSize.mul(this.pivot).add(
             this.axis.mul(alongAxisTotalSize * (this.pivot.dot(this.axis) - 0.5)));
 
-        for (let bounds of boundsArray) {
+        for (const bounds of boundsArray) {
             const alongAxisSize = bounds.size.dot(this.axis);
             const offAxisSize = bounds.size.mul(this.offAxis);
 
             pos = pos.add(this.axis.mul(alongAxisSize * 0.5));
-
-
 
             output.push({
                 position: pos
@@ -294,7 +292,7 @@ export class RectangularArrangement extends Arrangement {
 
         const transforms = arrangement.generate(boundsArray);
 
-        for (let transform of transforms) {
+        for (const transform of transforms) {
             transform.position = position.add(rotation.rotate(transform.position ?? Vector3.ZERO));
             transform.rotation = rotation.mul(transform.rotation ?? Rotation.IDENTITY);
         }
@@ -441,7 +439,7 @@ export class ScatterArrangement extends Arrangement {
 
         const diameterSq = radius * radius * 4;
 
-        for (let bounds of boundsArray) {
+        for (const bounds of boundsArray) {
             let bestX: number;
             let bestY: number;
             let bestZ = Number.POSITIVE_INFINITY;
@@ -566,7 +564,7 @@ export interface IPileArrangementOptions extends IScatterArrangementOptions {
 
         // Calcuate a max jitter rotation when object radius is provided
         let maxJitterRotation = 0;
-        let maxXYMargin = Math.max(margin.x, margin.y);
+        const maxXYMargin = Math.max(margin.x, margin.y);
         let width = options.itemWidth;
         if ((maxXYMargin > 0) && (options.itemWidth !== undefined && options.itemWidth !== null)){
             maxJitterRotation = PileArrangement.maxRotationInSpace(options.itemWidth, options.itemWidth + maxXYMargin);

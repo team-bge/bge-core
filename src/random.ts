@@ -1,5 +1,3 @@
-import { IGame } from "./interfaces.js";
-
 /**
  * Helper with methods to generate random numbers.
  * @category Core
@@ -36,7 +34,7 @@ export class Random {
     private static sfc32(a: number, b: number, c: number, d: number): { (): number } {
         return () => {
           a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0; 
-          var t = (a + b) | 0;
+          let t = (a + b) | 0;
           a = b ^ b >>> 9;
           b = c + (c << 3) | 0;
           c = (c << 21 | c >>> 11);

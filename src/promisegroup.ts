@@ -1,5 +1,3 @@
-import { game } from "./game";
-
 /**
  * @category Async
  */
@@ -34,10 +32,11 @@ export abstract class PromiseGroup {
         return result;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private readonly _handlers: { (reason?: any): void }[] = [];
 
     private _hasRejected = false;
-    private _rejectReason?: any;
+    private _rejectReason?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     private readonly _parent?: PromiseGroup;
 
@@ -48,6 +47,7 @@ export abstract class PromiseGroup {
         });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     catch(handler: { (reason?: any): void }): void {
         if (this._hasRejected) {
             handler(this._rejectReason);
@@ -60,6 +60,7 @@ export abstract class PromiseGroup {
     abstract itemResolved(): void;
     abstract itemRejected(reason?: any): void;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     reject(reason?: any): void {
         if (this._hasRejected) {
             return;
@@ -70,9 +71,9 @@ export abstract class PromiseGroup {
 
         const handlers = this._handlers.splice(0, this._handlers.length);
 
-        let errors: Error[] = [];
+        const errors: Error[] = [];
 
-        for (let handler of handlers) {
+        for (const handler of handlers) {
             try {
                 handler(reason);
             } catch (e) {
@@ -105,6 +106,7 @@ export class AnyGroup extends PromiseGroup {
         this.reject("AnyGroup resolved");
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any @typescript-eslint/no-unused-vars
     itemRejected(reason?: any): void {
         // 
     }
@@ -120,6 +122,7 @@ export class AllGroup extends PromiseGroup {
         //
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     itemRejected(reason?: any): void {
         if (this._anyRejected) {
             return;
