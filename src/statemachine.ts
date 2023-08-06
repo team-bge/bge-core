@@ -19,6 +19,8 @@ const NO_UNDO_KEY = Symbol("state:noundo");
 
 /**
  * Used to decorate state machine functions that will be skipped when undoing.
+ * @param target
+ * @param propertyKey
  * @category Decorators
  * @category State Machines
  */
@@ -29,6 +31,8 @@ export const skipUndo: MethodDecorator = (target: any, propertyKey) => {
 
 /**
  * Used to decorate state machine functions that cannot be undone.
+ * @param target
+ * @param propertyKey
  * @category Decorators
  * @category State Machines
  */

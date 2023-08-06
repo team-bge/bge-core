@@ -106,7 +106,7 @@ export class Delay {
     }
 
     cancelAll(reason?: any): void {
-        for (let info of [...this._active.values()]) {
+        for (const info of [...this._active.values()]) {
             info.reject(reason ?? "All delays cancelled");
         }
     }

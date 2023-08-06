@@ -19,6 +19,7 @@ export class MessageRow {
     }
 
     /**
+     * @param message
      * @internal
      */
     constructor(message: Message) {
@@ -55,7 +56,7 @@ export class MessageBar {
     static validate(format: string, args?: any[]): void {
         let maxIndex = -1;
             
-        for(let match of format.matchAll(/\{\s*(?<index>[0-9]+)\s*(?::(?<format>[^}]*))?\}/gi)) {
+        for(const match of format.matchAll(/\{\s*(?<index>[0-9]+)\s*(?::(?<format>[^}]*))?\}/gi)) {
             const index = parseInt(match.groups["index"]);
             maxIndex = Math.max(maxIndex, index);
         }
@@ -94,7 +95,7 @@ export class MessageBar {
             players = [players];
         }
 
-        for (let player of players) {
+        for (const player of players) {
             this._playerMap.delete(player);
         }
     }
@@ -156,7 +157,7 @@ export class MessageBar {
             return;
         }
 
-        for (let [player, rows] of map) {
+        for (const [player, rows] of map) {
             this._playerMap.set(player, [...rows]);
         }
     }
@@ -210,7 +211,7 @@ export class MessageBar {
             players = [...game.players, SPECTATOR];
         }
 
-        for (let player of players) {
+        for (const player of players) {
             let items = this._playerMap.get(player);
 
             if (items == null) {
@@ -252,7 +253,7 @@ export class MessageBar {
             players = this._playerMap.keys();
         }
 
-        for (let player of players) {
+        for (const player of players) {
             const items = this._playerMap.get(player);
 
             if (items == null) {
@@ -287,13 +288,13 @@ export class MessageBar {
             : this._playerMap.get(SPECTATOR);
 
         if (rows != null) {
-            for (let row of rows) {
+            for (const row of rows) {
                 views.push(MessageBar.renderMessage(ctx, row.message, false));
             }
         }
 
         if (ctx.player != null) {
-            for (let message of ctx.player.prompt.messages) {
+            for (const message of ctx.player.prompt.messages) {
                 views.push(MessageBar.renderMessage(ctx, message, true));
             }
         }

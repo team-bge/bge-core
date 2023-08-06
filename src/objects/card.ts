@@ -74,6 +74,9 @@ export interface ICardDimensions {
 /**
  * Specify the dimensions of a custom card class.
  * @category Decorators
+ * @param height
+ * @param thickness
+ * @param cornerRadius
  * @category Game Objects
  * @param width Width in centimeters.
  */
@@ -88,6 +91,8 @@ export function rectangleCard(width: number, height: number, thickness: number, 
 }
 
 /**
+ * @param size
+ * @param thickness
  * @category Decorators
  * @category Game Objects
  */
@@ -196,7 +201,7 @@ export class Card extends GameObject implements ITextEmbeddable {
     }
     
     override render(ctx: RenderContext): CardView {
-        let view = {
+        const view = {
             type: ViewType.CARD,
 
             name: ctx.isHidden ? this.hiddenName : this.name,

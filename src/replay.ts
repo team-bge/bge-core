@@ -99,6 +99,9 @@ export class Replay {
 
         this.events.push(...data.events);
 
+        /**
+         *
+         */
         function yieldAsync() {
             return new Promise<void>((resolve) => {
                 setTimeout(resolve, 0);

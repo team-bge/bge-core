@@ -107,8 +107,8 @@ export interface ITextInputOptions extends IPromptOptions {
 /**
  * Helper to create input prompts for a player.
  * The prompts will be created as promises that:
- * * Resolve when the player responds to the prompt
- * * Reject when the prompt is cancelled
+ * Resolve when the player responds to the prompt
+ * Reject when the prompt is cancelled
  * 
  * Prompts will cancel if they are created in an {@link anyExclusive} call, and another prompt
  * or delay created in the same call resolved first. Prompts will also cancel when created in
@@ -125,6 +125,7 @@ export class PromptHelper {
     private readonly _promptsByIndex = new Map<number, IPromptInfo>();
 
     /**
+     * @param player
      * @internal
      */
     constructor(player: Player) {
@@ -186,6 +187,7 @@ export class PromptHelper {
     }
 
     /**
+     * @param object
      * @internal
      */
     get(object: Clickable): Prompt | undefined {
@@ -205,6 +207,8 @@ export class PromptHelper {
     }
 
     /**
+     * @param index
+     * @param payload
      * @internal
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -425,6 +429,7 @@ export class PromptHelper {
 
     /**
      * Cancels all active prompts for this player.
+     * @param reason
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     cancelAll(reason?: any): void {

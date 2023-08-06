@@ -29,6 +29,10 @@ export function display(options?: IDisplayOptions): PropertyDecorator;
  */
 export function display<TParent = any, TValue = any>(optionsFn: DisplayOptionsFunc<TParent, TValue>): PropertyDecorator;
 
+/**
+ *
+ * @param options
+ */
 export function display(options?: IDisplayOptions | DisplayOptionsFunc): PropertyDecorator {
     return (target, propertyKey) => {
         const list = Reflect.getOwnMetadata(displayOptionsKey, target, propertyKey) as (IDisplayOptions | DisplayOptionsFunc)[] ?? [];
@@ -118,7 +122,7 @@ export class DisplayContainer {
         if (objects === undefined) {
             this._dynamicChildren.clear();
         } else {
-            for (let child of objects) {
+            for (const child of objects) {
                 this.remove(child);
             }
         }
@@ -136,7 +140,7 @@ export class DisplayContainer {
             return;
         }
 
-        for (let key of displayList) {
+        for (const key of displayList) {
             const options: (IDisplayOptions | DisplayOptionsFunc)[] = Reflect.getMetadata(displayOptionsKey, parent, key);
 
             if (options == null) {
@@ -200,7 +204,7 @@ export class DisplayContainer {
     render(ctx: RenderContext, parent: DisplayParent, views?: IView[]): IView[] {
         views ??= [];
 
-        for (let [child, options] of this._dynamicChildren) {
+        for (const [child, options] of this._dynamicChildren) {
             const childView = typeof child === "function"
                 ? ctx.renderText(child, child(), parent, options)
                 : ctx.renderChild(child, parent, options);
@@ -210,11 +214,11 @@ export class DisplayContainer {
             }
         }
 
-        for (let [key, property] of this._childProperties) {
+        for (const [key, property] of this._childProperties) {
             const options: IDisplayOptions = { jitterSeed: property.jitterSeed };
             const value = property.getValue();
 
-            for (let option of property.annotationOptions) {
+            for (const option of property.annotationOptions) {
                 if (typeof option === "function") {
                     Object.assign(options, option.apply(property.parent, [ctx, value]));
                 } else {

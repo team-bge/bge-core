@@ -97,7 +97,7 @@ export abstract class CardContainer<TCard extends Card> extends GameObject imple
      * @param cards Cards to add.
      */
     addRange(cards: TCard[] | Iterable<TCard>): void {
-        for (let card of cards) { 
+        for (const card of cards) { 
             this.add(card);
         }
     }
@@ -292,7 +292,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
     setOrientation(arg0: number | TCard | CardOrientation, orientation?: CardOrientation): void {
         if (orientation === undefined) {
             this.defaultOrientation = arg0 as CardOrientation;
-            for (let card of this._cards) {
+            for (const card of this._cards) {
                 card.orientation = this.defaultOrientation;
             }
             return;
@@ -343,7 +343,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
         if (typeof indexOrCardOrSelected === "boolean") {
             selected = indexOrCardOrSelected;
 
-            for (let card of this._cards) {
+            for (const card of this._cards) {
                 card.selected = selected;
             }
 
@@ -416,7 +416,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      */
     insertRange(index: number, cards: TCard[] | Iterable<TCard>): void {
         this.assertNoAutoSort();
-        for (let card of cards) {
+        for (const card of cards) {
             card._lastActionIndex = Internal.getNextActionIndex();
         }
         this._cards.splice(index, 0, ...Array.from(cards).map(x => this.createCardWrapper(x)));
@@ -533,6 +533,7 @@ export abstract class LinearCardContainer<TCard extends Card> extends CardContai
      * Deals up to the given total number of cards, divided between the given targets.
      * @param targets Recipients of the deal.
      * @param totalCount Maximum number of cards to deal in total.
+     * @param handLimit
      * @param firstTargetIndex Index of the first recipient in {@link targets}.
      */
     dealTotal(targets: ICardReceiver<TCard>[] | TCard[][], totalCount: number, handLimit?: number, firstTargetIndex: number = 0): void {

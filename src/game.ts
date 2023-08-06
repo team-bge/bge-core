@@ -41,7 +41,6 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
 
     /**
      * Base constructor for {@link Game<TPlayer>}. You need to pass in your player type here so that BGE knows how to make instances of it.
-     * 
      * @param PlayerType Constructor for your custom player type.
      */
     protected constructor(PlayerType: { new(index: number, config: IPlayerConfig): TPlayer }) {
@@ -148,6 +147,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
      * Called by the host when a player has responded to a prompt for input.
      * @param playerIndex Which player responded.
      * @param promptIndex Which prompt did they respond to.
+     * @param payload
      */
     respondToPrompt(playerIndex: number, promptIndex: number, payload?: any): void {
         const player = this._players[playerIndex];
@@ -194,7 +194,7 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
      */
     cancelAllPromises(reason?: any) {
 
-        for (let player of this.players) {
+        for (const player of this.players) {
             player.prompt.cancelAll(reason);
         }
 

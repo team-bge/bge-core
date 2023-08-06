@@ -14,6 +14,7 @@ export abstract class PromiseGroup {
     }
         
     /**
+     * @param group
      * @internal
      */
     static wrapPromises<T>(func: { (): T }, group: PromiseGroup): T {
@@ -174,6 +175,9 @@ export function any<T extends readonly unknown[] | []>(createPromises: { (): T }
  * @category Async
  */
 export function anyExclusive<T extends readonly unknown[] | []>(createPromises: { (): T }): Promise<Awaited<T[number]>>;
+/**
+ *
+ */
 export function anyExclusive<T>(createPromises: { (): Iterable<T | PromiseLike<T>> }): Promise<Awaited<T>> {
     return Promise.any(PromiseGroup.wrapPromises(createPromises, new AnyGroup(PromiseGroup.current)));
 }

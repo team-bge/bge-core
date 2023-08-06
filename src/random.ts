@@ -88,6 +88,7 @@ export class Random {
     }
 
     /**
+     * @param seed
      * @internal
      */
     initialize(seed: string): void {

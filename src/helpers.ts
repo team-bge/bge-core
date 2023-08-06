@@ -5,12 +5,13 @@ export class Helpers {
     /**
      * Gets the element from the given collection with the smallest value returned by {@link getValue}.
      * If the collection is empty, returns undefined.
+     * @param collection
      */
     static minBy<T>(collection: Iterable<T>, getValue: { (item: T): number }): T | undefined {
         let bestValue = Number.MAX_VALUE;
         let bestItem: T = undefined;
 
-        for (let item of collection) {
+        for (const item of collection) {
             const value = getValue(item);
 
             if (value < bestValue) {
@@ -25,12 +26,13 @@ export class Helpers {
     /**
      * Gets the element from the given collection with the largest value returned by {@link getValue}.
      * If the collection is empty, returns undefined.
+     * @param collection
      */
     static maxBy<T>(collection: Iterable<T>, getValue: { (item: T): number }): T | undefined {
         let bestValue = -Number.MAX_VALUE;
         let bestItem: T = undefined;
 
-        for (let item of collection) {
+        for (const item of collection) {
             const value = getValue(item);
 
             if (value > bestValue) {
@@ -70,7 +72,7 @@ export class Helpers {
         console.error(e);
 
         if (e instanceof AggregateError) {
-            for (let inner of e.errors) {
+            for (const inner of e.errors) {
                 this.printError(inner);
             }
         }

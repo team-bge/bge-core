@@ -102,7 +102,7 @@ interface IParentInfo {
     childId?: number;
     localPosition?: Vector3;
     localRotation?: Rotation;
-};
+}
 
 /**
  * @internal
@@ -144,7 +144,7 @@ export class ChildIndexMap {
     }
     
     forgetUnused(): void {
-        for (let [_, info] of this._map) {
+        for (const [_, info] of this._map) {
             info.prev = info.next;
             info.next = new Map();
         }
@@ -211,6 +211,9 @@ export class RenderContext {
     }
 
     /**
+     * @param player
+     * @param oldChildIndexMap
+     * @param oldParentMap
      * @internal 
      */
     constructor(player: Player, oldChildIndexMap?: ChildIndexMap, oldParentMap?: ParentMap) {
@@ -232,6 +235,7 @@ export class RenderContext {
     }
 
     /**
+     * @param parent
      * @internal
      */
     getParentId(parent: DisplayParent): number {
@@ -246,6 +250,8 @@ export class RenderContext {
     }
 
     /**
+     * @param parent
+     * @param view
      * @internal
      */
     setParentView(parent: DisplayParent, view: IView): void {
@@ -413,6 +419,10 @@ export class RenderContext {
     }
 
     /**
+     * @param object
+     * @param parent
+     * @param parentView
+     * @param options
      * @internal
      */
     renderInternalChild(object: GameObject, parent: DisplayParent, parentView: IView, options?: IDisplayOptions): void {
@@ -500,7 +510,7 @@ export class RenderContext {
      * @internal
      */
     processAnimations(): void {
-        for (let [parent, parentId] of this._parentIds) {
+        for (const [parent, parentId] of this._parentIds) {
             const view = this._parentViews.get(parent);
             
             if (view == null) {
@@ -515,14 +525,15 @@ export class RenderContext {
         }
 
         let index = 0;
-        let delay = Math.min(0.1, 0.75 / this._origins.length);
+        const delay = Math.min(0.1, 0.75 / this._origins.length);
 
-        for (let [_, origin] of this._origins.sort(([indexA, originA], [indexB, originB]) => indexA - indexB)) {
+        for (const [_, origin] of this._origins.sort(([indexA, originA], [indexB, originB]) => indexA - indexB)) {
             origin.delay = index++ * delay;
         }
     }
 
     /**
+     * @param value
      * @internal
      */
     renderTextEmbed(value: any): TextEmbedView {
