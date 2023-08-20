@@ -115,7 +115,7 @@ export class Token extends GameObject implements ITextEmbeddable {
         return new Bounds(new Vector3(this.scale, this.scale, this.scale * this._shapeView.thickness));
     }
     
-    render(ctx: RenderContext): TokenView {
+    override render(ctx: RenderContext): TokenView {
         return {
             type: ViewType.TOKEN,
             

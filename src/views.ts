@@ -8,7 +8,8 @@ export type IView =
     | DeckView
     | HandView
     | TextView
-    | TokenView;
+    | TokenView
+    | DieView;
 
 export interface GameView {
     basis: Basis;
@@ -31,7 +32,7 @@ export interface TableView extends IContainerView {
     tempChildren?: IView[];
 }
 
-export interface ZoneView extends IRectangularView, IOutlinedView, ILabelView, IColorView, ITransformView, IContainerView {
+export interface ZoneView extends IContainerView, IRectangularView, IOutlinedView, ILabelView, IColorView, ITransformView {
     type: ViewType.ZONE;
     childId?: number;
     containerId?: number;
@@ -42,7 +43,7 @@ export interface ZoneView extends IRectangularView, IOutlinedView, ILabelView, I
     tempChildren?: IView[];
 }
 
-export interface CardView extends IRectangularView, IThicknessView, IColorView, ITransformView, IContainerView {
+export interface CardView extends IContainerView, IRectangularView, IThicknessView, IColorView, ITransformView {
     type: ViewType.CARD;
     childId?: number;
     containerId?: number;
@@ -98,7 +99,7 @@ export interface TextView extends ILabelView, IColorView, ITransformView {
     scale?: number;
 }
 
-export interface TokenView extends IScaledView, IColorView, ITransformView, IContainerView {
+export interface TokenView extends IContainerView, IScaledView, IColorView, ITransformView {
     type: ViewType.TOKEN;
     childId?: number;
     containerId?: number;
@@ -108,6 +109,19 @@ export interface TokenView extends IScaledView, IColorView, ITransformView, ICon
     prompt?: Prompt;
     tempChildren?: IView[];
     shape?: ShapeView;
+}
+
+export interface DieView extends IScaledView, IColorView, ITransformView {
+    type: ViewType.DIE;
+    childId?: number;
+    containerId?: number;
+    name?: string;
+    allowAnimations?: boolean;
+    origin?: Origin;
+    prompt?: Prompt;
+    tempChildren?: IView[];
+    pipColor?: ColorView;
+    targetRotation?: Vector3View;
 }
 
 export enum Basis {
@@ -146,6 +160,7 @@ export enum ViewType {
     HAND = 4,
     TEXT = 5,
     TOKEN = 6,
+    DIE = 7,
 }
 
 export interface Origin {

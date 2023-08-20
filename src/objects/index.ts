@@ -1,6 +1,7 @@
 export * from "./card.js";
 export * from "./cardcontainer.js";
 export * from "./deck.js";
+export * from "./die.js";
 export * from "./hand.js";
 export * from "./object.js";
 export * from "./token.js";
