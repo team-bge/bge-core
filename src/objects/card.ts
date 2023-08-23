@@ -20,7 +20,8 @@ export class CardFace {
  */
 export enum CardShape {
     RECTANGLE,
-    HEXAGON
+    HEXAGON,
+    SVG
 }
 
 const cardDimensionsKey = Symbol("card:dimensions");
@@ -72,6 +73,11 @@ export interface ICardDimensions {
      * Corner radius of the card in centimeters.
      */
     cornerRadius: number;
+
+    /**
+     * For SVG cards, URL to the graphic.
+     */
+    svgUrl?: string;
 }
 
 /**
@@ -105,6 +111,16 @@ export function hexagonCard(size: number, thickness: number): ClassDecorator {
         width: size,
         height: size,
         thickness: thickness
+    } as ICardDimensions);
+}
+
+export function svgCard(url: string, width: number, height: number, thickness: number): ClassDecorator {
+    return Reflect.metadata(cardDimensionsKey, {
+        shape: CardShape.SVG,
+        width: width,
+        height: height,
+        thickness: thickness,
+        svgUrl: url
     } as ICardDimensions);
 }
 
@@ -154,6 +170,11 @@ export class Card extends GameObject implements ITextEmbeddable {
     readonly thickness: number;
 
     /**
+     * For cards using an SVG as a shape.
+     */
+    readonly svgUrl?: string;
+
+    /**
      * Corner radius of the card in centimeters.
      */
     readonly cornerRadius: number;
@@ -191,6 +212,7 @@ export class Card extends GameObject implements ITextEmbeddable {
         this.width = dims.width;
         this.height = dims.height;
         this.thickness = dims.thickness;
+        this.svgUrl = dims.svgUrl;
 
         this._localBounds = new Bounds(new Vector3(dims.width, dims.height, dims.thickness));
 
@@ -214,12 +236,17 @@ export class Card extends GameObject implements ITextEmbeddable {
             front: ctx.isHidden ? this.hidden.image : this.front.image,
             back: this.back.image,
 
-            width: this.width,
-            height: this.height,
-            thickness: this.thickness,
-            cornerRadius: this.cornerRadius,
-            sides: this.shape === CardShape.HEXAGON
-                ? 6 : 4,
+            shape: {
+                width: this.width,
+                height: this.height,
+                thickness: this.thickness,
+                cornerRadius: this.cornerRadius,
+                sides: this.shape === CardShape.HEXAGON
+                    ? 6 : this.shape === CardShape.RECTANGLE
+                    ? 4 : undefined,
+                url: this.shape === CardShape.SVG
+                    ? this.svgUrl : undefined
+            },
 
             children: this.children.isEmpty ? undefined : []
         } as CardView;

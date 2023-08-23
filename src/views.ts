@@ -43,7 +43,7 @@ export interface ZoneView extends IContainerView, IRectangularView, IOutlinedVie
     tempChildren?: IView[];
 }
 
-export interface CardView extends IContainerView, IRectangularView, IThicknessView, IColorView, ITransformView {
+export interface CardView extends IContainerView, IThicknessView, IColorView, ITransformView {
     type: ViewType.CARD;
     childId?: number;
     containerId?: number;
@@ -52,6 +52,9 @@ export interface CardView extends IContainerView, IRectangularView, IThicknessVi
     origin?: Origin;
     prompt?: Prompt;
     tempChildren?: IView[];
+    shape?: ShapeView;
+    width?: number;
+    height?: number;
     cornerRadius?: number;
     sides?: number;
     cutout?: boolean;
@@ -109,6 +112,7 @@ export interface TokenView extends IContainerView, IScaledView, IColorView, ITra
     prompt?: Prompt;
     tempChildren?: IView[];
     shape?: ShapeView;
+    opacity?: number;
 }
 
 export interface DieView extends IScaledView, IColorView, ITransformView {
@@ -204,6 +208,17 @@ export interface IThicknessView {
     thickness?: number;
 }
 
+export interface ShapeView {
+    url?: string;
+    sides?: number;
+    width?: number;
+    height?: number;
+    thickness: number;
+    cornerRadius: number;
+    standing: boolean;
+    noSides: boolean;
+}
+
 export interface ImageView {
     url: string;
     rows?: number;
@@ -228,17 +243,6 @@ export interface TextEmbedView {
 
 export interface IScaledView {
     scale?: number;
-}
-
-export interface ShapeView {
-    url?: string;
-    sides?: number;
-    width: number;
-    height: number;
-    thickness: number;
-    cornerRadius: number;
-    standing: boolean;
-    noSides: boolean;
 }
 
 export interface ColorView {

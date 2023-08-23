@@ -44,12 +44,12 @@ export interface IDieFace<T> {
  */
 export class Die<T = number> extends GameObject {
     static readonly DEFAULT_ROTATIONS_6: readonly Rotation[] = [
-        Rotation.y(-90),
         Rotation.x(-90),
+        Rotation.y(90),
         Rotation.x(180),
         Rotation.IDENTITY,
-        Rotation.x(90),
-        Rotation.y(90)
+        Rotation.y(-90),
+        Rotation.x(90)
     ];
 
     static readonly DEFAULT_FACES_6: readonly IDieFace<number>[] = [

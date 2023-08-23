@@ -26,12 +26,6 @@ export interface ITokenOptions {
     thickness?: number;
 
     /**
-     * Model scale, defaults to 1.
-     * For a cube, this is the width in centimeters.
-     */
-    scale?: number;
-
-    /**
      * Model tint color, defaults to white.
      */
     color?: Color;
@@ -45,6 +39,16 @@ export interface ISvgTokenOptions extends ITokenOptions {
      * Url of the SVG file to use for this token's shape.
      */
     url: string;
+
+    /**
+     * Width of the token in centimeters.
+     */
+    width: number;
+
+    /**
+     * Height of the token in centimeters.
+     */
+    height: number;
 }
 
 /**
@@ -55,6 +59,11 @@ export interface IPolygonTokenOptions extends ITokenOptions {
      * Number of sides of the regular polygon that will be extruded for this token's shape.
      */
     sides: number;
+
+    /**
+     * Diameter in centimeters.
+     */
+    size: number;
 }
 
 /**
@@ -64,12 +73,6 @@ export interface IPolygonTokenOptions extends ITokenOptions {
 export class Token extends GameObject implements ITextEmbeddable {
 
     private readonly _shapeView: ShapeView;
-    
-    /**
-     * Model scale.
-     * For a cube, this is the width in centimeters.
-     */
-    readonly scale: number;
 
     /**
      * Model tint color.
@@ -86,33 +89,34 @@ export class Token extends GameObject implements ITextEmbeddable {
         this.name = options.name ?? "Token";
 
         if ((options as ISvgTokenOptions).url !== undefined) {
+            const svgOptions = options as ISvgTokenOptions;
             this._shapeView = {
-                url: (options as ISvgTokenOptions).url,
-                thickness: options.thickness ?? 1.0,
-                standing: options.standing ?? false,
-                width: 1,
-                height: 1,
+                url: svgOptions.url,
+                thickness: svgOptions.thickness ?? 1.0,
+                standing: svgOptions.standing ?? false,
+                width: svgOptions.width ?? 1.0,
+                height: svgOptions.height ?? 1.0,
                 cornerRadius: 0,
                 noSides: false
             };
         } else {
+            const polygonOptions = options as IPolygonTokenOptions;
             this._shapeView = {
-                sides: (options as IPolygonTokenOptions).sides ?? 4,
+                sides: polygonOptions.sides ?? 4,
                 thickness: options.thickness ?? 1.0,
                 standing: options.standing ?? false,
-                width: 1,
-                height: 1,
+                width: polygonOptions.size ?? 1.0,
+                height: polygonOptions.size ?? 1.0,
                 cornerRadius: 0,
                 noSides: false
             };
         }
-
-        this.scale = options.scale ?? 1;
+        
         this.color = options.color;
     }
 
     override get localBounds(): Bounds {
-        return new Bounds(new Vector3(this.scale, this.scale, this.scale * this._shapeView.thickness));
+        return new Bounds(new Vector3(this._shapeView.width, this._shapeView.height, this._shapeView.thickness));
     }
     
     override render(ctx: RenderContext): TokenView {
@@ -125,8 +129,9 @@ export class Token extends GameObject implements ITextEmbeddable {
 
             prompt: ctx.player?.prompt.get(this),
 
-            scale: this.scale,
+            scale: 1.0,
             color: this.color?.encoded,
+            opacity: this.color?.a
         };
     }
 
