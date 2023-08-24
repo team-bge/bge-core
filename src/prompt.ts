@@ -276,7 +276,7 @@ export class PromptHelper {
      * @param options Options to configure the prompt, including the {@link IObjectClickOptions.message} text.
      * @returns A promise that resolves to the clicked object.
      */
-    click<TObject extends GameObject>(object: TObject, options: IObjectClickOptions): Promise<TObject>;
+    click<TObject extends Clickable>(object: TObject, options: IObjectClickOptions): Promise<TObject>;
 
     /**
      * Creates a prompt that resolves when the player clicks on the given {@link GameObject}. An accompanying
@@ -286,7 +286,7 @@ export class PromptHelper {
      * @param options Options to configure the prompt, including the {@link IObjectClickOptions.message} text and {@link IReturnClickOptions.return} value.
      * @returns A promise that resolves to {@link IReturnClickOptions.return}.
      */
-    click<TValue>(object: GameObject, options: IReturnClickOptions<TValue> & IObjectClickOptions): Promise<TValue>;
+    click<TValue>(object: Clickable, options: IReturnClickOptions<TValue> & IObjectClickOptions): Promise<TValue>;
 
     async click<TObject extends Clickable | string, TValue>(target: TObject,
         options?: (IButtonClickOptions | IObjectClickOptions) & (IReturnClickOptions<TValue> | object)): Promise<TObject | TValue> {
@@ -324,7 +324,7 @@ export class PromptHelper {
      * @param options Options to configure the prompt, including the {@link IObjectClickOptions.message} text.
      * @returns A promise that resolves to the clicked object.
      */
-    clickAny<TObject extends GameObject>(objects: ArrayLike<TObject> | Iterable<TObject>,
+    clickAny<TObject extends Clickable>(objects: ArrayLike<TObject> | Iterable<TObject>,
         options: IClickAnyOptions): Promise<TObject> {
 
         if (options?.if === false) {
