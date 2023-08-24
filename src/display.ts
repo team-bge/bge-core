@@ -165,7 +165,8 @@ export class RenderContext {
 
     private static readonly ANIMATING_VIEW_TYPES = new Set<ViewType>([
         ViewType.CARD,
-        ViewType.TOKEN
+        ViewType.TOKEN,
+        ViewType.DIE
     ]);
 
     /**
