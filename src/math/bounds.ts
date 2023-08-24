@@ -19,7 +19,7 @@ export class Bounds {
     constructor(center: Vector3, size: Vector3);
     constructor(arg0: Vector3, arg1?: Vector3) {
         let center: Vector3, size: Vector3;
-        
+
         if (arg1 === undefined) {
             center = Vector3.ZERO;
             size = arg0;

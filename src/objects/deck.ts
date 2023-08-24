@@ -52,8 +52,8 @@ export class Deck<TCard extends Card> extends LinearCardContainer<TCard> {
     override get localBounds(): Bounds {
         const cardDims = this.cardDimensions;
         return new Bounds(
-            new Vector3(0, 0, cardDims.thickness * this.count * 0.5),
-            new Vector3(cardDims.width + 2, cardDims.height + 2, cardDims.thickness * this.count));
+            new Vector3(0, 0, 0),
+            new Vector3(cardDims.width + 2, cardDims.height + 2, 0));
     }
 
     override render(ctx: RenderContext): DeckView {
