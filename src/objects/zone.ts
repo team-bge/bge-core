@@ -105,6 +105,7 @@ export class Zone extends GameObject {
         this.children.render(ctx, this, view.children);
 
         if (this.hideIfEmpty
+            && view.outlineStyle === OutlineStyle.NONE
             && view.children.length === 0
             && (view.tempChildren?.length ?? 0) === 0
             && view.prompt == null
