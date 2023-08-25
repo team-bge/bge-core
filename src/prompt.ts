@@ -334,6 +334,7 @@ export class PromptHelper {
         const objectSet = new Set(Array.from(objects).filter(x => x != null));
 
         if ((options.autoResolveIfSingle ?? false) && objectSet.size === 1) {
+            PromiseGroup.current?.itemResolved();
             return Promise.resolve(objectSet.values().next().value);
         }
 
@@ -368,7 +369,7 @@ export class PromptHelper {
         };
 
         const group = PromiseGroup.current;
-    
+
         if (object != null) {
             this._promptsByObject.set(object, promptInfo);
         }
