@@ -235,13 +235,13 @@ export abstract class Game<TPlayer extends Player = Player> implements IGame {
         return {
             basis: Basis.Y_FORWARD_Z_UP,
             playerIndex: player?.index ?? -1,
-            hasPrompts: player?.prompt.activeCount > 0 ?? false,
+            hasPrompts: player?.isActive ?? false,
             messages: message.render(new RenderContext(player)),
             cameras: player?.cameras ?? [],
             players: this.players.map(x => ({
                 name: x.name,
                 color: x.color.encoded,
-                hasPrompts: x.prompt.activeCount > 0
+                hasPrompts: x.isActive
             })),
             table: table
         };

@@ -36,6 +36,13 @@ export class Player implements ITextEmbeddable {
     // TODO: wrap this
     cameras: CameraView[] = [];
 
+    /**
+     * If true, it's this player's turn, and they'll have a visual indicator that they should act.
+     */
+    get isActive(): boolean {
+        return this.prompt.activeCount > 0;
+    }
+
     get color(): Color {
         return Player.DEFAULT_COLORS[this.index % Player.DEFAULT_COLORS.length];
     }
