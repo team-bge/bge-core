@@ -269,6 +269,15 @@ export class MessageBar {
         }
     }
 
+    addOrUpdate(row: MessageRow, format: string, ...args: MessageEmbed[]): MessageRow {
+        if (row != null) {
+            row.update(format, args);
+            return row;
+        }
+
+        return this.add(format, args);
+    }
+
     private static renderMessage(ctx: RenderContext, message: Message, prompt: boolean): MessageView {
         if (typeof message === "string") {
             return { format: message, prompt: prompt };
