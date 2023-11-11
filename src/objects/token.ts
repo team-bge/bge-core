@@ -4,6 +4,7 @@ import { Bounds, Vector3 } from "../math/index.js";
 import { GameObject } from "./object.js";
 import { ShapeView, TextEmbedView, TokenView, ViewType } from "../views.js";
 import { Color } from "../color.js";
+import { DisplayContainer } from "../displaycontainer.js";
 
 /**
  * Optional configuration for a {@link Token}.
@@ -80,6 +81,13 @@ export class Token extends GameObject implements ITextEmbeddable {
     readonly color?: Color;
     
     /**
+     * Contains child objects that are displayed on top of this token.
+     * This will also contain objects from {@link display} annotated properties,
+     * using the property keys as names.
+     */
+    readonly children = new DisplayContainer();
+
+    /**
      * A playing piece with a 3D model, tint color, and scale.
      * @param options Optional configuration for a {@link Token}.
      */
@@ -111,8 +119,10 @@ export class Token extends GameObject implements ITextEmbeddable {
                 noSides: false
             };
         }
-        
+
         this.color = options.color;
+
+        this.children.addProperties(this);
     }
 
     override get localBounds(): Bounds {
@@ -120,7 +130,7 @@ export class Token extends GameObject implements ITextEmbeddable {
     }
     
     override render(ctx: RenderContext): TokenView {
-        return {
+        const view = {
             type: ViewType.TOKEN,
             
             name: ctx.isHidden ? this.hiddenName : this.name,
@@ -131,8 +141,17 @@ export class Token extends GameObject implements ITextEmbeddable {
 
             scale: 1.0,
             color: this.color?.encoded,
-            opacity: this.color?.a
-        };
+            opacity: this.color?.a,
+
+            children: this.children.isEmpty ? undefined : []
+        } as TokenView;
+
+        if (!this.children.isEmpty) {
+            ctx.setParentView(this, view);
+            this.children.render(ctx, this, view.children);
+        }
+
+        return view;
     }
 
     renderTextEmbed(_: RenderContext): TextEmbedView {

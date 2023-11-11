@@ -195,6 +195,11 @@ export class Card extends GameObject implements ITextEmbeddable {
     readonly back = new CardFace();
 
     /**
+     * If true, don't draw the sides of the card, and use alpha cutoff for the faces.
+     */
+    cutout = false;
+
+    /**
      * Contains child objects that are displayed on top of this card.
      * This will also contain objects from {@link display} annotated properties,
      * using the property keys as names.
@@ -224,7 +229,7 @@ export class Card extends GameObject implements ITextEmbeddable {
     override get localBounds(): Bounds {
         return this._localBounds;
     }
-    
+
     override render(ctx: RenderContext): CardView {
         const view = {
             type: ViewType.CARD,
@@ -247,6 +252,8 @@ export class Card extends GameObject implements ITextEmbeddable {
                 url: this.shape === CardShape.SVG
                     ? this.svgUrl : undefined
             },
+
+            cutout: this.cutout,
 
             children: this.children.isEmpty ? undefined : []
         } as CardView;
