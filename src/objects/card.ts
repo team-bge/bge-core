@@ -2,7 +2,7 @@ import { RenderContext } from "../display.js";
 import { DisplayContainer, display } from "../displaycontainer.js";
 import { ITextEmbeddable } from "../interfaces.js";
 import { Face, GameObject } from "./object.js";
-import { CardView, ImageView, TextEmbedView, ViewType } from "../views.js";
+import { CardView, TextEmbedView, ViewType } from "../views.js";
 import { Bounds, Vector3 } from "../math/index.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
