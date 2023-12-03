@@ -1,6 +1,7 @@
+import { Color } from "../color.js";
 import { RenderContext } from "../display.js";
 import { Bounds } from "../math/index.js";
-import { IView } from "../views.js";
+import { IView, ImageView } from "../views.js";
 
 /**
  * Base class for all gameplay related objects and containers.
@@ -30,5 +31,29 @@ export abstract class GameObject {
      */
     get localBounds(): Bounds | undefined {
         return undefined;
+    }
+}
+
+/**
+ * @category Game Objects
+ */
+export class Face {
+    image?: ImageView;
+    color?: Color;
+
+    get imageView(): ImageView | null {
+        if (this.image == null && this.color == null) {
+            return null;
+        }
+
+        if (this.color == null) {
+            return this.image;
+        }
+
+        if (this.image == null) {
+            return { url: null, color: this.color.encoded };
+        }
+
+        return { ...this.image, color: this.color.encoded };
     }
 }

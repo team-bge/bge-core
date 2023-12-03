@@ -1,7 +1,7 @@
 import { RenderContext } from "../display.js";
 import { ITextEmbeddable } from "../interfaces.js";
 import { Bounds, Vector3 } from "../math/index.js";
-import { GameObject } from "./object.js";
+import { Face, GameObject } from "./object.js";
 import { ShapeView, TextEmbedView, TokenView, ViewType } from "../views.js";
 import { Color } from "../color.js";
 import { DisplayContainer } from "../displaycontainer.js";
@@ -86,6 +86,26 @@ export class Token extends GameObject implements ITextEmbeddable {
      * using the property keys as names.
      */
     readonly children = new DisplayContainer();
+    
+    /**
+     * Stores graphical information about the front face of the token, as seen if the token isn't hidden.
+     */
+    readonly front = new Face();
+    
+    /**
+     * Stores graphical information about the front face of the token, as seen if the token is hidden.
+     */
+    readonly hidden = new Face();
+    
+    /**
+     * Stores graphical information about the back face of the token.
+     */
+    readonly back = new Face();
+
+    /**
+     * Stores graphical information about the side faces of the token.
+     */
+    readonly sides = new Face();
 
     /**
      * A playing piece with a 3D model, tint color, and scale.
@@ -142,6 +162,10 @@ export class Token extends GameObject implements ITextEmbeddable {
             scale: 1.0,
             color: this.color?.encoded,
             opacity: this.color?.a,
+
+            front: ctx.isHidden ? this.hidden.imageView ?? this.back.imageView : this.front.imageView,
+            back: this.back.imageView,
+            sides: this.sides.imageView,
 
             children: this.children.isEmpty ? undefined : []
         } as TokenView;

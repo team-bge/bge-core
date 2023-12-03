@@ -111,6 +111,9 @@ export interface TokenView extends IContainerView, IScaledView, IColorView, ITra
     origin?: Origin;
     prompt?: Prompt;
     tempChildren?: IView[];
+    front?: ImageView;
+    back?: ImageView;
+    sides?: ImageView;
     shape?: ShapeView;
     opacity?: number;
 }

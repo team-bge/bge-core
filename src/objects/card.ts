@@ -1,19 +1,12 @@
 import { RenderContext } from "../display.js";
 import { DisplayContainer, display } from "../displaycontainer.js";
 import { ITextEmbeddable } from "../interfaces.js";
-import { GameObject } from "./object.js";
+import { Face, GameObject } from "./object.js";
 import { CardView, ImageView, TextEmbedView, ViewType } from "../views.js";
 import { Bounds, Vector3 } from "../math/index.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type CardType<TCard extends Card> = { new(...args: any[]): TCard };
-
-/**
- * @category Game Objects
- */
-export class CardFace {
-    image?: ImageView;
-}
 
 /**
  * @category Game Objects
@@ -182,17 +175,17 @@ export class Card extends GameObject implements ITextEmbeddable {
     /**
      * Stores graphical information about the front face of the card, as seen if the card isn't hidden.
      */
-    readonly front = new CardFace();
+    readonly front = new Face();
     
     /**
      * Stores graphical information about the front face of the card, as seen if the card is hidden.
      */
-    readonly hidden = new CardFace();
+    readonly hidden = new Face();
     
     /**
      * Stores graphical information about the back face of the card.
      */
-    readonly back = new CardFace();
+    readonly back = new Face();
 
     /**
      * If true, don't draw the sides of the card, and use alpha cutoff for the faces.
@@ -238,8 +231,8 @@ export class Card extends GameObject implements ITextEmbeddable {
 
             prompt: ctx.player?.prompt.get(this),
 
-            front: ctx.isHidden ? this.hidden.image : this.front.image,
-            back: this.back.image,
+            front: ctx.isHidden ? this.hidden.imageView ?? this.back.imageView : this.front.imageView,
+            back: this.back.imageView,
 
             shape: {
                 width: this.width,
