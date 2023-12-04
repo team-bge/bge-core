@@ -2,15 +2,18 @@ import { display } from "../displaycontainer.js";
 import { OutlineStyle } from "../views.js";
 import { Zone } from "./zone.js";
 
-export interface IGridIndex {
+export interface IGridIndex<T extends IGridIndex<T>> {
     get hash(): string;
+
+    to(other: T): T;
+    equals(other: T): boolean;
 }
 
 export interface IGridOptions {
     autoCreateNeighbors?: boolean;
 }
 
-export abstract class Grid<TIndex extends IGridIndex, TValue> extends Zone {
+export abstract class Grid<TIndex extends IGridIndex<TIndex>, TValue> extends Zone {
     private readonly _cells = new Map<string, GridCell<TIndex, TValue>>();
 
     readonly autoCreateNeighbors: boolean;
@@ -106,7 +109,7 @@ export abstract class Grid<TIndex extends IGridIndex, TValue> extends Zone {
     }
 }
 
-export class GridCell<TIndex extends IGridIndex, TValue> extends Zone {
+export class GridCell<TIndex extends IGridIndex<TIndex>, TValue> extends Zone {
     readonly grid: Grid<TIndex, TValue>;
     readonly index: TIndex;
 
@@ -146,7 +149,9 @@ export class GridCell<TIndex extends IGridIndex, TValue> extends Zone {
     }
 }
 
-export class GridIndex2D implements IGridIndex {
+export class GridIndex2D implements IGridIndex<GridIndex2D> {
+    static readonly ZERO = new GridIndex2D(0, 0);
+
     readonly x: number;
     readonly y: number;
 
@@ -157,6 +162,30 @@ export class GridIndex2D implements IGridIndex {
 
     get hash(): string {
         return `${this.x},${this.y}`;
+    }
+
+    north(steps = 1) {
+        return new GridIndex2D(this.x, this.y + steps);
+    }
+    
+    west(steps = 1) {
+        return new GridIndex2D(this.x - steps, this.y);
+    }
+
+    south(steps = 1) {
+        return new GridIndex2D(this.x, this.y - steps);
+    }
+
+    east(steps = 1) {
+        return new GridIndex2D(this.x + steps, this.y);
+    }
+
+    to(other: GridIndex2D): GridIndex2D {
+        return new GridIndex2D(other.x - this.x, other.y - this.y);
+    }
+
+    equals(other: GridIndex2D): boolean {
+        return other.x === this.x && other.y === this.y;
     }
 }
 
@@ -189,7 +218,7 @@ export class RectangleGrid<TValue> extends Grid<GridIndex2D, TValue> {
                 x: cell.index.x * (this.cellWidth + this.cellMargin),
                 y: cell.index.y * (this.cellHeight + this.cellMargin)
             }
-        })
+        });
     }
 
     protected override onRemoveCell(cell: GridCell<GridIndex2D, TValue>): void {
@@ -198,10 +227,118 @@ export class RectangleGrid<TValue> extends Grid<GridIndex2D, TValue> {
 
     protected override onGetNeighbourIndices(index: GridIndex2D): readonly GridIndex2D[] {
         return [
-            new GridIndex2D(index.x - 1, index.y),
-            new GridIndex2D(index.x, index.y - 1),
-            new GridIndex2D(index.x + 1, index.y),
-            new GridIndex2D(index.x, index.y + 1)
+            index.west(),
+            index.north(),
+            index.east(),
+            index.south()
+        ];
+    }
+}
+
+export class HexGridIndex implements IGridIndex<HexGridIndex> {
+    static readonly ZERO = new HexGridIndex(0, 0);
+
+    readonly x: number;
+    readonly y: number;
+
+    get z() {
+        return this.x + this.y;
+    }
+
+    constructor(x: number, y: number) {
+        this.x = x;
+        this.y = y;
+    }
+
+    get hash(): string {
+        return `${this.x},${this.y}`;
+    }
+
+    north(steps = 1) {
+        return new HexGridIndex(this.x, this.y + steps);
+    }
+    
+    northWest(steps = 1) {
+        return new HexGridIndex(this.x - steps, this.y + steps);
+    }
+
+    northEast(steps = 1) {
+        return new HexGridIndex(this.x + steps, this.y);
+    }
+
+    south(steps = 1) {
+        return new HexGridIndex(this.x, this.y - steps);
+    }
+
+    southWest(steps = 1) {
+        return new HexGridIndex(this.x - steps, this.y);
+    }
+
+    southEast(steps = 1) {
+        return new HexGridIndex(this.x + steps, this.y - steps);
+    }
+
+    to(other: HexGridIndex): HexGridIndex {
+        return new HexGridIndex(other.x - this.x, other.y - this.y);
+    }
+
+    distance(other?: HexGridIndex): number {
+        other ??= HexGridIndex.ZERO;
+
+        const x = Math.abs(this.x - other.x);
+        const y = Math.abs(this.y - other.y);
+        const z = Math.abs(this.z - other.z);
+
+        return Math.min(x + y, y + z, z + x);
+    }
+
+    equals(other: HexGridIndex): boolean {
+        return other.x === this.x && other.y === this.y;
+    }
+}
+
+export interface IHexGridOptions extends IGridOptions {
+    cellSize?: number;
+    cellMargin?: number;
+}
+
+export class HexGrid<TValue> extends Grid<HexGridIndex, TValue> {
+    static readonly ROOT_0_75 = Math.sqrt(0.75);
+
+    readonly cellSize: number;
+    readonly cellMargin: number;
+
+    constructor(options?: IHexGridOptions) {
+        super(options);
+
+        this.cellSize = options?.cellSize ?? 1;
+        this.cellMargin = options?.cellMargin ?? 0;    
+    }
+
+    protected override onCreateCell(cell: GridCell<HexGridIndex, TValue>): void {
+        cell.width = this.cellSize;
+        cell.height = this.cellSize;
+        
+        this.children.add(cell, {
+            position: {
+                x: cell.index.x * HexGrid.ROOT_0_75 * (this.cellSize + this.cellMargin),
+                y: (cell.index.y + 0.5 * cell.index.x) * (this.cellSize + this.cellMargin)
+            }
+        });
+    }
+
+    protected override onRemoveCell(cell: GridCell<HexGridIndex, TValue>): void {
+        this.children.remove(cell);
+    }
+
+    protected override onGetNeighbourIndices(index: HexGridIndex): readonly HexGridIndex[] {
+        return [
+            index.northWest(),
+            index.north(),
+            index.northEast(),
+            index.southEast(),
+            index.south(),
+            index.southWest()
         ];
     }
 }
