@@ -36,6 +36,7 @@ export abstract class Grid<TIndex extends IGridIndex<TIndex>, TValue> extends Zo
         this.autoCreateNeighbors = options?.autoCreateNeighbors ?? false;
 
         this.outlineStyle = OutlineStyle.NONE;
+        this.hideIfEmpty = true;
     }
 
     getCell(index: TIndex): GridCell<TIndex, TValue> | undefined {
@@ -126,6 +127,7 @@ export class GridCell<TIndex extends IGridIndex<TIndex>, TValue> extends Zone {
         this.index = index;
 
         this.outlineStyle = OutlineStyle.NONE;
+        this.hideIfEmpty = true;
     }
 
     @display()
@@ -303,7 +305,8 @@ export interface IHexGridOptions extends IGridOptions {
 }
 
 export class HexGrid<TValue> extends Grid<HexGridIndex, TValue> {
-    static readonly ROOT_0_75 = Math.sqrt(0.75);
+    private static readonly ROOT_0_75 = Math.sqrt(0.75);
+    private static readonly INV_ROOT_0_07 = 1.0 / Math.sqrt(0.75);
 
     readonly cellSize: number;
     readonly cellMargin: number;
@@ -321,8 +324,8 @@ export class HexGrid<TValue> extends Grid<HexGridIndex, TValue> {
         
         this.children.add(cell, {
             position: {
-                x: cell.index.x * HexGrid.ROOT_0_75 * (this.cellSize + this.cellMargin),
-                y: (cell.index.y + 0.5 * cell.index.x) * (this.cellSize + this.cellMargin)
+                x: cell.index.x * 0.75 * (this.cellSize + this.cellMargin),
+                y: (cell.index.y + 0.5 * cell.index.x) * HexGrid.ROOT_0_75 * (this.cellSize + this.cellMargin)
             }
         });
     }
